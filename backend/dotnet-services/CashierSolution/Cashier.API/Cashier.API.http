@@ -1,0 +1,6 @@
+@Cashier.API_HostAddress = http://localhost:5115
+
+GET {{Cashier.API_HostAddress}}/
+Accept: application/json
+
+###
