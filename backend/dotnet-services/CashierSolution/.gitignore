@@ -1,0 +1,30 @@
+# Ignore all bin and obj folders
+bin/
+obj/
+
+# Ignore generated assembly info files
+*.AssemblyInfo.cs
+*.AssemblyInfoInputs.cache
+
+# Ignore build outputs for all target frameworks (like net9.0)
+**/bin/
+**/obj/
+
+# Ignore Visual Studio and Rider IDE files
+.vs/
+.idea/
+
+# Ignore user-specific files
+*.user
+*.suo
+
+# Ignore others
+*.dbmdl
+*.log
+*.pdb
+*.cache
+*.dbcache.v2
+
+# OS-specific ignores
+.DS_Store
+Thumbs.db
