@@ -1,10 +1,10 @@
-package com.service_template.service_template;
+package com.market_os.template_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ServiceTemplateApplicationTests {
+class TemplateServiceApplicationTests {
 
 	@Test
 	void contextLoads() {
