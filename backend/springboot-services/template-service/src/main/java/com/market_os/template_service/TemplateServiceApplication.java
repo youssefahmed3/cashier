@@ -4,6 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 @SpringBootApplication
 @RestController
 
@@ -18,9 +20,12 @@ public class TemplateServiceApplication {
 		return "Welcome to the Template Service!";
 	}
 
-/* 	@GetMapping("/health")
-	public String health() {
-		return "OK";
-	} */
+
+
+	@GetMapping("/check")
+	public String getMethodName() {
+		return "Up and running!";
+	}
+	
 
 }
