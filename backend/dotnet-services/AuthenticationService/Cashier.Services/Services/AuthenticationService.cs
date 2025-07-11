@@ -56,9 +56,6 @@
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
                 return new LoginResponseDto { Errors = ["Invalid credentials."] };
 
-            if (!await _userManager.IsEmailConfirmedAsync(user))
-                return new LoginResponseDto { Errors = ["Email not confirmed."] };
-
             if (user.AccessFailedCount == 0 && user.TwoFactorEnabled == false)
             {
                 var code = GenerateVerificationCode();
@@ -73,7 +70,7 @@
 
                 await _emailSender.SendEmailAsync(email);
 
-                return new LoginResponseDto { Requires2FA = true };
+                return new LoginResponseDto { Requires2FA = true , Message = "Please confirm your email" };
             }
 
             return GenerateTokensAsync(user);
@@ -102,6 +99,7 @@
 
             _memoryCache.Remove($"2fa:{email}");
             user.IsFirstLogin = false;
+            user.EmailConfirmed = true;
             user.TwoFactorEnabled = true;
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
