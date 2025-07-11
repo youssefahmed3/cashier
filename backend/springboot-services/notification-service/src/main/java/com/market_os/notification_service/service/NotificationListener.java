@@ -9,7 +9,6 @@ import com.market_os.notification_service.repository.NotificationRepository;
 
 import java.time.LocalDateTime;
 
-
 @Service
 public class NotificationListener {
 
@@ -23,12 +22,11 @@ public class NotificationListener {
     public void handleOrderCreated(OrderCreatedEvent event) {
         Notification notification = new Notification();
         notification.setTitle("New Order Placed");
-        notification.setCategory("Order");
-        notification.setMessage("Order Placed"); /* For Now untill i know the data the order sends */
+        notification.setCategory("order.created"); // ✅ clearer, aligned with event
+        notification.setMessage("Order Placed");
         notification.setCreatedAt(LocalDateTime.now());
         notification.setRead(false);
-
-        // notificationRepository.save(notification);
+        notificationRepository.save(notification);
 
         System.out.println("🔔 Notification Saved for Order: " + event.getOrderId());
     }
