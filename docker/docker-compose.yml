@@ -21,10 +21,23 @@ services:
       networks:
         - backend
 
-    template-service:
-      build: ../backend/springboot-services/template-service
+    
+    rabbitmq:
+      image: rabbitmq:3-management
+      container_name: rabbitmq
+      ports:
+        - "5672:5672"     # AMQP protocol (for apps)
+        - "15672:15672"   # RabbitMQ dashboard (browser)
+      networks:
+        - backend
+      environment:
+        RABBITMQ_DEFAULT_USER: guest
+        RABBITMQ_DEFAULT_PASS: guest
+
+    notification-service:
+      build: ../backend/springboot-services/notification-service
       volumes:
-        - ../backend/springboot-services/template-service:/app
+        - ../backend/springboot-services/notification-service:/app
         - ~/.m2:/root/.m2
       
       ports:
@@ -32,44 +45,31 @@ services:
         
       environment:
         - SPRING_PROFILES_ACTIVE=dev
-        - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-        - ORDER_POSTGRES_USER=${ORDER_POSTGRES_USER}
-        - ORDER_POSTGRES_PASSWORD=${ORDER_POSTGRES_PASSWORD}
+        - SPRING_NOTIFICATION_DATASOURCE_URL=${SPRING_NOTIFICATION_DATASOURCE_URL}
+        - NOTIFICATION_POSTGRES_USER=${NOTIFICATION_POSTGRES_USER}
+        - NOTIFICATION_POSTGRES_PASSWORD=${NOTIFICATION_POSTGRES_PASSWORD}
       depends_on:
-        - order-db
+        - notification-db
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.template.rule=PathPrefix(`/template-service`)"
+        - "traefik.http.routers.template.rule=PathPrefix(`/notification`)"
         - "traefik.http.routers.template.entrypoints=web"
         - "traefik.http.services.template.loadbalancer.server.port=8080"
         - "traefik.http.routers.template.middlewares=strip-template@docker"
-        - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/template-service"
-
-        
+        - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/notification"
       networks:
         - backend
       
 
-    template-service-dotnet:
-      build: ../backend/dotnet-services/CashierSolution
-      volumes:
-        - ../backend/dotnet-services/CashierSolution:/app
-      
-      ports:
-        - "8002:8080"
 
-      networks:
-        - backend
-
-
-    order-db:
+    notification-db:
       image: postgres:14
       ports:
         - "5433:5432"
       environment:
-        POSTGRES_DB: ${ORDER_POSTGRES_DB}
-        POSTGRES_USER: ${ORDER_POSTGRES_USER}
-        POSTGRES_PASSWORD: ${ORDER_POSTGRES_PASSWORD}
+        POSTGRES_DB: ${NOTIFICATION_POSTGRES_DB}
+        POSTGRES_USER: ${NOTIFICATION_POSTGRES_USER}
+        POSTGRES_PASSWORD: ${NOTIFICATION_POSTGRES_PASSWORD}
       healthcheck:
         test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
         interval: 10s
