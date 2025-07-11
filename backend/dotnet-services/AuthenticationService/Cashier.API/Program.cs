@@ -81,16 +81,19 @@ namespace Cashier.API
             var _dbContext = services.GetRequiredService<CashierDbContext>();
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger<Program>();
-            try
+            if (_dbContext.Database.GetPendingMigrations().Any())
             {
-                await _dbContext.Database.MigrateAsync(); 
-                var userManager = services.GetRequiredService<UserManager<AppUser>>();
-                var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
-                await CashierContextSeed.SeedDataAsync(userManager, roleManager, _dbContext);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "An error has been occured during applying the migration");
+                try
+                {
+                    await _dbContext.Database.MigrateAsync();
+                    var userManager = services.GetRequiredService<UserManager<AppUser>>();
+                    var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+                    await CashierContextSeed.SeedDataAsync(userManager, roleManager, _dbContext);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "An error has been occured during applying the migration");
+                }
             }
             if (app.Environment.IsDevelopment())
             {
