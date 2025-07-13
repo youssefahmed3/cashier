@@ -8,13 +8,13 @@ using Shared.DTOS;
 
 namespace Order.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/orders")]
     [ApiController]
     public class OrderController : ControllerBase
     {
-        private readonly IOrderService<OrderDto, Guid, ResultDto<OrderDto>> _orderService;
+        private readonly IOrderService<OrderDto, long, ResultDto<OrderDto>> _orderService;
 
-        public OrderController(IOrderService<OrderDto, Guid, ResultDto<OrderDto>> orderService)
+        public OrderController(IOrderService<OrderDto, long, ResultDto<OrderDto>> orderService)
         {
             _orderService = orderService;
         }
@@ -28,7 +28,7 @@ namespace Order.API.Controllers
 
         // GET api/<OrderController>/5
         [HttpGet("{orderId}")]
-        public async Task<IActionResult> Get(Guid orderId)
+        public async Task<IActionResult> Get(long orderId)
         {
             var result = await _orderService.GetOrderByIdAsync(orderId);
 
@@ -52,7 +52,7 @@ namespace Order.API.Controllers
 
         // PUT api/<OrderController>/5
         [HttpPut("{orderId}")]
-        public async Task<IActionResult> Put(Guid orderId, string status)
+        public async Task<IActionResult> Put(long orderId, string status)
         {
             var result = await _orderService.UpdateOrderStatusAsync(orderId, status);
 

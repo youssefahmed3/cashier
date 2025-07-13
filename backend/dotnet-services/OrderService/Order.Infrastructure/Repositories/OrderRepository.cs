@@ -11,13 +11,13 @@ using Order.Infrastructure.Data;
 
 namespace Order.Infrastructure.Repositories
 {
-    public class OrderRepository : GenericRepository<SalesOrder, Guid>, IOrderRepository
+    public class OrderRepository : GenericRepository<SalesOrder, long>, IOrderRepository
     {
         public OrderRepository(OrderDbContext dbContext) : base(dbContext)
         {
         }
 
-        public async Task<IEnumerable<SalesOrder>> GetOrdersByBranchAsync(Guid branchId, DateTime? fromDate = null, DateTime? toDate = null)
+        public async Task<IEnumerable<SalesOrder>> GetOrdersByBranchAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null)
         {
             var query = _dbSet.Where(o => o.BranchId == branchId);
             
@@ -29,7 +29,7 @@ namespace Order.Infrastructure.Repositories
 
             return await query.Include(o => o.OrderItems).AsNoTracking().ToListAsync();
         }
-        public async Task<bool> UpdateStatusOrderAsync(Guid orderId, OrderStatus newStatus)
+        public async Task<bool> UpdateStatusOrderAsync(long orderId, OrderStatus newStatus)
         {
             var order = await _dbSet.FindAsync(orderId);
             if (order is null) return false;
@@ -40,7 +40,7 @@ namespace Order.Infrastructure.Repositories
 
         }
 
-        public async Task<SalesOrder?> GetOrderWithItemsAsync(Guid orderId)
+        public async Task<SalesOrder?> GetOrderWithItemsAsync(long orderId)
         {
             return await _dbSet.Include(o =>o.OrderItems).FirstOrDefaultAsync( o => o.Id == orderId);
         }

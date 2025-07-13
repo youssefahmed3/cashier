@@ -10,13 +10,13 @@ using Order.Infrastructure.Data;
 
 namespace Order.Infrastructure.Repositories
 {
-    public class PaymentRepository : GenericRepository<Payment, Guid>, IPaymentRepository
+    public class PaymentRepository : GenericRepository<Payment, long>, IPaymentRepository
     {
         public PaymentRepository(OrderDbContext dbContext) : base(dbContext)
         {
         }
 
-        public async Task<IEnumerable<Payment>> GetPaymentByBranchIdAsync(Guid branchId, DateTime? fromDate = null, DateTime? toDate = null)
+        public async Task<IEnumerable<Payment>> GetPaymentByBranchIdAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null)
         {
             var query = _dbSet.Where(p => p.BranchId == branchId);
 
@@ -30,7 +30,7 @@ namespace Order.Infrastructure.Repositories
         }
 
         // as we support refund or when the Payment Retries so the one order may has many records in the payment table
-        public async Task<IEnumerable<Payment>> GetPaymentByOrderIdAsync(Guid orderId)
+        public async Task<IEnumerable<Payment>> GetPaymentByOrderIdAsync(long orderId)
         {
             return await _dbSet.Where(o  => o.OrderId == orderId).ToListAsync();
         }

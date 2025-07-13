@@ -34,7 +34,6 @@ namespace Order.Infrastructure.Strategies
 
                 var payment = new Payment
                 {
-                    Id = Guid.NewGuid(),
                     OrderId = paymentRequestDto.OrderId,
                     Amount = paymentRequestDto.Amount,
                     Method = PaymentMethod.PayPal,
@@ -68,18 +67,15 @@ namespace Order.Infrastructure.Strategies
             }
         }
 
-        public async Task<ResultDto<Payment>> RefundPaymentAsync(Guid paymentId, decimal amount)
+        public async Task<ResultDto<Payment>> RefundPaymentAsync(long paymentId, decimal amount)
         {
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
 
                 var originalPayment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-                if (originalPayment == null)
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    return ResultDto<Payment>.Failure("Original payment not found.");
-                }
+                if (originalPayment == null || (originalPayment != null && originalPayment.OrderId == null))
+                    return ResultDto<Payment>.Failure("Original payment not found or related order not found");
 
                 if (amount <= 0 || amount > originalPayment.Amount)
                 {
@@ -92,7 +88,7 @@ namespace Order.Infrastructure.Strategies
 
                 var refundPayment = new Payment
                 {
-                    Id = Guid.NewGuid(),
+                   
                     OrderId = originalPayment.OrderId,
                     Amount = -amount,
                     Method = PaymentMethod.PayPal,
@@ -108,11 +104,11 @@ namespace Order.Infrastructure.Strategies
                 await _unitOfWork.SaveChangesAsync();
 
                 // Update order status based on remaining payments
-                var payments = await _unitOfWork.PaymentRepo.GetPaymentByOrderIdAsync(originalPayment.OrderId);
+                var payments = await _unitOfWork.PaymentRepo.GetPaymentByOrderIdAsync(originalPayment.OrderId.Value);
                 var totalPaid = payments.Sum(p => p.Amount);
 
                 OrderStatus newStatus = totalPaid == 0 ? OrderStatus.Refunded : OrderStatus.PartiallyRefunded;
-                bool updated = await _unitOfWork.Orders.UpdateStatusOrderAsync(originalPayment.OrderId, newStatus);
+                bool updated = await _unitOfWork.Orders.UpdateStatusOrderAsync(originalPayment.OrderId.Value, newStatus);
 
                 if (!updated)
                 {

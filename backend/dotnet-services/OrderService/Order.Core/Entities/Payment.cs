@@ -12,7 +12,7 @@ namespace Order.Core.Entities
     // if the cashier that do the refund different => should i  update payment to have cahierId for tracking
     public class Payment
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public long Id { get; set; } 
         public decimal Amount { get; set; }
         public PaymentMethod Method { get; set; }
         public PaymentStatus Status { get; set; }
@@ -25,12 +25,12 @@ namespace Order.Core.Entities
         public DateTime? CompletedAt { get; set; }
 
         //ref
-        public Guid OrderId { get; set; }
-        public Guid BranchId { get; set; }
-        public Guid ShiftId { get; set; }
+        public long? OrderId { get; set; }
+        public long BranchId { get; set; }
+        public long ShiftId { get; set; }
 
         // CashierId ==> if system extend maybe it the user
-        //public Guid UserId { get; set; }
+        //public long UserId { get; set; }
         public virtual SalesOrder? Order { get; set; }
 
     }

@@ -17,17 +17,23 @@ namespace Order.Services.Mapping
         {
 
             CreateMap<SalesOrder, OrderDto>()
-                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.OrderItems))
-                .ReverseMap();
+            .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.OrderItems));
+
+            CreateMap<OrderDto, SalesOrder>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderItems, opt => opt.MapFrom(src => src.Items));
+
 
             CreateMap<OrderItem, OrderItemDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Qty))
                 .ForMember(dest => dest.UnitPrice, opt => opt.MapFrom(src => src.UnitPrice))
                 .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.OrderId))
                 .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
-                .ReverseMap();
-          
+                .ReverseMap()
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
+
 
 
 

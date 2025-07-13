@@ -28,7 +28,7 @@ namespace Order.API.Controllers
         }
 
         [HttpPost("refund/{paymentId}")]
-        public async Task<IActionResult> RefundPayment(Guid paymentId, [FromBody] decimal amount)
+        public async Task<IActionResult> RefundPayment(long paymentId, [FromBody] decimal amount)
         {
             var result = await _paymentService.RefundPaymentAsync(paymentId, amount);
 
@@ -39,7 +39,7 @@ namespace Order.API.Controllers
         }
 
         [HttpGet("{paymentId}")]
-        public async Task<IActionResult> GetPayment(Guid paymentId)
+        public async Task<IActionResult> GetPayment(long paymentId)
         {
             var result = await _paymentService.GetPaymentByIdAsync(paymentId);
 
@@ -50,7 +50,7 @@ namespace Order.API.Controllers
         }
 
         [HttpGet("order/{orderId}")]
-        public async Task<IActionResult> GetPaymentsByOrder(Guid orderId)
+        public async Task<IActionResult> GetPaymentsByOrder(long orderId)
         {
             var result = await _paymentService.GetPaymentsByOrderIdAsync(orderId);
 

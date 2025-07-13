@@ -17,7 +17,7 @@ namespace Order.API.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<IActionResult> GetAll([FromQuery] Guid orderId, [FromQuery] Guid branchId)
+        public async Task<IActionResult> GetAll([FromQuery] long orderId, [FromQuery] long branchId)
         {
             var result = await _orderItemService.GetAllAsync(orderId, branchId);
             if (result.IsSuccess)
@@ -26,7 +26,7 @@ namespace Order.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetById([FromQuery] Guid orderId, [FromQuery] Guid itemId, [FromQuery] Guid branchId)
+        public async Task<IActionResult> GetById([FromQuery] long orderId, [FromQuery] long itemId, [FromQuery] long branchId)
         {
             var result = await _orderItemService.GetByIdAsync(itemId, orderId, branchId);
             if (result.IsSuccess)
@@ -35,7 +35,7 @@ namespace Order.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromQuery] Guid branchId, [FromBody] OrderItemDto dto)
+        public async Task<IActionResult> Create([FromQuery] long branchId, [FromBody] OrderItemDto dto)
         {
             var result = await _orderItemService.CreateAsync(dto, branchId);
             if (result.IsSuccess)
@@ -45,9 +45,9 @@ namespace Order.API.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update([FromQuery] Guid branchId, Guid itemId,[FromBody] OrderItemDto dto)
+        public async Task<IActionResult> Update([FromQuery] long branchId, long itemId,[FromBody] OrderItemDto dto)
         {
-            var result = await _orderItemService.UpdateAsync(branchId, dto);
+            var result = await _orderItemService.UpdateAsync(branchId, itemId, dto);
             if (result.IsSuccess)
                 return NoContent();
 
@@ -55,7 +55,7 @@ namespace Order.API.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> Delete([FromQuery] Guid orderId, Guid itemId, [FromQuery] Guid branchId)
+        public async Task<IActionResult> Delete([FromQuery] long orderId, long itemId, [FromQuery] long branchId)
         {
             var result = await _orderItemService.DeleteAsync(itemId, orderId, branchId);
             if (result.IsSuccess)

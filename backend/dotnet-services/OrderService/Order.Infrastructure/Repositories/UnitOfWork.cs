@@ -15,7 +15,7 @@ namespace Order.Infrastructure.Repositories
         private readonly OrderDbContext _context;
         private IDbContextTransaction? _transaction;
         public IOrderRepository Orders { get; }
-        public IGenericRepository<OrderItem, Guid> OrderItems { get; }
+        public IGenericRepository<OrderItem, long> OrderItems { get; }
 
         public IPaymentRepository PaymentRepo {  get; }
 
@@ -23,7 +23,7 @@ namespace Order.Infrastructure.Repositories
         {
             _context = context;
             Orders = new OrderRepository(_context);
-            OrderItems = new GenericRepository<OrderItem, Guid>(_context);
+            OrderItems = new GenericRepository<OrderItem, long>(_context);
             PaymentRepo =  new PaymentRepository(_context);
         }
 

@@ -15,7 +15,7 @@ public class OrderItemService : IOrderItemService
         _mapper = mapper;
     }
 
-    private async Task<(bool IsValid, SalesOrder? Order, string? Error)> ValidateOrderAsync(Guid orderId, Guid branchId)
+    private async Task<(bool IsValid, SalesOrder? Order, string? Error)> ValidateOrderAsync(long orderId, long branchId)
     {
         var order = await _unitOfWork.Orders.GetOrderWithItemsAsync(orderId);
         if (order == null || order.BranchId != branchId)
@@ -25,7 +25,7 @@ public class OrderItemService : IOrderItemService
         return (true, order, null);
     }
 
-    public async Task<ResultDto<IEnumerable<OrderItemDto>>> GetAllAsync(Guid orderId, Guid branchId)
+    public async Task<ResultDto<IEnumerable<OrderItemDto>>> GetAllAsync(long orderId, long branchId)
     {
         var (isValid, order, error) = await ValidateOrderAsync(orderId, branchId);
         if (!isValid)
@@ -36,7 +36,7 @@ public class OrderItemService : IOrderItemService
         return ResultDto<IEnumerable<OrderItemDto>>.Success(dtoList);
     }
 
-    public async Task<ResultDto<OrderItemDto>> GetByIdAsync(Guid itemId, Guid orderId, Guid branchId)
+    public async Task<ResultDto<OrderItemDto>> GetByIdAsync(long itemId, long orderId, long branchId)
     {
         var (isValid, _, error) = await ValidateOrderAsync(orderId, branchId);
         if (!isValid)
@@ -50,14 +50,15 @@ public class OrderItemService : IOrderItemService
         return ResultDto<OrderItemDto>.Success(dto);
     }
 
-    public async Task<ResultDto<OrderItemDto>> CreateAsync(OrderItemDto dto, Guid branchId)
+    //TODO: I need to handle the when create to not take the id on dto 
+    public async Task<ResultDto<OrderItemDto>> CreateAsync(OrderItemDto dto, long branchId)
     {
         var (isValid, _, error) = await ValidateOrderAsync(dto.OrderId, branchId);
         if (!isValid)
             return ResultDto<OrderItemDto>.Failure(error!);
 
         var entity = _mapper.Map<OrderItem>(dto);
-        entity.Id = Guid.NewGuid();
+        
 
         await _unitOfWork.OrderItems.AddAsync(entity);
         await _unitOfWork.SaveChangesAsync();
@@ -66,13 +67,13 @@ public class OrderItemService : IOrderItemService
         return ResultDto<OrderItemDto>.Success(createdDto);
     }
 
-    public async Task<ResultDto<bool>> UpdateAsync(Guid branchId, OrderItemDto dto)
+    public async Task<ResultDto<bool>> UpdateAsync(long branchId, long itemId, OrderItemDto dto)
     {
         var (isValid, _, error) = await ValidateOrderAsync(dto.OrderId, branchId);
         if (!isValid)
             return ResultDto<bool>.Failure(error!);
 
-        var item = await _unitOfWork.OrderItems.GetByIdAsync(dto.Id.Value);
+        var item = await _unitOfWork.OrderItems.GetByIdAsync(itemId);
         if (item == null || item.OrderId != dto.OrderId)
             return ResultDto<bool>.Failure("Order item not found.");
 
@@ -83,7 +84,7 @@ public class OrderItemService : IOrderItemService
         return ResultDto<bool>.Success(true);
     }
 
-    public async Task<ResultDto<bool>> DeleteAsync(Guid itemId, Guid orderId, Guid branchId)
+    public async Task<ResultDto<bool>> DeleteAsync(long itemId, long orderId, long branchId)
     {
         var (isValid, _, error) = await ValidateOrderAsync(orderId, branchId);
         if (!isValid)

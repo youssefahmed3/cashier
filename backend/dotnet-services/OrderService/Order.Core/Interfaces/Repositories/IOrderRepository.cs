@@ -8,11 +8,11 @@ using Order.Core.Enums;
 
 namespace Order.Core.Interfaces.Repositories
 {
-    public interface IOrderRepository : IGenericRepository<SalesOrder,Guid>
+    public interface IOrderRepository : IGenericRepository<SalesOrder,long>
     {
-        Task<IEnumerable<SalesOrder>> GetOrdersByBranchAsync(Guid branchId, DateTime? fromDate = null, DateTime? toDate = null);
-        Task<bool> UpdateStatusOrderAsync(Guid orderId, OrderStatus newStatus);
-        Task<SalesOrder?> GetOrderWithItemsAsync(Guid orderId);
+        Task<IEnumerable<SalesOrder>> GetOrdersByBranchAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null);
+        Task<bool> UpdateStatusOrderAsync(long orderId, OrderStatus newStatus);
+        Task<SalesOrder?> GetOrderWithItemsAsync(long orderId);
 
     }
 }

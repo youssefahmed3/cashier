@@ -13,7 +13,7 @@ namespace Order.Core.Interfaces.Strategies
     {
         PaymentMethod SupportedPaymentMethod { get; }
         Task<ResultDto<Payment>> ProcessPaymentAsync(PaymentRequestDto paymentRequestDto);
-        Task<ResultDto<Payment>> RefundPaymentAsync(Guid paymentId,decimal amount);
+        Task<ResultDto<Payment>> RefundPaymentAsync(long paymentId,decimal amount);
 
     }
 }

@@ -21,8 +21,8 @@ public class CashPaymentStrategy : IPaymentStrategy
         {
             // TODO: Validate cashier's shift
 
-            var shiftId = "Shit1";
-            var cashierId = "Cashier1";
+            var shiftId = 1;
+            var cashierId = 1;
 
             await _unitOfWork.BeginTransactionAsync();
 
@@ -30,7 +30,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             {
                 OrderId = paymentRequestDto.OrderId,
                 BranchId = paymentRequestDto.BranchId,
-                ShiftId = new Guid(shiftId),
+                ShiftId = shiftId,
                 Method = PaymentMethod.Cash,
                 Amount = paymentRequestDto.Amount,
                 Status = PaymentStatus.Completed,
@@ -64,22 +64,21 @@ public class CashPaymentStrategy : IPaymentStrategy
         }
     }
 
-    public async Task<ResultDto<Payment>> RefundPaymentAsync(Guid paymentId, decimal amount)
+    public async Task<ResultDto<Payment>> RefundPaymentAsync(long paymentId, decimal amount)
     {
         try
         {
             await _unitOfWork.BeginTransactionAsync();
 
             var originalPayment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-            if (originalPayment == null)
-                return ResultDto<Payment>.Failure("Original payment not found.");
+            if (originalPayment == null || (originalPayment != null && originalPayment.OrderId == null))
+                return ResultDto<Payment>.Failure("Original payment not found or related order not found");
 
             if (amount <= 0 || amount > originalPayment.Amount)
                 return ResultDto<Payment>.Failure("Invalid refund amount.");
 
             var refundPayment = new Payment
             {
-                Id = Guid.NewGuid(),
                 OrderId = originalPayment.OrderId,
                 BranchId = originalPayment.BranchId,
                 ShiftId = originalPayment.ShiftId,
@@ -95,11 +94,11 @@ public class CashPaymentStrategy : IPaymentStrategy
             await _unitOfWork.PaymentRepo.AddAsync(refundPayment);
 
             // Calculate total paid after refund
-            decimal totalPaid = (await _unitOfWork.PaymentRepo.GetPaymentByOrderIdAsync(originalPayment.OrderId))
+            decimal totalPaid = (await _unitOfWork.PaymentRepo.GetPaymentByOrderIdAsync(originalPayment.OrderId.Value))
                                 .Sum(p => p.Amount);
 
             OrderStatus newStatus = totalPaid == 0 ? OrderStatus.Refunded : OrderStatus.PartiallyRefunded;
-            var updateSuccess = await _unitOfWork.Orders.UpdateStatusOrderAsync(originalPayment.OrderId, newStatus);
+            var updateSuccess = await _unitOfWork.Orders.UpdateStatusOrderAsync(originalPayment.OrderId.Value, newStatus);
             if (!updateSuccess)
             {
                 await _unitOfWork.RollbackTransactionAsync();

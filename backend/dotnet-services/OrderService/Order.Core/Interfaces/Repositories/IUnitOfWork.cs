@@ -10,7 +10,7 @@ namespace Order.Core.Interfaces.Repositories
     public interface IUnitOfWork : IDisposable
     {
          IOrderRepository Orders { get; }
-        IGenericRepository<OrderItem, Guid> OrderItems { get; }
+        IGenericRepository<OrderItem, long> OrderItems { get; }
 
         IPaymentRepository PaymentRepo { get; }
         Task<int> SaveChangesAsync();

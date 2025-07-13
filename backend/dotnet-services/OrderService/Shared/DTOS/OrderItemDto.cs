@@ -2,10 +2,10 @@
 {
     public class OrderItemDto
     {
-        public Guid? Id { get; set; }
-        public Guid ProductId { get; init; }
+        public long Id { get; set; }
+        public long ProductId { get; init; }
         public decimal Quantity { get; init; }
         public decimal UnitPrice { get; init; }
-        public Guid OrderId { get; init; }
+        public long OrderId { get; init; }
     }
 }

@@ -9,10 +9,10 @@ namespace Shared.DTOS
 {
     public class OrderDto
     {
-        public Guid OrderId { get; init; }
-        public Guid BranchId { get; init; }
-        public Guid UserId { get; init; }
-        public Guid ShiftId { get; init; }
+        public long OrderId { get; init; }
+        public long BranchId { get; init; }
+        public long UserId { get; init; }
+        public long ShiftId { get; init; }
         public string Status { get; init; } = "New";
         public List<OrderItemDto> Items { get; init; } = [];
     }

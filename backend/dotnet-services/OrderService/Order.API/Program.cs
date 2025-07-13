@@ -25,7 +25,7 @@ namespace Order.API
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            builder.Services.AddScoped<IOrderService<OrderDto, Guid, ResultDto<OrderDto>>, OrderService>();
+            builder.Services.AddScoped<IOrderService<OrderDto, long, ResultDto<OrderDto>>, OrderService>();
             builder.Services.AddScoped<IOrderItemService, OrderItemService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddAutoMapper(typeof(OrderMappingProfile).Assembly);

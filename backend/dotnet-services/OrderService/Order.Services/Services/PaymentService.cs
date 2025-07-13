@@ -60,7 +60,7 @@ namespace Order.Services.Services
 
             }
         }
-        public async Task<ResultDto<PaymentDto>> RefundPaymentAsync(Guid paymentId, decimal amount)
+        public async Task<ResultDto<PaymentDto>> RefundPaymentAsync(long paymentId, decimal amount)
         {
             //TODO: Check the BranchId 
             try
@@ -87,7 +87,7 @@ namespace Order.Services.Services
 
         }
 
-        public async Task<ResultDto<IEnumerable<PaymentDto>>> GetPaymentsByOrderIdAsync(Guid orderId)
+        public async Task<ResultDto<IEnumerable<PaymentDto>>> GetPaymentsByOrderIdAsync(long orderId)
         {
             try
             {
@@ -102,7 +102,7 @@ namespace Order.Services.Services
 
         }
 
-        public async Task<ResultDto<PaymentDto>> GetPaymentByIdAsync(Guid paymentId)
+        public async Task<ResultDto<PaymentDto>> GetPaymentByIdAsync(long paymentId)
         {
             try
             {

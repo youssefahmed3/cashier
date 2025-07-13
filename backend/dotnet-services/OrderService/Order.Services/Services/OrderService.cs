@@ -14,7 +14,7 @@ using Shared.DTOS;
 
 namespace Order.Services.Services
 {
-    public class OrderService : IOrderService<OrderDto, Guid, ResultDto<OrderDto>>
+    public class OrderService : IOrderService<OrderDto, long, ResultDto<OrderDto>>
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -43,7 +43,11 @@ namespace Order.Services.Services
                 await _unitOfWork.Orders.AddAsync(order);
                 await _unitOfWork.SaveChangesAsync();
 
-                return ResultDto<OrderDto>.Success(orderDto);
+                var savedOrder = await _unitOfWork.Orders.GetOrderWithItemsAsync(order.Id);
+                var savedOrderDto = _mapper.Map<OrderDto>(savedOrder);
+
+                return ResultDto<OrderDto>.Success(savedOrderDto);
+
             }
             catch (Exception ex)
             {
@@ -52,7 +56,7 @@ namespace Order.Services.Services
 
         }
 
-        public async Task<ResultDto<OrderDto>> GetOrderByIdAsync(Guid orderId)
+        public async Task<ResultDto<OrderDto>> GetOrderByIdAsync(long orderId)
         {
             var order = await _unitOfWork.Orders.GetOrderWithItemsAsync(orderId);
 
@@ -63,7 +67,7 @@ namespace Order.Services.Services
             return ResultDto<OrderDto>.Success(orderDto);
         }
 
-        public async Task<ResultDto<OrderDto>> UpdateOrderStatusAsync(Guid orderId, string newStatus)
+        public async Task<ResultDto<OrderDto>> UpdateOrderStatusAsync(long orderId, string newStatus)
         {
             var existingOrder = await _unitOfWork.Orders.GetByIdAsync(orderId);
             if (existingOrder == null)

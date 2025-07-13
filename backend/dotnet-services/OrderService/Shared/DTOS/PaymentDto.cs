@@ -8,7 +8,7 @@ namespace Shared.DTOS
 {
     public class PaymentDto
     {
-        public Guid Id { get; set; }
+        public long Id { get; set; }
         public decimal Amount { get; set; }
         public string Method { get; set; }
         public string Status { get; set; }
@@ -21,8 +21,8 @@ namespace Shared.DTOS
         public DateTime? CompletedAt { get; set; }
 
         //ref
-        public Guid OrderId { get; set; }
-        public Guid BranchId { get; set; }
-        public Guid ShiftId { get; set; }
+        public long OrderId { get; set; }
+        public long BranchId { get; set; }
+        public long ShiftId { get; set; }
     }
 }
