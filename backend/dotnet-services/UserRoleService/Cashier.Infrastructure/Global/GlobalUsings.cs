@@ -7,3 +7,5 @@ global using Microsoft.AspNetCore.Identity;
 global using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 global using System.Reflection;
 global using System.Collections.Concurrent;
+global using Newtonsoft.Json;
+ 
