@@ -8,6 +8,8 @@ namespace Order.Infrastructure.Data
        public DbSet<SalesOrder> SalesOrder { get; set; }
        public DbSet<OrderItem> OrderItems { get; set; }
 
+       // public DbSet<Payment> Payment { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

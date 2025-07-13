@@ -17,13 +17,14 @@ namespace Order.Infrastructure.Repositories
         public IOrderRepository Orders { get; }
         public IGenericRepository<OrderItem, Guid> OrderItems { get; }
 
-
+        public IPaymentRepository PaymentRepo {  get; }
 
         public UnitOfWork(OrderDbContext context)
         {
             _context = context;
             Orders = new OrderRepository(_context);
             OrderItems = new GenericRepository<OrderItem, Guid>(_context);
+            PaymentRepo =  new PaymentRepository(_context);
         }
 
         public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
