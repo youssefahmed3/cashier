@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace Cashier.API
 {
     public class Program
@@ -26,16 +28,18 @@ namespace Cashier.API
             builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JWTOptions"));
 
             var jwtOptions = builder.Configuration.GetSection("JWTOptions").Get<JwtOptions>();
-            builder.Services.AddSingleton<TokenValidationParameters>(new TokenValidationParameters
+            var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
+                RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
                 ValidIssuer = jwtOptions!.Issuer,
                 ValidAudience = jwtOptions.Audience,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
-            });
+            };
+            builder.Services.AddSingleton<TokenValidationParameters>(tokenValidationParameters);
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -43,16 +47,7 @@ namespace Cashier.API
 
             }).AddJwtBearer(options =>
             {
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtOptions!.Issuer,
-                    ValidAudience = jwtOptions.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
-                };
+                options.TokenValidationParameters = tokenValidationParameters;
             });
             builder.Services.AddAuthorization();
             builder.Services.AddCors(options =>
@@ -77,6 +72,7 @@ namespace Cashier.API
                 try
                 {
                     await _dbContext.Database.MigrateAsync();
+                    await CashierContextSeed.SeedDataAsync(_dbContext);
                 }
                 catch (Exception ex)
                 {
