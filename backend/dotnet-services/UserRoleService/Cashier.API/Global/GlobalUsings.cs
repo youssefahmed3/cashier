@@ -1,0 +1,16 @@
+﻿global using Cashier.Core.Interfaces.Services;
+global using Cashier.Shared.DTOS;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Mvc;
+global using Cashier.Core.Entities;
+global using Cashier.Core.Interfaces.Repositories;
+global using Cashier.Infrastructure.Data;
+global using Cashier.Infrastructure.Data.Repositories;
+global using Cashier.Services.Mapping;
+global using Cashier.Services.Services;
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.IdentityModel.Tokens;
+global using Microsoft.OpenApi.Models;
+global using System.Text;
