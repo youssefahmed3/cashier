@@ -46,10 +46,18 @@ namespace Order.Services.Services
                 {
                     return ResultDto<PaymentDto>.Failure($"Payment method {request.PaymentMethod} is not supported.");
                 }
+                Console.WriteLine("Registered payment methods:");
+                foreach (var key in _paymentStrategies.Keys)
+                {
+                    Console.WriteLine($" - {key}");
+                }
                 var strategy = _paymentStrategies[method];
                 var result = await strategy.ProcessPaymentAsync(request);
+                //TODO: Check if there any error happens throw ex 
+                if (!result.IsSuccess)
+                    throw new InvalidOperationException(result.Error);
 
-                var resultDto = _mapper.Map<PaymentDto>(result);
+                var resultDto = _mapper.Map<PaymentDto>(result.Value);
 
                 return ResultDto<PaymentDto>.Success(resultDto);
 
@@ -73,8 +81,10 @@ namespace Order.Services.Services
 
                 var strategy = _paymentStrategies[payment.Method];
                 var result = await strategy.RefundPaymentAsync(paymentId, amount);
-
-                var resultDto = _mapper.Map<PaymentDto>(result);
+                //TODO: Check if there any error happens throw ex 
+                if (!result.IsSuccess)
+                    throw new InvalidOperationException(result.Error);
+                var resultDto = _mapper.Map<PaymentDto>(result.Value);
 
                 return ResultDto<PaymentDto>.Success(resultDto);
 

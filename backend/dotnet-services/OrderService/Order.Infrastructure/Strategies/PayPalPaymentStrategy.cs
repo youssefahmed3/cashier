@@ -77,6 +77,10 @@ namespace Order.Infrastructure.Strategies
                 if (originalPayment == null || (originalPayment != null && originalPayment.OrderId == null))
                     return ResultDto<Payment>.Failure("Original payment not found or related order not found");
 
+                var order = await _unitOfWork.Orders.GetByIdAsync(originalPayment.OrderId.Value);
+                if (order.Status == OrderStatus.Refunded || order.Status == OrderStatus.PartiallyRefunded)
+                    return ResultDto<Payment>.Failure("related order does not has refund");
+
                 if (amount <= 0 || amount > originalPayment.Amount)
                 {
                     await _unitOfWork.RollbackTransactionAsync();

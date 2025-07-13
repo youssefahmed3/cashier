@@ -27,10 +27,10 @@ namespace Order.API.Controllers
             return BadRequest(new { error = result.Error });
         }
 
-        [HttpPost("refund/{paymentId}")]
-        public async Task<IActionResult> RefundPayment(long paymentId, [FromBody] decimal amount)
+        [HttpPost("refund")]
+        public async Task<IActionResult> RefundPayment(RefundRequest refundRequest)
         {
-            var result = await _paymentService.RefundPaymentAsync(paymentId, amount);
+            var result = await _paymentService.RefundPaymentAsync(refundRequest.PaymentId, refundRequest.Amount);
 
             if (result.IsSuccess)
                 return Ok(result.Value);

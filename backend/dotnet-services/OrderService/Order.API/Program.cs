@@ -1,7 +1,9 @@
 using Order.Core.Interfaces.Repositories;
 using Order.Core.Interfaces.Services;
+using Order.Core.Interfaces.Strategies;
 using Order.Infrastructure.Data.Configurations;
 using Order.Infrastructure.Repositories;
+using Order.Infrastructure.Strategies;
 using Order.Services.Mapping;
 using Order.Services.Services;
 using Shared.DTOS;
@@ -28,7 +30,10 @@ namespace Order.API
             builder.Services.AddScoped<IOrderService<OrderDto, long, ResultDto<OrderDto>>, OrderService>();
             builder.Services.AddScoped<IOrderItemService, OrderItemService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<IPaymentStrategy, CashPaymentStrategy>();
+            builder.Services.AddScoped<IPaymentStrategy, PayPalPaymentStrategy>();
             builder.Services.AddAutoMapper(typeof(OrderMappingProfile).Assembly);
+            builder.Services.AddAutoMapper(typeof(PaymentMappingProfile).Assembly);
 
             // Add services to the container.
             builder.Services.AddControllers();

@@ -15,16 +15,15 @@ namespace Order.Services.Mapping
     {
         public PaymentMappingProfile()
         {
-            
-            
+
+
             CreateMap<Payment, PaymentDto>()
                 .ForMember(dest => dest.Method, opt => opt.MapFrom(src => src.Method.ToString()))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
-
             CreateMap<PaymentDto, Payment>()
             .ForMember(dest => dest.Method, opt => opt.MapFrom(src =>
-                EnumHelper.ConvertToEnum<PaymentStatus>(src.Method, PaymentStatus.Pending)))
+                EnumHelper.ConvertToEnum<PaymentStatus>(src.Status, PaymentStatus.Pending)))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src =>
                 EnumHelper.ConvertToEnum<PaymentMethod>(src.Method, PaymentMethod.Cash)))
             .ForMember(dest => dest.Order, opt => opt.Ignore()); // Ignore navigation
