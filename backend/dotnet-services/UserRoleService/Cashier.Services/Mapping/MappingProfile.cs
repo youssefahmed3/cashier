@@ -7,6 +7,7 @@
             CreateMap<AppUser, AppUserDto>().ReverseMap();
             CreateMap<AppRole, AppRoleDto>().ReverseMap();
             CreateMap<AppUser, AppUserToReturnDto>();
+            CreateMap<Permission,PermissionDto>();
         }
     }
 }
