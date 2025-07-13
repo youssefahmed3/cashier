@@ -82,6 +82,12 @@
             var usersWithRoles = await _service.GetUsersWithRolesByTenantAsync(tenantId);
             return Ok(usersWithRoles);
         }
-
+        // GET: api/userrole/user/{userId}/permissions
+        [HttpGet("user/{userId}/permissions")]
+        public async Task<IActionResult> GetUserPermissions(int userId)
+        {
+            var permissions = await _service.GetUserPermissionsAsync(userId);
+            return Ok(permissions);
+        }
     }
 }
