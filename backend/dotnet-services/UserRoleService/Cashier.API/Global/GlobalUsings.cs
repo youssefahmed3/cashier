@@ -1,5 +1,4 @@
 ﻿global using Cashier.Core.Interfaces.Services;
-global using Cashier.Shared.DTOS;
 global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Mvc;
 global using Cashier.Core.Entities;
@@ -14,3 +13,10 @@ global using Microsoft.EntityFrameworkCore;
 global using Microsoft.IdentityModel.Tokens;
 global using Microsoft.OpenApi.Models;
 global using System.Text;
+global using Cashier.Services.Helpers.EmailService;
+global using IAuthenticationService = Cashier.Core.Interfaces.Services.IAuthenticationService;
+global using Cashier.Shared.DTOS.Identity;
+global using AuthenticationService = Cashier.Services.Services.AuthenticationService;
+global using Cashier.Shared.DTOS.AppRole;
+global using Cashier.Shared.DTOS.AppUser;
+global using Cashier.Shared.DTOS.Permission;

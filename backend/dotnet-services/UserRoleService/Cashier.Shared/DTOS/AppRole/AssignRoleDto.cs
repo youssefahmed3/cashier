@@ -1,4 +1,4 @@
-﻿namespace Cashier.Shared.DTOS
+﻿namespace Cashier.Shared.DTOS.AppRole
 {
     public class AssignRoleDto
     {

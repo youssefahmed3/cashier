@@ -1,4 +1,4 @@
-﻿namespace Cashier.Shared.DTOS
+﻿namespace Cashier.Shared.DTOS.AppUser
 {
     public class UserQueryDto
     {

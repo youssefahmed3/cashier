@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cashier.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(CashierDbContext))]
-    [Migration("20250711214459_Intial-create")]
-    partial class Intialcreate
+    [Migration("20250713121757_Intial-Create")]
+    partial class IntialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -83,6 +83,9 @@ namespace Cashier.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(15)");
 
                     b.Property<bool>("IsFirstLogin")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsSuspended")
                         .HasColumnType("bit");
 
                     b.Property<string>("Lastname")

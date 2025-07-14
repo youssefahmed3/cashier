@@ -1,6 +1,6 @@
-﻿namespace Cashier.Shared.DTOS
+﻿namespace Cashier.Shared.DTOS.AppRole
 {
-    public class RemoveRoleDto
+    public class UnassignRoleDto
     {
         public int UserId { get; set; }
         public int RoleId { get; set; }

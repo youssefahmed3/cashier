@@ -1,8 +1,24 @@
 ﻿global using AutoMapper;
 global using Cashier.Core.Entities;
-global using Cashier.Shared.DTOS;
 global using Cashier.Core.Interfaces.Repositories;
 global using Cashier.Core.Interfaces.Services;
 global using Microsoft.AspNetCore.Http;
-global using Microsoft.AspNetCore.Identity;
 global using System.Security.Claims;
+global using MailKit.Net.Smtp;
+global using MailKit.Security;
+global using Microsoft.Extensions.Configuration;
+global using MimeKit;
+global using Cashier.Services.Helpers.EmailBuilderService;
+global using Cashier.Services.Helpers.EmailService;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.Extensions.Caching.Memory;
+global using Microsoft.Extensions.Options;
+global using Microsoft.IdentityModel.Tokens;
+global using System.IdentityModel.Tokens.Jwt;
+global using System.Text;
+global using System.Data;
+global using Cashier.Shared.DTOS.Identity;
+global using Cashier.Shared.DTOS.AppRole;
+global using Cashier.Shared.DTOS.AppUser;
+global using Cashier.Shared.DTOS.Permission;
+

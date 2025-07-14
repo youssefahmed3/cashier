@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-namespace Cashier.Services.Services
+﻿namespace Cashier.Services.Services
 {
     public class UserRoleService(IUnitOfWork _unitOfWork, IMapper _mapper,
         IHttpContextAccessor _httpContextAccessor, UserManager<AppUser> _userManager) : IUserRoleService
@@ -20,6 +18,7 @@ namespace Cashier.Services.Services
                                       || (u.Lastname != null && u.Lastname.Contains(filter.FirstName)));
 
             var users = query
+                .Where(u => !u.IsSuspended)
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
                 .ToList();
@@ -70,7 +69,7 @@ namespace Cashier.Services.Services
             return _mapper.Map<AppUserToReturnDto>(user);
         }
         // Remove role from user
-        public async Task<bool> RemoveRoleAsync(RemoveRoleDto dto)
+        public async Task<bool> UnassignRoleAsync(UnassignRoleDto dto)
         {
             var userRoleRepo = _unitOfWork.GetRepository<UserRole, int>();
             var allRoles = await userRoleRepo.GetAllAsync();
@@ -99,7 +98,7 @@ namespace Cashier.Services.Services
                                 select new UserRoleInfoDto
                                 {
                                     RoleId = r.Id,
-                                    RoleName = r.Name
+                                    RoleName = r?.Name ?? ""
                                 };
 
             return assignedRoles.ToList();
@@ -141,17 +140,45 @@ namespace Cashier.Services.Services
             await AddPermissionsAsync(newPermissions);
             return (true, "Permissions assigned successfully.");
         }
-        // Removes a user from the system.
-        public async Task<bool> RemoveUserAsync(int userId)
+        // Removes a user from the system. [Hard-delete]
+        //public async Task<bool> RemoveUserAsync(int userId)
+        //{
+        //    var userRepo = _unitOfWork.GetRepository<AppUser, int>();
+        //    var user = await userRepo.GetByIdAsync(userId);
+        //    if (user is null)
+        //        return false;
+        //    userRepo.Delete(user);
+        //    await _unitOfWork.SaveChangesAsync();
+        //    return true;
+        //}
+        // Suspend a user. [Soft-delete]
+        public async Task<bool> SuspendUserAsync(int userId)
         {
             var userRepo = _unitOfWork.GetRepository<AppUser, int>();
             var user = await userRepo.GetByIdAsync(userId);
             if (user is null)
                 return false;
-            userRepo.Delete(user);
+
+            user.IsSuspended = true; 
+            userRepo.Update(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            return true;
+        }
+        //To unsuspend user 
+        public async Task<bool> UnsuspendUserAsync(int userId)
+        {
+            var userRepo = _unitOfWork.GetRepository<AppUser, int>();
+            var user = await userRepo.GetByIdAsync(userId);
+            if (user is null)
+                return false;
+
+            user.IsSuspended = false;
+            userRepo.Update(user);
             await _unitOfWork.SaveChangesAsync();
             return true;
         }
+
         // Gets all users in a tenant with their assigned roles.
         public async Task<List<UserWithRolesDto>> GetUsersWithRolesByTenantAsync(int tenantId)
         {
@@ -248,6 +275,5 @@ namespace Cashier.Services.Services
             await userPermissionRepo.AddRangeAsync(permissions);
             await _unitOfWork.SaveChangesAsync();
         }
-
     }
 }
