@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-
 namespace Cashier.API
 {
     public class Program
@@ -22,9 +20,18 @@ namespace Cashier.API
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
-            builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<CashierDbContext>().AddDefaultTokenProviders();
+            builder.Services.AddIdentity<AppUser, AppRole>(options =>
+            {
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 8;
+                options.User.RequireUniqueEmail = true;
+            }).AddEntityFrameworkStores<CashierDbContext>().AddDefaultTokenProviders();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserRoleService, UserRoleService>();
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            builder.Services.AddTransient<IEmailSender,EmailSender>();  
             builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JWTOptions"));
 
             var jwtOptions = builder.Configuration.GetSection("JWTOptions").Get<JwtOptions>();
@@ -72,7 +79,9 @@ namespace Cashier.API
                 try
                 {
                     await _dbContext.Database.MigrateAsync();
-                    await CashierContextSeed.SeedDataAsync(_dbContext);
+                    var userManager = services.GetRequiredService<UserManager<AppUser>>();
+                    var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+                    await CashierContextSeed.SeedDataAsync(userManager, roleManager, _dbContext);
                 }
                 catch (Exception ex)
                 {
@@ -89,7 +98,7 @@ namespace Cashier.API
                     options.RoutePrefix = string.Empty;
                 });
             }
-
+            
             app.UseHttpsRedirection();
             app.UseCors("MyPolicy");
 

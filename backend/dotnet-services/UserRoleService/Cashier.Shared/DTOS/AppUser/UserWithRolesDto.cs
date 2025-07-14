@@ -1,4 +1,4 @@
-﻿namespace Cashier.Shared.DTOS
+﻿namespace Cashier.Shared.DTOS.AppUser
 {
     public class UserWithRolesDto
     {
@@ -6,6 +6,6 @@
         public string? Email { get; set; }
         public string? Firstname { get; set; }
         public string? Lastname { get; set; }
-        public List<string> Roles { get; set; } = new();
+        public IEnumerable<string> Roles { get; set; } = new List<string>();
     }
 }

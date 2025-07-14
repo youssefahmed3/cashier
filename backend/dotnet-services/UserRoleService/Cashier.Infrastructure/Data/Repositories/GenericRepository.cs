@@ -28,11 +28,10 @@
             await _dbContext.Set<TEntity>().ToListAsync() :
             await _dbContext.Set<TEntity>().AsNoTracking().ToListAsync();
 
-       public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate)
-    {
-        return await _dbSet.Where(predicate).ToListAsync();
-    }
-
+        public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            return await _dbSet.Where(predicate).ToListAsync();
+        }
         public async Task<TEntity?> GetByIdAsync(TKey id) => await _dbContext.Set<TEntity>().FindAsync(id);
         public void Update(TEntity entity) => _dbContext.Update(entity);
     }

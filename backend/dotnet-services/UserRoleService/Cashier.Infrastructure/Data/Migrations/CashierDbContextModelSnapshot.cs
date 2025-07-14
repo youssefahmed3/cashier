@@ -82,6 +82,9 @@ namespace Cashier.Infrastructure.Data.Migrations
                     b.Property<bool>("IsFirstLogin")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsSuspended")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Lastname")
                         .IsRequired()
                         .HasMaxLength(15)

@@ -1,6 +1,6 @@
-﻿namespace Cashier.Shared.DTOS
+﻿namespace Cashier.Shared.DTOS.AppUser
 {
-    public class AppUserDto
+    public class UpdateUserDto
     {
         public int Id { get; set; }
         public string Email { get; set; } = string.Empty;

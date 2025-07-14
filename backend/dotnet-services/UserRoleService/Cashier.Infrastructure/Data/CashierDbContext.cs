@@ -17,6 +17,5 @@
         }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<UserPermissions> UserPermissions { get; set; }
-
     }
 }

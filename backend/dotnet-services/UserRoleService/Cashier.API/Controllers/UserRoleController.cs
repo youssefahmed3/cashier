@@ -33,19 +33,23 @@
             await _service.AssignRoleAsync(dto);
             return Ok("Role assigned successfully.");
         }
-        //POST: api/userrole/remove-role
-        [HttpPost("remove-role")]
-        public async Task<IActionResult> RemoveRole([FromBody] RemoveRoleDto dto)
+        //POST: api/userrole/unassign-role
+        [HttpPost("unassign-role")]
+        public async Task<IActionResult> UnassignRole([FromBody] UnassignRoleDto dto)
         {
-            var result = await _service.RemoveRoleAsync(dto);
-            return result ? Ok("Role removed.") : NotFound("Role assignment not found.");
+            var result = await _service.UnassignRoleAsync(dto);
+            return result ? Ok("Role unassigned from the user.") : NotFound("Role assignment not found.");
         }
         //POST: api/userrole/update-user
         [HttpPost("update-user")]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDto dto)
         {
             var updated = await _service.UpdateUserAsync(dto);
-            return updated ? Ok("User updated.") : NotFound("User not found.");
+            return Ok(new
+            {
+                success = updated,
+                message = updated ? "User updated." : "User not found."
+            });
         }
         // GET: api/userrole/user/{userId}/tenant/{tenantId}/roles
         [HttpGet("user/{userId}/tenant/{tenantId}/roles")]
@@ -65,15 +69,34 @@
         [HttpPost("assign-permissions")]
         public async Task<IActionResult> AssignPermissions([FromBody] AssignPermissionDto dto)
         {
-            await _service.AssignPermissionsToUserAsync(dto);
-            return Ok("Permissions assigned.");
+           var result = await _service.AssignPermissionsToUserAsync(dto);
+            return Ok(new
+            {
+                isSuccess = result.Success,
+                message = result.Message
+            });
         }
-        // DELETE: api/userrole/users/{userId}
-        [HttpDelete("users/{userId}")]
-        public async Task<IActionResult> RemoveUser(int userId)
+        // POST: api/userrole/users/suspend/{userId}
+        [HttpPost("users/suspend/{userId}")]
+        public async Task<IActionResult> SuspendUser(int userId)
         {
-            var success = await _service.RemoveUserAsync(userId);
-            return success ? Ok("User removed.") : NotFound("User not found.");
+            var success = await _service.SuspendUserAsync(userId);
+            return Ok(new
+            {
+                success,
+                message = success ? "User suspended." : "User not found."
+            });
+        }
+        // PUT: api/userrole/users/unsuspend/{userId}
+        [HttpPut("users/unsuspend/{userId}")]
+        public async Task<IActionResult> UnsuspendUser(int userId)
+        {
+            var result = await _service.UnsuspendUserAsync(userId);
+            return Ok(new
+            {
+                success = result,
+                message = result ? "User unsuspended successfully." : "User not found."
+            });
         }
         // GET: api/userrole/tenant/{tenantId}/users-with-roles
         [HttpGet("tenant/{tenantId}/users-with-roles")]

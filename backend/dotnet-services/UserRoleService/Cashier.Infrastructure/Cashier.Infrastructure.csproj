@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Cashier.Core\Cashier.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\Migrations\" />
+  </ItemGroup>
+
 </Project>

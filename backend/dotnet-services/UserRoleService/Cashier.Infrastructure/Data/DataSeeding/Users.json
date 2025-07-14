@@ -1,0 +1,41 @@
+﻿[
+    {
+        "UserName": "superadmin",
+        "NormalizedUserName": "SUPERADMIN",
+        "Email": "superadmin@gmail.com",
+        "NormalizedEmail": "SUPERADMIN@GMAIL.COM",
+        "EmailConfirmed": true,
+        "PasswordHash": "",
+        "SecurityStamp": "random-guid-1",
+        "Firstname": "Super",
+        "Lastname": "Admin",
+        "RoleId": 1,
+        "IsFirstLogin": false
+    },
+    {
+        "UserName": "admin1",
+        "NormalizedUserName": "ADMIN1",
+        "Email": "admin1@gmail.com",
+        "NormalizedEmail": "ADMIN1@GMAIL.COM",
+        "EmailConfirmed": true,
+        "PasswordHash": "",
+        "SecurityStamp": "random-guid-2",
+        "Firstname": "Admin",
+        "Lastname": "One",
+        "RoleId": 2,
+        "IsFirstLogin": true
+    },
+    {
+        "UserName": "MariamShindy",
+        "NormalizedUserName": "MARIAMSHINDY",
+        "Email": "MariamShindy@gmail.com",
+        "NormalizedEmail": "MARIAMSHINDY@GMAIL.COM",
+        "EmailConfirmed": true,
+        "PasswordHash": "",
+        "SecurityStamp": "random-guid-2",
+        "Firstname": "Admin",
+        "Lastname": "One",
+        "RoleId": 3,
+        "IsFirstLogin": true
+    }
+]
