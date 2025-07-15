@@ -38,10 +38,10 @@ namespace Shift.API.Controllers
             return BadRequest(new { error = result.Error });
         }
 
-        [HttpGet("active/{branchId}/{userId}")]
-        public async Task<IActionResult> GetActiveShift(long branchId, long userId)
+        [HttpGet("active/{branchId}")]
+        public async Task<IActionResult> GetActiveShift(long branchId)
         {
-            var result = await _shiftService.GetActiveShiftAsync(branchId, userId);
+            var result = await _shiftService.GetActiveShiftAsync(branchId);
 
             if (result.IsSuccess)
                 return Ok(result.Value);

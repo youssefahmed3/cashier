@@ -16,11 +16,10 @@ namespace Shift.Infrastructure.Repositories
         {
         }
 
-        public async Task<Core.Entities.Shift?> GetActiveShiftAsync(long branchId, long userId)
+        public async Task<Core.Entities.Shift?> GetActiveShiftAsync(long branchId)
         {
-            return await _dbSet.FirstOrDefaultAsync(s => s.IsActive && 
-                                                   s.BranchId == branchId &&
-                                                   s.UserId == userId);            
+            return await _dbSet.FirstOrDefaultAsync(s => s.IsActive &&
+                                                   s.BranchId == branchId);          
         }
 
         public async Task<IEnumerable<Core.Entities.Shift>> GetShiftsByBranchAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null)
