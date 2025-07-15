@@ -15,11 +15,15 @@ namespace Shift.Infrastructure.Repositories
         private readonly ShiftDbContext _context;
         private IDbContextTransaction? _transaction;
 
+        public IShiftRepository ShiftRepository { get; }
 
-        public UnitOfWork(ShiftDbContext context)
+        public IDrawerLogRepository DrawerLogRepository {  get; }
+
+        public UnitOfWork(ShiftDbContext context )
         {
             _context = context;
-
+            ShiftRepository = new ShiftRepository(_context);
+            DrawerLogRepository   = new DrawerLogRepository(_context);
         }
 
         public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
