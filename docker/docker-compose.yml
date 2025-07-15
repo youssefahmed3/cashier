@@ -1,95 +1,129 @@
+version: "3.8"
+
 networks:
   backend:
 
 services:
-  
-    traefik:
-      image: traefik:v3.0
-      command:
-        - --api.dashboard=true
-        - --providers.docker=true
-        - --entrypoints.web.address=:80
-      ports:
-        - "80:80"       # Public HTTP traffic
-        - "8080:8080"   # Traefik Dashboard
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-      labels:
-        - "traefik.http.routers.traefik.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
-        - "traefik.http.routers.traefik.service=api@internal"
-        - "traefik.http.routers.traefik.entrypoints=web"
-      networks:
-        - backend
+  traefik:
+    image: traefik:v3.0
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"       # Public HTTP traffic
+      - "8080:8080"   # Traefik Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "traefik.http.routers.traefik.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=web"
+    networks:
+      - backend
 
-    
-    rabbitmq:
-      image: rabbitmq:3-management
-      container_name: rabbitmq
-      ports:
-        - "5672:5672"     # AMQP protocol (for apps)
-        - "15672:15672"   # RabbitMQ dashboard (browser)
-      networks:
-        - backend
-      environment:
-        RABBITMQ_DEFAULT_USER: guest
-        RABBITMQ_DEFAULT_PASS: guest
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"     # AMQP protocol (for apps)
+      - "15672:15672"   # RabbitMQ dashboard (browser)
+    networks:
+      - backend
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
-    notification-service:
-      build: ../backend/springboot-services/notification-service
-      volumes:
-        - ../backend/springboot-services/notification-service:/app
-        - ~/.m2:/root/.m2
-      
-      ports:
-        - "8001:8080"
-        
-      environment:
-        - SPRING_PROFILES_ACTIVE=dev
-        - SPRING_NOTIFICATION_DATASOURCE_URL=${SPRING_NOTIFICATION_DATASOURCE_URL}
-        - NOTIFICATION_POSTGRES_USER=${NOTIFICATION_POSTGRES_USER}
-        - NOTIFICATION_POSTGRES_PASSWORD=${NOTIFICATION_POSTGRES_PASSWORD}
-      depends_on:
-        - notification-db
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.template.rule=PathPrefix(`/notification`)"
-        - "traefik.http.routers.template.entrypoints=web"
-        - "traefik.http.services.template.loadbalancer.server.port=8080"
-        - "traefik.http.routers.template.middlewares=strip-template@docker"
-        - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/notification"
-      networks:
-        - backend
-      
+  notification-service:
+    build: ../backend/springboot-services/notification-service
+    volumes:
+      - ../backend/springboot-services/notification-service:/app
+      - ~/.m2:/root/.m2
+    ports:
+      - "8001:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_NOTIFICATION_DATASOURCE_URL=${SPRING_NOTIFICATION_DATASOURCE_URL}
+      - NOTIFICATION_POSTGRES_USER=${NOTIFICATION_POSTGRES_USER}
+      - NOTIFICATION_POSTGRES_PASSWORD=${NOTIFICATION_POSTGRES_PASSWORD}
+    depends_on:
+      - notification-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.template.rule=PathPrefix(`/notification`)"
+      - "traefik.http.routers.template.entrypoints=web"
+      - "traefik.http.services.template.loadbalancer.server.port=8080"
+      - "traefik.http.routers.template.middlewares=strip-template@docker"
+      - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/notification"
+    networks:
+      - backend
 
+  starter-data-service:
+    build: ../backend/springboot-services/starter-data-service
+    volumes:
+      - ../backend/springboot-services/starter-data-service:/app
+      - ~/.m2:/root/.m2
+    ports:
+      - "8002:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_STARTER_DATA_DATASOURCE_URL=${SPRING_STARTER_DATA_DATASOURCE_URL}
+      - STARTER_DATA_POSTGRES_USER=${STARTER_DATA_POSTGRES_USER}
+      - STARTER_DATA_POSTGRES_PASSWORD=${STARTER_DATA_POSTGRES_PASSWORD}
+    depends_on:
+      - starter-data-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.template.rule=PathPrefix(`/starter-data`)"
+      - "traefik.http.routers.template.entrypoints=web"
+      - "traefik.http.services.template.loadbalancer.server.port=8080"
+      - "traefik.http.routers.template.middlewares=strip-template@docker"
+      - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/starter-data"
+    networks:
+      - backend
 
-    notification-db:
-      image: postgres:14
-      ports:
-        - "5433:5432"
-      environment:
-        POSTGRES_DB: ${NOTIFICATION_POSTGRES_DB}
-        POSTGRES_USER: ${NOTIFICATION_POSTGRES_USER}
-        POSTGRES_PASSWORD: ${NOTIFICATION_POSTGRES_PASSWORD}
-      healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
-        interval: 10s
-        timeout: 5s
-        retries: 5
-      networks:
-        - backend
-        
-    dotnet-db:
-      image: mcr.microsoft.com/mssql/server:2022-latest
-      container_name: dotnet-db
-      environment:
-        SA_PASSWORD: "YourStrong@Passw0rd"
-        ACCEPT_EULA: "Y"
-      ports:
-        - "1433:1433"
-      networks:
-        - backend
+  notification-db:
+    image: postgres:14
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: ${NOTIFICATION_POSTGRES_DB}
+      POSTGRES_USER: ${NOTIFICATION_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${NOTIFICATION_POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
 
+  starter-data-db:
+    image: postgres:14
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: ${SARTER_DATA_POSTGRES_DB}
+      POSTGRES_USER: ${SARTER_DATA_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${SARTER_DATA_POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  dotnet-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: dotnet-db
+    environment:
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    networks:
+      - backend
 
 volumes:
   frontend_node_modules:
-  
