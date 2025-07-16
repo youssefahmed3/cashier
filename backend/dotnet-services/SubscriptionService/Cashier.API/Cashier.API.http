@@ -1,0 +1,6 @@
+@Cashier.API_HostAddress = http://localhost:5093
+
+GET {{Cashier.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
