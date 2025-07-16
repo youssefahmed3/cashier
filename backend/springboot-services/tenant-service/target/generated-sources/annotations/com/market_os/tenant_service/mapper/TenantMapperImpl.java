@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-16T12:54:01+0300",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
+    date = "2025-07-16T13:09:08+0300",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.42.50.v20250628-1110, environment: Java 21.0.7 (Eclipse Adoptium)"
 )
 @Component
 public class TenantMapperImpl implements TenantMapper {
@@ -104,13 +104,13 @@ public class TenantMapperImpl implements TenantMapper {
 
         BranchDto.BranchDtoBuilder branchDto = BranchDto.builder();
 
+        branchDto.createdAt( branch.getCreatedAt() );
         branchDto.id( branch.getId() );
-        branchDto.tenantId( branch.getTenantId() );
+        branchDto.location( branch.getLocation() );
         branchDto.name( branch.getName() );
         branchDto.phone( branch.getPhone() );
-        branchDto.location( branch.getLocation() );
         branchDto.taxPercentage( branch.getTaxPercentage() );
-        branchDto.createdAt( branch.getCreatedAt() );
+        branchDto.tenantId( branch.getTenantId() );
 
         return branchDto.build();
     }
