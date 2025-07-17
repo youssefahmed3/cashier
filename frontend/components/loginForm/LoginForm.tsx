@@ -38,6 +38,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       }
       else if (result.isSuccess) {
         setMessage("Login successful!");
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("refresh-token", result.refreshToken);
         // We will Redirect to the dashboard or home page
       }
       else {
