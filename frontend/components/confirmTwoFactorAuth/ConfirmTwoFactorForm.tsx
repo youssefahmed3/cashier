@@ -37,10 +37,10 @@ export function ConfirmTwoFactorForm({
 
             if (result.isSuccess) {
                 localStorage.removeItem("2fa-email");
-                localStorage.setItem("accessToken", result.token)
-                localStorage.setItem("refreshToken", result.refreshToken)
+                localStorage.setItem("token", result.token);
+                localStorage.setItem("refresh-token", result.refreshToken);
                 setMessage("2FA confirmed successfully!")
-                //Redirect to the dashboard or home page
+                //Redirect to the dashboard 
             } else {
                 setMessage(result.message || "Invalid code")
             }

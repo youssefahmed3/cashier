@@ -81,7 +81,7 @@
         [HttpPost("validate-verification-code")]
         public IActionResult ValidateVerificationCode([FromBody] ValidateVerificationCodeDto model)
         {
-            var result = _authService.ValidateVerificationCodeAsync(model.Email, model.VerificationCode);
+            var result = _authService.ValidateVerificationCode(model.Email, model.VerificationCode);
             return Ok(new
             {
                 success = result.Success,
@@ -94,7 +94,13 @@
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
         {
             var result = await _authService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword);
-            return Ok(result);
+            return Ok(new
+            {
+                success = result.Success,
+                message = result.Message,
+                token = result.Token,
+                refreshToken = result.refereshToken
+            });
         }
     }
 }

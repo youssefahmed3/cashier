@@ -234,7 +234,7 @@
         }
 
         // Validates if the verification code sent to email is correct and not expired
-        public (bool Success, string Message) ValidateVerificationCodeAsync(string email, string code)
+        public (bool Success, string Message) ValidateVerificationCode(string email, string code)
         {
             if (!_memoryCache.TryGetValue(email, out string? storedCode) || storedCode != code)
                 return (false, "Invalid or expired verification code.");
@@ -245,7 +245,7 @@
         public async Task<(bool Success, string Message, string? Token, string? refereshToken)> ResetPasswordAsync(string email, string code, string newPassword)
         {
 
-            var validate = ValidateVerificationCodeAsync(email, code);
+            var validate = ValidateVerificationCode(email, code);
             if (!validate.Success)
                 return (false, validate.Message, "", "");
 
