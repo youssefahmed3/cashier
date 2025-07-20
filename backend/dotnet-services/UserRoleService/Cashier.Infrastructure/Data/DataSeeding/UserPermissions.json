@@ -1,0 +1,36 @@
+[
+    {
+        "appUserId": 1,
+        "permissionId": 1
+    },
+    {
+        "appUserId": 1,
+        "permissionId": 2
+    },
+    {
+        "appUserId": 1,
+        "permissionId": 3
+    },
+
+    {
+        "appUserId": 2,
+        "permissionId": 4
+    },
+    {
+        "appUserId": 2,
+        "permissionId": 5
+    },
+
+    {
+        "appUserId": 3,
+        "permissionId": 1
+    },
+    {
+        "appUserId": 3,
+        "permissionId": 6
+    },
+    {
+        "appUserId": 3,
+        "permissionId": 7
+    }
+]

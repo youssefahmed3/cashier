@@ -1,0 +1,42 @@
+[
+    { "name": "ViewUsers" },
+    { "name": "CreateUser" },
+    { "name": "EditUser" },
+    { "name": "DeleteUser" },
+
+    { "name": "ViewRoles" },
+    { "name": "AssignRole" },
+    { "name": "RemoveRole" },
+
+    { "name": "ViewPermissions" },
+    { "name": "AssignPermissions" },
+
+    { "name": "AccessPOS" },
+    { "name": "CreateInvoice" },
+    { "name": "DeleteInvoice" },
+    { "name": "ViewInvoices" },
+
+    { "name": "ManageProducts" },
+    { "name": "ViewProducts" },
+
+    { "name": "ManageCategories" },
+    { "name": "ViewCategories" },
+
+    { "name": "AddBranch" },
+    { "name": "EditBranch" },
+    { "name": "DeleteBranch" },
+    { "name": "ViewBranches" },
+
+    { "name": "AddInventory" },
+    { "name": "EditInventory" },
+    { "name": "DeleteInventory" },
+    { "name": "ViewInventory" },
+
+    { "name": "ViewReports" },
+
+    { "name": "ManageTenants" },
+
+    { "name": "AccessDashboard" },
+
+    { "name": "ManageProfile" }
+]

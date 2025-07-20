@@ -1,0 +1,18 @@
+﻿[
+    {
+        "Name": "SuperAdmin",
+        "NormalizedName": "SUPERADMIN"
+    },
+    {
+        "Name": "Admin",
+        "NormalizedName": "ADMIN"
+    },
+    {
+        "Name": "Cashier",
+        "NormalizedName": "CASHIER"
+    },
+    {
+        "Name": "Employee",
+        "NormalizedName": "EMPLOYEE"
+    }
+]

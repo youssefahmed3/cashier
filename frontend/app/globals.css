@@ -119,4 +119,8 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .container-base {
+    @apply flex flex-col gap-4 p-4 pt-0;
+  }
 }
