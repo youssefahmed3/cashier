@@ -1,30 +1,33 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   AudioWaveform,
   BookOpen,
   Bot,
+  Box,
   Command,
   Frame,
   GalleryVerticalEnd,
+  LayoutDashboard,
   Map,
   PieChart,
+  Settings,
   Settings2,
   SquareTerminal,
-} from "lucide-react"
+  Users,
+} from "lucide-react";
 
-
-import { NavMain } from "./nav-main"
-import { NavUser } from "./nav-user"
-import { TeamSwitcher } from "./team-switcher"
+import { NavMain } from "./nav-main";
+import { NavUser } from "./nav-user";
+import { TeamSwitcher } from "./team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 // This is sample data.
 const data = {
@@ -33,49 +36,41 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
+  branches: [
     {
-      name: "Acme Inc",
+      name: "Branch 1",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
     {
-      name: "Acme Corp.",
+      name: "Branch 2",
       logo: AudioWaveform,
       plan: "Startup",
     },
     {
-      name: "Evil Corp.",
+      name: "Branch 3",
       logo: Command,
       plan: "Free",
     },
   ],
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
+      title: "Dashboard",
+      url: "/tenant/dashboard",
+      icon: LayoutDashboard,
       isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
+      title: "Employees",
+      url: "/tenant/employees",
+      icon: Users,
+      isActive: true,
+    },
+    {
+      title: "Inventory",
+      url: "/tenant/inventory",
+      icon: Box,
+      /* items: [
         {
           title: "Genesis",
           url: "#",
@@ -88,36 +83,20 @@ const data = {
           title: "Quantum",
           url: "#",
         },
-      ],
+      ], */
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
+      title: "Products",
+      url: "/tenant/products",
+      icon: Box,
+      isActive: true,
     },
+
     {
       title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
+      url: "/tenant/settings",
+      icon: Settings,
+      /* items: [
         {
           title: "General",
           url: "#",
@@ -134,7 +113,7 @@ const data = {
           title: "Limits",
           url: "#",
         },
-      ],
+      ], */
     },
   ],
   projects: [
@@ -154,13 +133,13 @@ const data = {
       icon: Map,
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher branches={data.branches} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
@@ -170,5 +149,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }
