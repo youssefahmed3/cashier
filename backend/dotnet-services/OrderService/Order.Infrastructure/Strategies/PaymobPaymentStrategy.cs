@@ -3,25 +3,34 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Order.Core.Entities;
 using Order.Core.Enums;
 using Order.Core.Interfaces.Repositories;
+using Order.Core.Interfaces.Services;
 using Order.Core.Interfaces.Strategies;
+using Order.Infrastructure.Settings;
 using Shared.DTOS;
+using Shared.PaymentProviders.Paymob;
 
 namespace Order.Infrastructure.Strategies
 {
-    //TODO: handle cases where a PayPal transaction succeeds but subsequent local transaction(s) fail.
-    //TODO: Integrate with PayPal for payment 
-    public class PayPalPaymentStrategy : IPaymentStrategy
+    //TODO: handle cases where a Paymob transaction succeeds but subsequent local transaction(s) fail.
+    //TODO: Integrate with Paymob for payment 
+    public class PaymobPaymentStrategy : IPaymentStrategy
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPaymobService _paymobService;
+        private readonly PaymobSettings _settings;
 
-        public PayPalPaymentStrategy(IUnitOfWork unitOfWork)
+
+        public PaymobPaymentStrategy(IUnitOfWork unitOfWork, IPaymobService paymobService, IOptions<PaymobSettings> settings)
         {
             _unitOfWork = unitOfWork;
+            _paymobService = paymobService;
+            _settings = settings.Value;
         }
-        public PaymentMethod SupportedPaymentMethod => PaymentMethod.PayPal;
+        public PaymentMethod SupportedPaymentMethod => PaymentMethod.Paymob;
 
         public async Task<ResultDto<Payment>> ProcessPaymentAsync(PaymentRequestDto paymentRequestDto)
         {
@@ -29,21 +38,22 @@ namespace Order.Infrastructure.Strategies
             {
                 await _unitOfWork.BeginTransactionAsync();
 
-                // Call PayPal API (mocked here)
-                var transactionId = await ProcessPayPalPaymentAsync(paymentRequestDto);
+                // Call Paymob API
+                var (transactionId, clientSecret) = await ProcessPaymobPaymentAsync(paymentRequestDto);
 
                 var payment = new Payment
                 {
                     OrderId = paymentRequestDto.OrderId,
                     Amount = paymentRequestDto.Amount,
-                    Method = PaymentMethod.PayPal,
+                    Method = PaymentMethod.Paymob,
                     Status = PaymentStatus.Completed,
                     BranchId = paymentRequestDto.BranchId,
                     TransactionId = transactionId,
                     CreatedAt = DateTime.UtcNow,
                     CompletedAt = DateTime.UtcNow,
-                    Reference = paymentRequestDto.Reference
+                    Reference = clientSecret,
                 };
+                
 
                 await _unitOfWork.PaymentRepo.AddAsync(payment);
                 await _unitOfWork.SaveChangesAsync();
@@ -63,7 +73,7 @@ namespace Order.Infrastructure.Strategies
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                return ResultDto<Payment>.Failure($"PayPal payment failed: {ex.Message}");
+                return ResultDto<Payment>.Failure($"Paymob payment failed: {ex.Message}");
             }
         }
 
@@ -87,15 +97,15 @@ namespace Order.Infrastructure.Strategies
                     return ResultDto<Payment>.Failure("Invalid refund amount.");
                 }
 
-                // Process PayPal refund (mocked)
-                var refundTransactionId = await ProcessPayPalRefundAsync(originalPayment.TransactionId, amount);
+                // Process Paymob refund (mocked)
+                var refundTransactionId = await ProcessPaymobRefundAsync(originalPayment.TransactionId, amount);
 
                 var refundPayment = new Payment
                 {
                    
                     OrderId = originalPayment.OrderId,
                     Amount = -amount,
-                    Method = PaymentMethod.PayPal,
+                    Method = PaymentMethod.Paymob,
                     Status = PaymentStatus.Refunded,
                     BranchId = originalPayment.BranchId,
                     TransactionId = refundTransactionId,
@@ -127,22 +137,64 @@ namespace Order.Infrastructure.Strategies
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                return ResultDto<Payment>.Failure($"PayPal refund failed: {ex.Message}");
+                return ResultDto<Payment>.Failure($"Paymob refund failed: {ex.Message}");
             }
         }
 
-        // Mock PayPal payment method
-        private async Task<string> ProcessPayPalPaymentAsync(PaymentRequestDto request)
+        //Paymob payment method
+        private async Task<(string specialReference, string clientSecert)> ProcessPaymobPaymentAsync(PaymentRequestDto request)
         {
-            await Task.Delay(100);
-            return $"PP_{Guid.NewGuid().ToString("N")[..10]}";
+            // TODO: fetch actual customer billing data from request or database
+            var billingData = new PaymobBillingData
+            {
+                First_Name = "Market_OS",
+                Last_Name = "Project",
+                Email = "marketOS@gmail.com",
+                Phone_Number = "011XXXXXXXX",
+            };
+
+            var intentionRequest = new PaymobIntentionRequest
+            {
+                Amount = request.Amount * 100, // to convert it to cents 
+                Currency = _settings.Currency,
+                Billing_Data = billingData,
+                Extras = new PaymobExtras
+                {
+                    Order_Id = request.OrderId
+                },
+                Payment_Methods = [_settings.CardIntegrationId,],
+                Notification_Url = _settings.NotificationUrl,
+                Redirection_Url = _settings.RedirectionUrl,
+                Expiration = _settings.ExpirationSeconds,
+                Special_Reference = $"{request.OrderId}-{request.PaymentMethod}-{request.CashierId}-{request.BranchId}-{request.CustomerId}-{DateTime.UtcNow.Ticks}",
+
+            };
+
+            var result = await _paymobService.CreateIntentionAsync(intentionRequest);
+
+            if (!result.IsSuccess)
+                throw new InvalidOperationException(result.Error);
+
+          
+
+
+            return (result.Value.Special_Reference, result.Value.Client_Secret);
         }
 
-        // Mock PayPal refund method
-        private async Task<string> ProcessPayPalRefundAsync(string originalTransactionId, decimal amount)
+
+        // Paymob refund method
+        private async Task<string> ProcessPaymobRefundAsync(string specialReference, decimal amount)
         {
-            await Task.Delay(100);
-            return $"RF_{Guid.NewGuid().ToString("N")[..10]}";
+            var transactionResult = await _paymobService.GetTransactionIdAsync(specialReference.ToString());
+
+            if (!transactionResult.IsSuccess)
+                throw new InvalidOperationException(transactionResult.Error);
+
+            var refundResult = await _paymobService.RefundPaymentAsync(transactionResult.Value.Id, amount * 100); ;
+            if (!refundResult.IsSuccess)
+                throw new InvalidOperationException(refundResult.Error);
+
+            return refundResult.Value.Id.ToString();
         }
 
     }

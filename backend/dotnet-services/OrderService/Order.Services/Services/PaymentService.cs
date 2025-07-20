@@ -46,11 +46,7 @@ namespace Order.Services.Services
                 {
                     return ResultDto<PaymentDto>.Failure($"Payment method {request.PaymentMethod} is not supported.");
                 }
-                Console.WriteLine("Registered payment methods:");
-                foreach (var key in _paymentStrategies.Keys)
-                {
-                    Console.WriteLine($" - {key}");
-                }
+              
                 var strategy = _paymentStrategies[method];
                 var result = await strategy.ProcessPaymentAsync(request);
                 //TODO: Check if there any error happens throw ex 

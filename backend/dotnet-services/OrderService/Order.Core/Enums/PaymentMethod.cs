@@ -10,7 +10,7 @@ namespace Order.Core.Enums
     {
         Cash = 0,
         PayPal = 1,
-        //PayMob = 2,
+        Paymob = 2,
         //CreditCard = 2,
         //DebitCard = 3
     }

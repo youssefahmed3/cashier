@@ -3,6 +3,8 @@ using Order.Core.Interfaces.Services;
 using Order.Core.Interfaces.Strategies;
 using Order.Infrastructure.Data.Configurations;
 using Order.Infrastructure.Repositories;
+using Order.Infrastructure.Services;
+using Order.Infrastructure.Settings;
 using Order.Infrastructure.Strategies;
 using Order.Services.Mapping;
 using Order.Services.Services;
@@ -20,6 +22,9 @@ namespace Order.API
 
             //Add Db Service 
             builder.Services.ConfigureDbService(builder.Configuration);
+            builder.Services.Configure<PaymobSettings>(builder.Configuration.GetSection("PaymobSettings"));
+
+            builder.Services.AddHttpClient<IPaymobService, PaymobService>();
 
             //if we used unit of work we will only register it 
             builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
@@ -30,10 +35,13 @@ namespace Order.API
             builder.Services.AddScoped<IOrderService<OrderDto, long, ResultDto<OrderDto>>, OrderService>();
             builder.Services.AddScoped<IOrderItemService, OrderItemService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+
             builder.Services.AddScoped<IPaymentStrategy, CashPaymentStrategy>();
-            builder.Services.AddScoped<IPaymentStrategy, PayPalPaymentStrategy>();
+            builder.Services.AddScoped<IPaymentStrategy, PaymobPaymentStrategy>();
             builder.Services.AddAutoMapper(typeof(OrderMappingProfile).Assembly);
             builder.Services.AddAutoMapper(typeof(PaymentMappingProfile).Assembly);
+            
+
 
             // Add services to the container.
             builder.Services.AddControllers();
