@@ -12,8 +12,8 @@ services:
       - --providers.docker=true
       - --entrypoints.web.address=:80
     ports:
-      - "80:80"       # Public HTTP traffic
-      - "8080:8080"   # Traefik Dashboard
+      - "80:80" # Public HTTP traffic
+      - "8080:8080" # Traefik Dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
@@ -40,13 +40,30 @@ services:
       - "traefik.http.services.order-dotnet.loadbalancer.server.port=8085"
       - "traefik.http.routers.order-dotnet.middlewares=strip-order-dotnet@docker"
       - "traefik.http.middlewares.strip-order-dotnet.stripprefix.prefixes=/order-service-dotnet"
+  shift-service-dotnet:
+    build: ../backend/dotnet-services/ShiftService
+    volumes:
+      - ../backend/dotnet-services/ShiftService:/app
+    ports:
+      - "8011:8086"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - dotnet-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift-service-dotnet`)"
+      - "traefik.http.routers.shift-dotnet.entrypoints=web"
+      - "traefik.http.services.shift-dotnet.loadbalancer.server.port=8086"
+      - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
+      - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift-service-dotnet"
 
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"     # AMQP protocol (for apps)
-      - "15672:15672"   # RabbitMQ dashboard (browser)
+      - "5672:5672" # AMQP protocol (for apps)
+      - "15672:15672" # RabbitMQ dashboard (browser)
     networks:
       - backend
     environment:
@@ -110,7 +127,7 @@ services:
       POSTGRES_USER: ${NOTIFICATION_POSTGRES_USER}
       POSTGRES_PASSWORD: ${NOTIFICATION_POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -137,7 +154,7 @@ services:
       POSTGRES_USER: ${SARTER_DATA_POSTGRES_USER}
       POSTGRES_PASSWORD: ${SARTER_DATA_POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
 
       interval: 10s
       timeout: 5s
