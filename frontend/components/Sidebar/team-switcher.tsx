@@ -20,16 +20,16 @@ import {
 } from "@/components/ui/sidebar"
 
 export function TeamSwitcher({
-  teams,
+  branches,
 }: {
-  teams: {
+  branches: {
     name: string
     logo: React.ElementType
     plan: string
   }[]
 }) {
   const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams[0])
+  const [activeTeam, setActiveTeam] = React.useState(branches[0])
 
   if (!activeTeam) {
     return null
@@ -61,18 +61,18 @@ export function TeamSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Teams
+              Branches
             </DropdownMenuLabel>
-            {teams.map((team, index) => (
+            {branches.map((branch, index) => (
               <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
+                key={branch.name}
+                onClick={() => setActiveTeam(branch)}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
-                  <team.logo className="size-3.5 shrink-0" />
+                  <branch.logo className="size-3.5 shrink-0" />
                 </div>
-                {team.name}
+                {branch.name}
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
@@ -81,7 +81,7 @@ export function TeamSwitcher({
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus className="size-4" />
               </div>
-              <div className="text-muted-foreground font-medium">Add team</div>
+              <div className="text-muted-foreground font-medium">Add Branch</div>
             </DropdownMenuItem>
 
             
