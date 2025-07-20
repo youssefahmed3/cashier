@@ -7,6 +7,7 @@ COPY Order.API/*.csproj Order.API/
 COPY Order.Core/*.csproj Order.Core/
 COPY Order.Infrastructure/*.csproj Order.Infrastructure/
 COPY Order.Services/*.csproj Order.Services/
+COPY Shared/*.csproj Shared/
 
 RUN dotnet restore
 
