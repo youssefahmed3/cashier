@@ -61,7 +61,7 @@ namespace Cashier.API
             {
                 options.AddPolicy("MyPolicy", policyOptioons =>
                 {
-                    policyOptioons.AllowAnyHeader().AllowAnyMethod().WithOrigins(builder.Configuration["FrontBaseUrl"]!);
+                    policyOptioons.WithOrigins(builder.Configuration["FrontBaseUrl"]!).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
                 });
             });
             builder.Services.AddAutoMapper((typeof(MappingProfile)));
