@@ -10,6 +10,30 @@
         private readonly string baseFrontendUrl = _configuration["FrontBaseUrl"]!;
 
         // Sends a registration link to the user's email if the email is not already registered
+        //public async Task<(bool Success, string Message)> SendRegistrationLinkAsync(string email)
+        //{
+        //    if (string.IsNullOrWhiteSpace(email))
+        //        return (false, "Email is required.");
+
+        //    var existingUser = await _userManager.FindByEmailAsync(email);
+        //    if (existingUser != null)
+        //        return (false, "An account already exists with this email.");
+
+        //    var registrationLink = $"{baseFrontendUrl}/register?email={Uri.EscapeDataString(email)}";
+
+        //    var emailMessage = new Email
+        //    {
+        //        To = email,
+        //        Subject = "Register for Your Account",
+        //        Body = EmailBuilder.BuildRegistrationEmail(registrationLink)
+        //    };
+
+        //    await _emailSender.SendEmailAsync(emailMessage);
+
+        //    return (true, "Registration link sent successfully.");
+        //}
+
+        // Sends a registration link to the user's email if the email is not already registered
         public async Task<(bool Success, string Message)> SendRegistrationLinkAsync(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -19,7 +43,8 @@
             if (existingUser != null)
                 return (false, "An account already exists with this email.");
 
-            var registrationLink = $"{baseFrontendUrl}/register?email={Uri.EscapeDataString(email)}";
+            var token = GenerateEmailToken(email);
+            var registrationLink = $"{baseFrontendUrl}/register?token={Uri.EscapeDataString(token)}";
 
             var emailMessage = new Email
             {
@@ -31,6 +56,25 @@
             await _emailSender.SendEmailAsync(emailMessage);
 
             return (true, "Registration link sent successfully.");
+        }
+        private string GenerateEmailToken(string email)
+        {
+            var claims = new List<Claim>
+                {
+             new("email", email),
+             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Value.SecretKey));
+            var token = new JwtSecurityToken(
+                issuer: _jwtOptions.Value.Issuer,
+                audience: _jwtOptions.Value.Audience,
+                expires: DateTime.UtcNow.AddMinutes(15),
+                claims: claims,
+                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         // Registers a new user with provided data and password

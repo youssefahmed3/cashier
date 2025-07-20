@@ -1,12 +1,21 @@
 "use client"
-import { useState } from "react"
+
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { registerUser, RegisterDto } from "@/lib/api"
+import { extractEmailFromJwtToken } from "@/lib/jwt"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useRouter } from 'next/navigation'
+
 
 export function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+  const router = useRouter();
+
   const [form, setForm] = useState<RegisterDto>({
     firstName: "",
     lastName: "",
@@ -15,8 +24,21 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
     phoneNumber: "",
     password: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (token) {
+      const email = extractEmailFromJwtToken(token);
+      if (email) {
+        setForm((prev) => ({ ...prev, email }));
+      }
+      else {
+  setMessage("Invalid or expired token.");
+}
+    }
+  }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.id]: e.target.value });
@@ -30,6 +52,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
       const result = await registerUser(form);
       if (result.success) {
         setMessage("Registration successful!");
+        router.push(`/login`);
       } else {
         setMessage(result.message || "Something went wrong.");
       }
@@ -68,7 +91,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={form.email} onChange={handleChange} required />
+                  <Input id="email" type="email" value={form.email} onChange={handleChange} required readOnly={!!token} />
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="phoneNumber">Phone Number</Label>
