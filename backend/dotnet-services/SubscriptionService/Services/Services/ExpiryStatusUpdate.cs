@@ -1,9 +1,9 @@
-﻿using Cashier.Data;
+﻿using Cashier.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Cashier.Services
+namespace Cashier.Services.Services
 {
     public class ExpiryStatusUpdate : BackgroundService
     {

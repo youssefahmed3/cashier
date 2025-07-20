@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Cashier.Data;
+using Cashier.Infrastructure.Data;
+using Cashier.Core.Entities;
 
-namespace Cashier.Controllers
+namespace Cashier.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
