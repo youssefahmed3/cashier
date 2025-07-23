@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/input-otp"
 import { useRouter } from "next/navigation"
 import { toast } from "react-hot-toast"
-import { validateResetCode } from "@/lib/api/auth/"
+import { validateResetCode } from "@/lib/api/auth"
 
 export function ValidateResetPasswordCodeForm({
     className,

@@ -22,8 +22,8 @@ export function ForgetPasswordForm({
     e.preventDefault()
     setLoading(true)
 
-    forgotPassword({ email })
-    /* 
+    await forgotPassword({ email });
+      /* 
     try {
       
 
