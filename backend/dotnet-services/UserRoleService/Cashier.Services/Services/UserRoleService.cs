@@ -1,4 +1,6 @@
-﻿namespace Cashier.Services.Services
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Cashier.Services.Services
 {
     public class UserRoleService(IUnitOfWork _unitOfWork, IMapper _mapper,
         IHttpContextAccessor _httpContextAccessor, UserManager<AppUser> _userManager) : IUserRoleService
@@ -25,6 +27,23 @@
 
             return users.Select(_mapper.Map<AppUserDto>).ToList();
         }
+        //Retrive data of current logged in user 
+        public async Task<AppUserWithRolesDto> GetCurrentUserAsync()
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return new AppUserWithRolesDto();
+
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            if (user == null)
+                return new AppUserWithRolesDto();
+
+            var userDto = _mapper.Map<AppUserWithRolesDto>(user);
+            userDto.Roles = (await _userManager.GetRolesAsync(user)).ToList();
+
+            return userDto;
+        }
+
         // Retrieves all roles in the system.
         public async Task<List<AppRoleDto>> GetAllRolesAsync()
         {
