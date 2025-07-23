@@ -104,6 +104,31 @@ services:
 
   
 
+  tenant-service:
+    build: ../backend/springboot-services/tenant-service
+    volumes:
+      - ../backend/springboot-services/tenant-service:/app
+      - ~/.m2:/root/.m2
+    ports:
+      - "8004:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_NOTIFICATION_DATASOURCE_URL=${SPRING_NOTIFICATION_DATASOURCE_URL}
+      - NOTIFICATION_POSTGRES_USER=${NOTIFICATION_POSTGRES_USER}
+      - NOTIFICATION_POSTGRES_PASSWORD=${NOTIFICATION_POSTGRES_PASSWORD}
+    depends_on:
+      - tenant-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.template.rule=PathPrefix(`/tenant`)"
+      - "traefik.http.routers.template.entrypoints=web"
+      - "traefik.http.services.template.loadbalancer.server.port=8080"
+      - "traefik.http.routers.template.middlewares=strip-template@docker"
+      - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/tenant"
+    networks:
+      - backend
+
+
   notification-db:
     image: postgres:14
     ports:
@@ -120,7 +145,6 @@ services:
     networks:
       - backend
 
-
   dotnet-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: dotnet-db
@@ -132,3 +156,21 @@ services:
     networks:
       - backend
 
+  tenant-db:
+    image: postgres:14
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: tenant_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+volumes:
+  frontend_node_modules:
