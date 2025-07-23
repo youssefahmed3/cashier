@@ -1,6 +1,4 @@
-﻿using System.Security.Claims;
-
-namespace Cashier.Validation.Interfaces
+﻿namespace Cashier.Validation.Interfaces
 {
     public interface ITokenValidator
     {
