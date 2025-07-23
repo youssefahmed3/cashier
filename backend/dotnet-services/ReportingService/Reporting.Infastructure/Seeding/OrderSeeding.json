@@ -1,0 +1,71 @@
+[
+  {
+    "Id": 1,
+    "CreatedAt": "2025-07-20T14:30:00",
+    "UpdatedAt": "2025-07-21T09:15:00",
+    "Status": "Completed",
+    "Total": 250,
+    "OrderItems": [
+      {
+        "ProductId": 101,
+        "Quantity": 2,
+        "Price": 100
+      },
+      {
+        "ProductId": 102,
+        "Quantity": 1,
+        "Price": 50
+      }
+    ]
+  },
+  {
+    "Id": 2,
+    "CreatedAt": "2025-07-21T12:45:00",
+    "UpdatedAt": null,
+    "Status": "Pending",
+    "Total": 180,
+    "OrderItems": [
+      {
+        "ProductId": 103,
+        "Quantity": 3,
+        "Price": 60
+      }
+    ]
+  },
+  {
+    "Id": 3,
+    "CreatedAt": "2025-07-22T08:20:00",
+    "UpdatedAt": "2025-07-22T10:00:00",
+    "Status": "Cancelled",
+    "Total": 0,
+    "OrderItems": []
+  },
+  {
+    "Id": 4,
+    "CreatedAt": "2025-07-22T15:10:00",
+    "UpdatedAt": "2025-07-22T16:45:00",
+    "Status": "Completed",
+    "Total": 320,
+    "OrderItems": [
+      {
+        "ProductId": 104,
+        "Quantity": 4,
+        "Price": 80
+      }
+    ]
+  },
+  {
+    "Id": 5,
+    "CreatedAt": "2025-07-23T09:00:00",
+    "UpdatedAt": null,
+    "Status": "Processing",
+    "Total": 210,
+    "OrderItems": [
+      {
+        "ProductId": 105,
+        "Quantity": 2,
+        "Price": 105
+      }
+    ]
+  }
+]

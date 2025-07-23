@@ -10,6 +10,6 @@ public class OrderItem
     public DateTime CreatedAt { get; set; }
 
     // Navigation Properties
-    public Product Product { get; set; }
-    public Order Order { get; set; }
+    public required Product Product { get; set; }
+    public required Order Order { get; set; }
 }

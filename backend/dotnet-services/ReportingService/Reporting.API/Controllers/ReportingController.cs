@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
-using Reporting.core.Entities;
 using Reporting.Core.Entities;
 using Reporting.Infrastructure.Data;
 using System.Globalization;
@@ -13,9 +12,9 @@ namespace Reporting.API.Controllers
     [ApiController]
     public class ReportingController : ControllerBase
     {
-        private readonly StockDbContext _context;
+        private readonly OrderDbContext _context;
 
-        public ReportingController(StockDbContext context)
+        public ReportingController(OrderDbContext context)
         {
             _context = context;
         }
@@ -36,18 +35,21 @@ namespace Reporting.API.Controllers
 
             return Ok(dailySales);
         }
+
         // GET: api/reporting/WeeklySales
         [HttpGet("WeeklySales")]
         public async Task<IActionResult> GetWeeklySales()
         {
-            var weeklySales = await _context.Set<Order>()
+            var orders = await _context.Set<Order>().ToListAsync();
+
+            var weeklySales = orders
                 .GroupBy(o => new
                 {
                     Year = o.CreatedAt.Year,
                     Week = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
                         o.CreatedAt,
-                        CalendarWeekRule.FirstDay, // Specify the CalendarWeekRule
-                        DayOfWeek.Monday          // Specify the first day of the week
+                        CalendarWeekRule.FirstDay,
+                        DayOfWeek.Monday
                     )
                 })
                 .Select(g => new
@@ -57,10 +59,11 @@ namespace Reporting.API.Controllers
                     TotalSum = g.Sum(o => o.Total)
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Week)
-                .ToListAsync();
-            return Ok(weeklySales);
+                .ToList();
 
+            return Ok(weeklySales);
         }
+
         // GET: api/reporting/MonthlySales
         [HttpGet("MonthlySales")]
         public async Task<IActionResult> GetMonthlySales()
@@ -101,6 +104,7 @@ namespace Reporting.API.Controllers
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToListAsync();
 
+            ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("MonthlySales");
 
@@ -120,8 +124,6 @@ namespace Reporting.API.Controllers
             var stream = new MemoryStream(package.GetAsByteArray());
             stream.Position = 0;
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "MonthlySales.xlsx");
-
         }
-        
     }
 }

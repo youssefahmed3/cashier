@@ -11,10 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Global\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Cashier.Shared\Cashier.Shared.csproj" />
   </ItemGroup>
 
