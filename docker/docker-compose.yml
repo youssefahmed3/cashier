@@ -108,22 +108,36 @@ services:
     ports:
       - "8004:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_NOTIFICATION_DATASOURCE_URL=${SPRING_NOTIFICATION_DATASOURCE_URL}
-      - NOTIFICATION_POSTGRES_USER=${NOTIFICATION_POSTGRES_USER}
-      - NOTIFICATION_POSTGRES_PASSWORD=${NOTIFICATION_POSTGRES_PASSWORD}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - DB_HOST=tenant-db
+      - DB_PORT=5432
+      - DB_NAME=${TENANT_POSTGRES_DB:-tenant_db}
+      - DB_USERNAME=${TENANT_POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${TENANT_POSTGRES_PASSWORD:-postgres}
+      - SUBSCRIPTION_SERVICE_URL=${SUBSCRIPTION_SERVICE_URL:-http://subscription-service:8080}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:8085}
+      - USER_ROLE_SERVICE_URL=${USER_ROLE_SERVICE_URL:-http://auth-service:8085}
+      - JWT_SECRET=${JWT_SECRET:-mySecretKey123456789012345678901234567890}
+      - JWT_ISSUER=${JWT_ISSUER:-https://localhost:5115}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-https://localhost:5115}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
+      - SECURITY_USER_NAME=admin
+      - SECURITY_USER_PASSWORD=admin123
     depends_on:
       - tenant-db
+      - rabbitmq
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.template.rule=PathPrefix(`/tenant`)"
-      - "traefik.http.routers.template.entrypoints=web"
-      - "traefik.http.services.template.loadbalancer.server.port=8080"
-      - "traefik.http.routers.template.middlewares=strip-template@docker"
-      - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/tenant"
+      - "traefik.http.routers.tenant.rule=PathPrefix(`/tenant`)"
+      - "traefik.http.routers.tenant.entrypoints=web"
+      - "traefik.http.services.tenant.loadbalancer.server.port=8080"
+      - "traefik.http.routers.tenant.middlewares=strip-tenant@docker"
+      - "traefik.http.middlewares.strip-tenant.stripprefix.prefixes=/tenant"
     networks:
       - backend
-
 
   notification-db:
     image: postgres:14

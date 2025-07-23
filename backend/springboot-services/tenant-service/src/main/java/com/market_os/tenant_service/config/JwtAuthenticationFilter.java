@@ -94,6 +94,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     request.setAttribute("userRoles", roles);
                     request.setAttribute("tenantId", tenantId);
                     request.setAttribute("userInfo", userRole);
+                    request.setAttribute("jwtToken", token);
                     
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     log.debug("Authenticated user: {} (ID: {}) with roles: {} and tenant: {}", 
