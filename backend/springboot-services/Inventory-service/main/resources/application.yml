@@ -1,0 +1,12 @@
+server:
+  port: 8081 # Different port for each service
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/supermarket_pos
+    username: postgres
+    password: yourpassword
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
