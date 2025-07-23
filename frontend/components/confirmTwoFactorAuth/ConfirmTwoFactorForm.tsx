@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { confirm2FA } from "@/lib/api"
+import { confirm2FA } from "@/lib/api/auth/"
 import { useState } from "react"
 import {
     InputOTP,

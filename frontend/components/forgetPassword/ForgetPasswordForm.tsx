@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { forgotPassword } from "@/lib/api"
 import { toast } from "react-hot-toast"
 import { useRouter } from 'next/navigation'
+import { useAuth } from "@/hooks/useAuth"
 
 export function ForgetPasswordForm({
   className,
@@ -17,12 +17,16 @@ export function ForgetPasswordForm({
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter();
-
+  const { forgotPassword, forgotPasswordError, forgotPasswordStatus } = useAuth();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
+    forgotPassword({ email })
+    /* 
     try {
+      
+
       const response = await forgotPassword({ email })
       if (response.success) {
         toast.success(response.message || "Reset code sent to your email.")
@@ -35,7 +39,7 @@ export function ForgetPasswordForm({
       toast.error("Failed to send reset code.")
     } finally {
       setLoading(false)
-    }
+    } */
   }
 
   return (

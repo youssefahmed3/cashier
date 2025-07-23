@@ -1,16 +1,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0
 WORKDIR /app
 
-# Copy solution and project files for restore (enables Docker cache)
 COPY Order.Service.sln ./
 COPY Order.API/*.csproj Order.API/
 COPY Order.Core/*.csproj Order.Core/
 COPY Order.Infrastructure/*.csproj Order.Infrastructure/
 COPY Order.Services/*.csproj Order.Services/
+COPY Shared/*.csproj Shared/  
 
 RUN dotnet restore
 
-# Copy the rest of the code
 COPY . ./
 
 EXPOSE 8080

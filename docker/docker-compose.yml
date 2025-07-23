@@ -23,24 +23,6 @@ services:
     networks:
       - backend
 
-  order-service-dotnet:
-    build: ../backend/dotnet-services/OrderService
-    volumes:
-      - ../backend/dotnet-services/OrderService:/app
-    ports:
-      - "8010:8085"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-    depends_on:
-      - dotnet-db
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.order-dotnet.rule=PathPrefix(`/order-service-dotnet`)"
-      - "traefik.http.routers.order-dotnet.entrypoints=web"
-      - "traefik.http.services.order-dotnet.loadbalancer.server.port=8085"
-      - "traefik.http.routers.order-dotnet.middlewares=strip-order-dotnet@docker"
-      - "traefik.http.middlewares.strip-order-dotnet.stripprefix.prefixes=/order-service-dotnet"
-
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -53,13 +35,52 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
 
+  auth-service:
+    build: ../backend/dotnet-services/AuthenticationService
+    volumes:
+      - ../backend/dotnet-services/AuthenticationService:/app
+    ports:
+      - "8001:8085"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - dotnet-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.order-dotnet.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.order-dotnet.entrypoints=web"
+      - "traefik.http.services.order-dotnet.loadbalancer.server.port=8085"
+      - "traefik.http.routers.order-dotnet.middlewares=strip-order-dotnet@docker"
+      - "traefik.http.middlewares.strip-order-dotnet.stripprefix.prefixes=/auth"
+    
+
+  order-service:
+    build: ../backend/dotnet-services/OrderService
+    volumes:
+      - ../backend/dotnet-services/OrderService:/app
+    ports:
+      - "8002:8085"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - dotnet-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.order-dotnet.rule=PathPrefix(`/order`)"
+      - "traefik.http.routers.order-dotnet.entrypoints=web"
+      - "traefik.http.services.order-dotnet.loadbalancer.server.port=8085"
+      - "traefik.http.routers.order-dotnet.middlewares=strip-order-dotnet@docker"
+      - "traefik.http.middlewares.strip-order-dotnet.stripprefix.prefixes=/order"
+
+
+
   notification-service:
     build: ../backend/springboot-services/notification-service
     volumes:
       - ../backend/springboot-services/notification-service:/app
       - ~/.m2:/root/.m2
     ports:
-      - "8001:8080"
+      - "8003:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_NOTIFICATION_DATASOURCE_URL=${SPRING_NOTIFICATION_DATASOURCE_URL}
@@ -77,29 +98,7 @@ services:
     networks:
       - backend
 
-  starter-data-service:
-    build: ../backend/springboot-services/starter-data-service
-    volumes:
-      - ../backend/springboot-services/starter-data-service:/app
-      - ~/.m2:/root/.m2
-    ports:
-      - "8002:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_STARTER_DATA_DATASOURCE_URL=${SPRING_STARTER_DATA_DATASOURCE_URL}
-      - STARTER_DATA_POSTGRES_USER=${STARTER_DATA_POSTGRES_USER}
-      - STARTER_DATA_POSTGRES_PASSWORD=${STARTER_DATA_POSTGRES_PASSWORD}
-    depends_on:
-      - starter-data-db
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.template.rule=PathPrefix(`/starter-data`)"
-      - "traefik.http.routers.template.entrypoints=web"
-      - "traefik.http.services.template.loadbalancer.server.port=8080"
-      - "traefik.http.routers.template.middlewares=strip-template@docker"
-      - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/starter-data"
-    networks:
-      - backend
+  
 
   notification-db:
     image: postgres:14
@@ -156,5 +155,3 @@ services:
     networks:
       - backend
 
-volumes:
-  frontend_node_modules:
