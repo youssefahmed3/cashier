@@ -9,6 +9,8 @@ import {
     validateResetCode,
     resetPassword,
 } from '../lib/api/auth';
+import { toast } from 'sonner';
+
 import {
     RegisterDto,
     LoginDto,
@@ -35,7 +37,11 @@ export const useAuth = () => {
         mutationFn: registerUser,
         onSuccess: (data) => {
             if (data.success) {
+                toast.success("Registration successful!");
                 router.push('/login');
+            }
+            else{
+                toast.error("Registration failed!");
             }
         },
         onError: (error) => {
@@ -48,13 +54,18 @@ export const useAuth = () => {
         mutationFn: loginUser,
         onSuccess: (data, variables) => {
             if (data.requires2FA) {
+                toast.info("Two-factor authentication required. Please check your email.");
                 localStorage.setItem("2fa-email", variables.email);
                 router.push("/confirmTwoFactorAuth");
             } else if (data.success) {
+                toast.success("Login successful!");
                 console.log("Login successful");
                 localStorage.setItem("token", data.token!);
                 localStorage.setItem("refresh-token", data.refreshToken!);
                 redirect('/tenant/dashboard'); // Redirect to the dashboard or home page
+            }
+            else{
+                toast.error("Invalid credentials.");
             }
         },
     });
@@ -64,6 +75,7 @@ export const useAuth = () => {
         mutationFn: confirm2FA,
         onSuccess: (data) => {
             if (data.isSuccess) {
+                toast.success("2FA confirmed successfully!");
                 localStorage.removeItem("2fa-email");
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('refresh-Token', data.refreshToken);
@@ -82,14 +94,14 @@ export const useAuth = () => {
     onSuccess: (data, variables) => {
       if (data.success) {
         localStorage.setItem("user-email", variables.email);
-        // toast.success(data.message || "Reset code sent.");
+        toast.success(data.message || "Reset code sent.");
         router.push('/validateResetPasswordCode');
       } else {
-        // toast.error(data.message || "Something went wrong.");
+        toast.error(data.message || "Something went wrong.");
       }
     },
     onError: (error) => {
-    //   toast.error(error.message || "Failed to send reset code.");
+      toast.error(error.message || "Failed to send reset code.");
       console.error("Forgot password error:", error.message);
     },
   });
@@ -103,10 +115,12 @@ export const useAuth = () => {
         mutationFn: validateResetCode,
         onSuccess: (data) => {
             if (data.success) {
+                toast.success("Code validated successfully.");
                 router.push('/resetPassword');
             }
         },
         onError: (error) => {
+            toast.error("Failed to validate reset code.");
             console.error('Validate reset code error:', error.message);
         },
     });
@@ -116,6 +130,7 @@ export const useAuth = () => {
         mutationFn: resetPassword,
         onSuccess: (data) => {
             if (data.success) {
+                toast.success("Password reset successfully.");
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('refresh-token', data.refreshToken);
                 localStorage.removeItem("user-email")
@@ -124,6 +139,7 @@ export const useAuth = () => {
             }
         },
         onError: (error) => {
+            toast.error("Failed to reset password.");
             console.error('Reset password error:', error.message);
         },
     });
@@ -131,6 +147,7 @@ export const useAuth = () => {
     // Logout mutation
     const logoutMutation = useMutation<void, Error>({
         mutationFn: async () => {
+            toast.success("Logged out successfully.");
             localStorage.removeItem('token');
             localStorage.removeItem('refresh-token');
             localStorage.removeItem('tempToken');
@@ -141,6 +158,7 @@ export const useAuth = () => {
             router.push('/login');
         },
         onError: (error) => {
+            toast.error("Logout failed.");
             console.error('Logout error:', error.message);
         },
     });
