@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { registerUser, RegisterDto } from "@/lib/api"
 import { extractEmailFromJwtToken } from "@/lib/jwt"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from 'next/navigation'
+import { RegisterDto } from "@/types/dtos"
+import { useAuth } from "@/hooks/useAuth"
 
 
 export function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -27,6 +28,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const {register, registerError, registerStatus} = useAuth();
 
   useEffect(() => {
     if (token) {
@@ -48,7 +50,8 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    try {
+    register(form);
+    /* try {
       const result = await registerUser(form);
       if (result.success) {
         setMessage("Registration successful!");
@@ -60,7 +63,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
       setMessage(error.message);
     } finally {
       setLoading(false);
-    }
+    } */
   };
 
   return (

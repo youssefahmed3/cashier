@@ -1,6 +1,6 @@
 "use client";
 
-import { BranchType, InventoryType, ProductType } from "@/app/types/types";
+import { BranchType, InventoryType, ProductType } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

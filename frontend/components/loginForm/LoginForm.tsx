@@ -1,14 +1,20 @@
-"use client"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { loginUser, LoginDto } from "@/lib/api"
-import { useState } from "react"
-import { useRouter } from 'next/navigation'
+"use client";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { LoginDto } from "@/types/dtos";
+import { useAuth } from "@/hooks/useAuth";
+
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   const [form, setForm] = useState<LoginDto>({
     email: "",
     password: "",
@@ -16,6 +22,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
+
+  const { login, loginStatus, loginError } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.id]: e.target.value });
@@ -25,7 +33,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    try {
+    login(form)
+    /* try {
       const result = await loginUser(form);
       if (result.requires2FA) {
         setMessage("Login successful, Please confirm your email!");
@@ -49,7 +58,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       setMessage(error.message);
     } finally {
       setLoading(false);
-    }
+    } */
   };
   // export function LoginForm({
   //   className,
@@ -59,7 +68,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     <div className={cn("flex flex-col gap-6 w-[60%]", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form onSubmit={handleSubmit} className="p-6 md:p-8 w-full max-w-2xl mx-auto">
+          <form
+            onSubmit={handleSubmit}
+            className="p-6 md:p-8 w-full max-w-2xl mx-auto"
+          >
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -69,17 +81,33 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
               </div>
               <div className="grid gap-3 w-[full]">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" placeholder="user@example.com" type="email" value={form.email} onChange={handleChange} required />
+                <Input
+                  id="email"
+                  placeholder="user@example.com"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div className="grid gap-3 w-full">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
                 </div>
-                <Input id="password" type="password" placeholder="Enter your password" value={form.password} onChange={handleChange} required />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
               {message && (
-                <p className="text-center text-sm text-red-600 dark:text-red-400">{message}</p>
+                <p className="text-center text-sm text-red-600 dark:text-red-400">
+                  {message}
+                </p>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
@@ -130,9 +158,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
               </div>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
+                <Link href="/register" className="underline underline-offset-4">
                   Join us
-                </a>
+                </Link>
               </div>
             </div>
           </form>
@@ -150,5 +178,5 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
         and <a href="#">Privacy Policy</a>.
       </div>
     </div>
-  )
+  );
 }

@@ -1,19 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { resetPassword, ResetPasswordDto } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "react-hot-toast"
+import { ResetPasswordDto } from "@/types/dtos"
+import { useAuth } from "@/hooks/useAuth"
 
 export function ResetPasswordForm() {
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [email, setEmail] = useState("")
     const [code, setCode] = useState("")
-
+    const {resetPassword, resetPasswordError, resetPasswordStatus} = useAuth()
     useEffect(() => {
         const storedEmail = localStorage.getItem("user-email") || ""
         const storedCode = localStorage.getItem("reset-code") || ""
@@ -29,7 +30,8 @@ export function ResetPasswordForm() {
         }
 
         const dto: ResetPasswordDto = { email, code, newPassword }
-        const result = await resetPassword(dto)
+        resetPassword(dto)
+        /*         const result = await resetPassword(dto)
 
         if (result.success) {
             toast.success("Password reset successfully")
@@ -40,7 +42,7 @@ export function ResetPasswordForm() {
             localStorage.removeItem("reset-code")
         } else {
             toast.error(result.message || "Failed to reset password")
-        }
+        } */
     }
 
     return (

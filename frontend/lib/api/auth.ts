@@ -1,3 +1,5 @@
+import { ApiResponse, Confirm2FADto, ForgotPasswordDto, ForgotPasswordResponse, LoginDto, RegisterDto, ResetPasswordDto, ResetPasswordResponse, ValidateResetCodeDto } from "@/types/dtos";
+
 //Register function
 export async function registerUser(data: RegisterDto) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
@@ -14,14 +16,6 @@ export async function registerUser(data: RegisterDto) {
   return json;
 }
 
-export interface RegisterDto {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  phoneNumber: string;
-  password: string;
-}
 
 //Login function
 export async function loginUser(data: LoginDto) {
@@ -39,10 +33,6 @@ export async function loginUser(data: LoginDto) {
   return json;
 }
 
-export interface LoginDto {
-  email: string;
-  password: string;
-}
 
 //Confirm Two Factor Auth function
 export async function confirm2FA(data: Confirm2FADto): Promise<ApiResponse> {
@@ -56,18 +46,7 @@ export async function confirm2FA(data: Confirm2FADto): Promise<ApiResponse> {
 
   return await response.json()
 }
-export interface Confirm2FADto {
-  email: string
-  code: string
-}
 
-export interface ApiResponse {
-  isSuccess: boolean
-  message: string
-  token: string
-  refreshToken: string
-  expiration: Date
-}
 
 //Forget Password function
 export async function forgotPassword(data: ForgotPasswordDto): Promise<ForgotPasswordResponse> {
@@ -81,13 +60,7 @@ export async function forgotPassword(data: ForgotPasswordDto): Promise<ForgotPas
 
   return await response.json()
 }
-export interface ForgotPasswordDto {
-  email: string
-}
-export interface ForgotPasswordResponse {
-  success: boolean
-  message: string
-}
+
 
 //Validate Reset Password Code function
 export async function validateResetCode(
@@ -104,10 +77,6 @@ export async function validateResetCode(
   return await response.json();
 }
 
-export interface ValidateResetCodeDto {
-  email: string
-  verificationCode: string
-}
 
 //Reset Password function 
 export async function resetPassword(data: ResetPasswordDto): Promise<ResetPasswordResponse> {
@@ -122,14 +91,3 @@ export async function resetPassword(data: ResetPasswordDto): Promise<ResetPasswo
   return await response.json()
 }
 
-export interface ResetPasswordDto {
-  email: string
-  newPassword: string
-  code: string
-}
-export interface ResetPasswordResponse {
-  success: boolean
-  message: string
-  token: string
-  refreshToken: string
-}
