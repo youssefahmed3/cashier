@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace Cashier.Services.Services
+﻿namespace Cashier.Services.Services
 {
     public class UserRoleService(IUnitOfWork _unitOfWork, IMapper _mapper,
         IHttpContextAccessor _httpContextAccessor, UserManager<AppUser> _userManager) : IUserRoleService
