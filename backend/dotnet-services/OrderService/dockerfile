@@ -1,0 +1,17 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+WORKDIR /app
+
+COPY Order.Service.sln ./
+COPY Order.API/*.csproj Order.API/
+COPY Order.Core/*.csproj Order.Core/
+COPY Order.Infrastructure/*.csproj Order.Infrastructure/
+COPY Order.Services/*.csproj Order.Services/
+COPY Shared/*.csproj Shared/  
+
+RUN dotnet restore
+
+COPY . ./
+
+EXPOSE 8080
+
+CMD ["dotnet", "watch", "--project", "Order.API/Order.API.csproj", "run"]

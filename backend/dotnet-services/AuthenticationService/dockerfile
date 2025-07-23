@@ -1,0 +1,18 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+WORKDIR /app
+
+COPY CashierSolution.sln ./
+COPY Cashier.API/*.csproj Cashier.API/
+COPY Cashier.Core/*.csproj Cashier.Core/
+COPY Cashier.Infrastructure/*.csproj Cashier.Infrastructure/
+COPY Cashier.Services/*.csproj Cashier.Services/
+
+COPY Shared/*.csproj Shared/
+
+RUN dotnet restore
+
+COPY . ./
+
+EXPOSE 8080
+
+CMD ["dotnet", "watch", "--project", "Cashier.API/Cashier.API.csproj", "run"]
