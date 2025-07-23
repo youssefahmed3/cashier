@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { confirm2FA } from "@/lib/api/auth/"
+import { confirm2FA } from "@/lib/api/auth"
 import { useState } from "react"
 import {
     InputOTP,
@@ -12,6 +12,7 @@ import {
     InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { useEffect } from "react"
+import { useAuth } from "@/hooks/useAuth"
 
 export function ConfirmTwoFactorForm({
     className,
@@ -26,30 +27,41 @@ export function ConfirmTwoFactorForm({
         if (storedEmail) setEmail(storedEmail);
     }, []);
 
+const {
+  confirm2FA,
+  confirm2FAStatus,
+  confirm2FAError,
+  isConfirm2FALoading
+} = useAuth()
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
-        setMessage("")
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault()
+  setMessage("")
+  confirm2FA({ email, code })
+}
+    // const handleSubmit = async (e: React.FormEvent) => {
+    //     e.preventDefault()
+    //     setLoading(true)
+    //     setMessage("")
 
-        try {
-            const result = await confirm2FA({ email, code })
+    //     try {
+    //         const result = await confirm2FA({ email, code })
 
-            if (result.isSuccess) {
-                localStorage.removeItem("2fa-email");
-                localStorage.setItem("token", result.token);
-                localStorage.setItem("refresh-token", result.refreshToken);
-                setMessage("2FA confirmed successfully!")
-                //Redirect to the dashboard 
-            } else {
-                setMessage(result.message || "Invalid code")
-            }
-        } catch (error) {
-            setMessage("Server error")
-        } finally {
-            setLoading(false)
-        }
-    }
+    //         if (result.success) {
+    //             localStorage.removeItem("2fa-email");
+    //             localStorage.setItem("token", result.token);
+    //             localStorage.setItem("refresh-token", result.refreshToken);
+    //             setMessage("2FA confirmed successfully!")
+    //             //Redirect to the dashboard 
+    //         } else {
+    //             setMessage(result.message || "Invalid code")
+    //         }
+    //     } catch (error) {
+    //         setMessage("Server error")
+    //     } finally {
+    //         setLoading(false)
+    //     }
+    // }
 
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -86,13 +98,16 @@ export function ConfirmTwoFactorForm({
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full" disabled={loading}>
-                                {loading ? "Confirming..." : "Confirm account"}
-                            </Button>
+                           <Button type="submit" disabled={isConfirm2FALoading}>
+  {isConfirm2FALoading ? "Confirming..." : "Confirm"}
+</Button>
 
-                            {message && (
-                                <p className="text-center text-sm text-red-500">{message}</p>
-                            )}
+{confirm2FAError && (
+  <p className="text-center text-sm text-red-600">
+    {confirm2FAError.message || "2FA failed"}
+  </p>
+)}
+
                         </div>
                     </form>
 
