@@ -10,6 +10,7 @@ services:
     command:
       - --api.dashboard=true
       - --providers.docker=true
+      - --api.insecure=true
       - --entrypoints.web.address=:80
     ports:
       - "80:80"       # Public HTTP traffic
@@ -35,6 +36,7 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
 
+
   auth-service:
     build: ../backend/dotnet-services/AuthenticationService
     volumes:
@@ -47,11 +49,13 @@ services:
       - dotnet-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.order-dotnet.rule=PathPrefix(`/auth`)"
-      - "traefik.http.routers.order-dotnet.entrypoints=web"
-      - "traefik.http.services.order-dotnet.loadbalancer.server.port=8085"
-      - "traefik.http.routers.order-dotnet.middlewares=strip-order-dotnet@docker"
-      - "traefik.http.middlewares.strip-order-dotnet.stripprefix.prefixes=/auth"
+      - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth.entrypoints=web"
+      - "traefik.http.services.auth.loadbalancer.server.port=8085"
+      - "traefik.http.routers.auth.middlewares=strip-auth@docker"
+      - "traefik.http.middlewares.strip-auth.stripprefix.prefixes=/auth"
+    networks:
+      - backend
     
 
   order-service:
@@ -66,13 +70,13 @@ services:
       - dotnet-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.order-dotnet.rule=PathPrefix(`/order`)"
-      - "traefik.http.routers.order-dotnet.entrypoints=web"
-      - "traefik.http.services.order-dotnet.loadbalancer.server.port=8085"
-      - "traefik.http.routers.order-dotnet.middlewares=strip-order-dotnet@docker"
-      - "traefik.http.middlewares.strip-order-dotnet.stripprefix.prefixes=/order"
-
-
+      - "traefik.http.routers.order.rule=PathPrefix(`/order`)"
+      - "traefik.http.routers.order.entrypoints=web"
+      - "traefik.http.services.order.loadbalancer.server.port=8085"
+      - "traefik.http.routers.order.middlewares=strip-order@docker"
+      - "traefik.http.middlewares.strip-order.stripprefix.prefixes=/order"
+    networks:
+      - backend
 
   notification-service:
     build: ../backend/springboot-services/notification-service
@@ -90,11 +94,11 @@ services:
       - notification-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.template.rule=PathPrefix(`/notification`)"
-      - "traefik.http.routers.template.entrypoints=web"
-      - "traefik.http.services.template.loadbalancer.server.port=8080"
-      - "traefik.http.routers.template.middlewares=strip-template@docker"
-      - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/notification"
+      - "traefik.http.routers.notification.rule=PathPrefix(`/notification`)"
+      - "traefik.http.routers.notification.entrypoints=web"
+      - "traefik.http.services.notification.loadbalancer.server.port=8080"
+      - "traefik.http.routers.notification.middlewares=strip-notification@docker"
+      - "traefik.http.middlewares.strip-notification.stripprefix.prefixes=/notification"
     networks:
       - backend
 
@@ -133,38 +137,6 @@ services:
       POSTGRES_DB: ${NOTIFICATION_POSTGRES_DB}
       POSTGRES_USER: ${NOTIFICATION_POSTGRES_USER}
       POSTGRES_PASSWORD: ${NOTIFICATION_POSTGRES_PASSWORD}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend
-
-  order-db:
-    image: postgres:14
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_DB: ${ORDER_POSTGRES_DB}
-      POSTGRES_USER: ${ORDER_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${ORDER_POSTGRES_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend
-
-  starter-data-db:
-    image: postgres:14
-    ports:
-      - "5435:5432"
-    environment:
-      POSTGRES_DB: ${SARTER_DATA_POSTGRES_DB}
-      POSTGRES_USER: ${SARTER_DATA_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${SARTER_DATA_POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 10s
