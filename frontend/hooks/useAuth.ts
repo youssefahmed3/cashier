@@ -1,6 +1,6 @@
 "use client";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import {
     registerUser,
     loginUser,
@@ -9,6 +9,8 @@ import {
     validateResetCode,
     resetPassword,
 } from '../lib/api/auth';
+import { toast } from 'sonner';
+
 import {
     RegisterDto,
     LoginDto,
@@ -19,6 +21,7 @@ import {
     ApiResponse,
     ForgotPasswordResponse,
     ResetPasswordResponse,
+    TwoFactorAuthApiResponse
 } from '@/types/dtos';
 
 export const useAuth = () => {
@@ -33,8 +36,12 @@ export const useAuth = () => {
     const registerMutation = useMutation<ApiResponse, Error, RegisterDto>({
         mutationFn: registerUser,
         onSuccess: (data) => {
-            if (data.isSuccess) {
+            if (data.success) {
+                toast.success("Registration successful!");
                 router.push('/login');
+            }
+            else{
+                toast.error("Registration failed!");
             }
         },
         onError: (error) => {
@@ -45,38 +52,35 @@ export const useAuth = () => {
     // Login mutation
     const loginMutation = useMutation<ApiResponse, Error, LoginDto>({
         mutationFn: loginUser,
-        onSuccess: (data) => {
-            if (data.isSuccess) {
-                if (data.message === '2FA required') {
-                    // Store temporary token for 2FA
-                    localStorage.setItem('tempToken', data.token);
-                    localStorage.setItem('tempRefreshToken', data.refreshToken);
-                    router.push('/confirmTwoFactorAuth');
-                } else {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('refreshToken', data.refreshToken);
-                    /* The router here is not correct i know */
-                    /* TODO: fix the router depend on the role or the data fetching */
-                    router.push('/dashboard');
-                }
+        onSuccess: (data, variables) => {
+            if (data.requires2FA) {
+                toast.info("Two-factor authentication required. Please check your email.");
+                localStorage.setItem("2fa-email", variables.email);
+                router.push("/confirmTwoFactorAuth");
+            } else if (data.success) {
+                toast.success("Login successful!");
+                console.log("Login successful");
+                localStorage.setItem("token", data.token!);
+                localStorage.setItem("refresh-token", data.refreshToken!);
+                redirect('/tenant/dashboard'); // Redirect to the dashboard or home page
             }
-        },
-        onError: (error) => {
-            console.error('Login error:', error.message);
+            else{
+                toast.error("Invalid credentials.");
+            }
         },
     });
 
     // Confirm 2FA mutation
-    const confirm2FAMutation = useMutation<ApiResponse, Error, Confirm2FADto>({
+    const confirm2FAMutation = useMutation<TwoFactorAuthApiResponse, Error, Confirm2FADto>({
         mutationFn: confirm2FA,
         onSuccess: (data) => {
             if (data.isSuccess) {
-                localStorage.removeItem('tempToken');
-                localStorage.removeItem('tempRefreshToken');
+                toast.success("2FA confirmed successfully!");
+                localStorage.removeItem("2fa-email");
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('refresh-Token', data.refreshToken);
                 /* TODO: fix the router depend on the role or the data fetching */
-                router.push('/dashboard');
+                router.push('/login');
             }
         },
         onError: (error) => {
@@ -84,18 +88,23 @@ export const useAuth = () => {
         },
     });
 
-    // Forgot password mutation
-    const forgotPasswordMutation = useMutation<ForgotPasswordResponse, Error, ForgotPasswordDto>({
-        mutationFn: forgotPassword,
-        onSuccess: (data) => {
-            if (data.success) {
-                router.push('/validateResetPasswordCode');
-            }
-        },
-        onError: (error) => {
-            console.error('Forgot password error:', error.message);
-        },
-    });
+
+ const forgotPasswordMutation = useMutation<ForgotPasswordResponse, Error, ForgotPasswordDto>({
+    mutationFn: forgotPassword,
+    onSuccess: (data, variables) => {
+      if (data.success) {
+        localStorage.setItem("user-email", variables.email);
+        toast.success(data.message || "Reset code sent.");
+        router.push('/validateResetPasswordCode');
+      } else {
+        toast.error(data.message || "Something went wrong.");
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to send reset code.");
+      console.error("Forgot password error:", error.message);
+    },
+  });
 
     // Validate reset code mutation
     const validateResetCodeMutation = useMutation<
@@ -106,10 +115,12 @@ export const useAuth = () => {
         mutationFn: validateResetCode,
         onSuccess: (data) => {
             if (data.success) {
+                toast.success("Code validated successfully.");
                 router.push('/resetPassword');
             }
         },
         onError: (error) => {
+            toast.error("Failed to validate reset code.");
             console.error('Validate reset code error:', error.message);
         },
     });
@@ -119,12 +130,16 @@ export const useAuth = () => {
         mutationFn: resetPassword,
         onSuccess: (data) => {
             if (data.success) {
+                toast.success("Password reset successfully.");
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('refresh-token', data.refreshToken);
+                localStorage.removeItem("user-email")
+                localStorage.removeItem("reset-code")
                 router.push('/login');
             }
         },
         onError: (error) => {
+            toast.error("Failed to reset password.");
             console.error('Reset password error:', error.message);
         },
     });
@@ -132,8 +147,9 @@ export const useAuth = () => {
     // Logout mutation
     const logoutMutation = useMutation<void, Error>({
         mutationFn: async () => {
+            toast.success("Logged out successfully.");
             localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('refresh-token');
             localStorage.removeItem('tempToken');
             localStorage.removeItem('tempRefreshToken');
         },
@@ -142,6 +158,7 @@ export const useAuth = () => {
             router.push('/login');
         },
         onError: (error) => {
+            toast.error("Logout failed.");
             console.error('Logout error:', error.message);
         },
     });
@@ -156,10 +173,12 @@ export const useAuth = () => {
         login: loginMutation.mutate,
         loginStatus: loginMutation.status,
         loginError: loginMutation.error,
+        isLoading: loginMutation.isPending,
 
         confirm2FA: confirm2FAMutation.mutate,
         confirm2FAStatus: confirm2FAMutation.status,
         confirm2FAError: confirm2FAMutation.error,
+        isConfirm2FALoading: confirm2FAMutation.isPending,
 
         forgotPassword: forgotPasswordMutation.mutate,
         forgotPasswordStatus: forgotPasswordMutation.status,

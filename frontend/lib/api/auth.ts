@@ -1,4 +1,4 @@
-import { ApiResponse, Confirm2FADto, ForgotPasswordDto, ForgotPasswordResponse, LoginDto, RegisterDto, ResetPasswordDto, ResetPasswordResponse, ValidateResetCodeDto } from "@/types/dtos";
+import { ApiResponse, Confirm2FADto, ForgotPasswordDto, ForgotPasswordResponse, LoginDto, RegisterDto, ResetPasswordDto, ResetPasswordResponse, TwoFactorAuthApiResponse, ValidateResetCodeDto } from "@/types/dtos";
 
 //Register function
 export async function registerUser(data: RegisterDto) {
@@ -35,7 +35,7 @@ export async function loginUser(data: LoginDto) {
 
 
 //Confirm Two Factor Auth function
-export async function confirm2FA(data: Confirm2FADto): Promise<ApiResponse> {
+export async function confirm2FA(data: Confirm2FADto): Promise<TwoFactorAuthApiResponse> {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/confirm-2fa`, {
     method: "POST",
     headers: {

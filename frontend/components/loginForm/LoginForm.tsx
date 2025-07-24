@@ -19,11 +19,11 @@ export function LoginForm({
     email: "",
     password: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
 
-  const { login, loginStatus, loginError } = useAuth();
+  const { login, loginStatus, loginError, isLoading } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.id]: e.target.value });
@@ -31,7 +31,6 @@ export function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setMessage(null);
     login(form)
     /* try {
@@ -104,13 +103,14 @@ export function LoginForm({
                 />
               </div>
 
-              {message && (
+              {(loginError || message) && (
                 <p className="text-center text-sm text-red-600 dark:text-red-400">
-                  {message}
+                  {loginError?.message || message}
                 </p>
               )}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
               <div className="grid gap-3 w-full">
                 <div className="flex justify-center items-center w-full">

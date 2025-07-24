@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Cashier.Infrastructure\Cashier.Infrastructure.csproj" />
     <ProjectReference Include="..\Cashier.Services\Cashier.Services.csproj" />
+    <ProjectReference Include="..\Cashier.Validation\Cashier.Validation.csproj" />
   </ItemGroup>
 
 </Project>

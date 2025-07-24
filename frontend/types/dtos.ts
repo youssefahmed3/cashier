@@ -19,11 +19,21 @@ export interface Confirm2FADto {
 }
 
 export interface ApiResponse {
+    success: boolean
+    message: string
+    token: string
+    refreshToken: string
+    expiration: Date
+    requires2FA?: boolean;
+}
+
+export interface TwoFactorAuthApiResponse {
     isSuccess: boolean
     message: string
     token: string
     refreshToken: string
     expiration: Date
+    requires2FA?: boolean;
 }
 
 export interface ForgotPasswordDto {

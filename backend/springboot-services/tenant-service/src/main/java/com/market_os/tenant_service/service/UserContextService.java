@@ -1,6 +1,8 @@
 package com.market_os.tenant_service.service;
 
 import com.market_os.tenant_service.dto.UserRoleDto;
+import com.market_os.tenant_service.dto.AppUserDto;
+import com.market_os.tenant_service.dto.PermissionDto;
 import com.market_os.tenant_service.util.UserContextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class UserContextService {
+    
+    private final UserRolePermissionService userRolePermissionService;
     
     /**
      * Get current user's tenant ID
@@ -50,18 +54,29 @@ public class UserContextService {
     
     /**
      * Check if current user has permission to access a tenant
-     * This method can be enhanced with complex business logic
+     * Enhanced with UserRoleService integration
      */
     public boolean canAccessTenant(UUID tenantId) {
         try {
-            // Check using utility method
-            boolean hasAccess = UserContextUtil.hasAccessToTenant(tenantId);
+            // Check using enhanced permission service
+            boolean hasAccess = userRolePermissionService.canAccessTenant(tenantId);
             
-            // TODO: Add additional checks when needed
-            // - Check if user's subscription allows access to this tenant
-            // - Validate time-based access restrictions
-            // - Check if tenant is active and user has current permissions
-            // - Apply business rules based on user roles
+            // Additional business logic checks
+            if (hasAccess) {
+                // Check if user is suspended
+                AppUserDto userDetails = userRolePermissionService.getCurrentUserDetails();
+                if (userDetails != null && Boolean.TRUE.equals(userDetails.getIsSuspended())) {
+                    log.warn("Access denied for suspended user to tenant: {}", tenantId);
+                    return false;
+                }
+                
+                // Check if user has ViewTenants permission
+                if (!userRolePermissionService.hasPermission("ViewTenants") && 
+                    !UserContextUtil.isSuperAdmin()) {
+                    log.warn("User lacks ViewTenants permission for tenant: {}", tenantId);
+                    return false;
+                }
+            }
             
             return hasAccess;
         } catch (Exception e) {
@@ -118,6 +133,65 @@ public class UserContextService {
                     userId, tenantId, roles);
         } catch (Exception e) {
             return "User: unknown";
+        }
+    }
+    
+    /**
+     * Check if user can create tenants
+     */
+    public boolean canCreateTenants() {
+        return userRolePermissionService.canManageTenants() && 
+               userRolePermissionService.hasPermission("ManageTenants");
+    }
+    
+    /**
+     * Check if user can update a specific tenant
+     */
+    public boolean canUpdateTenant(UUID tenantId) {
+        return canAccessTenant(tenantId) && 
+               (UserContextUtil.isSuperAdmin() || 
+                userRolePermissionService.hasPermission("ManageTenants"));
+    }
+    
+    /**
+     * Check if user can delete a specific tenant
+     */
+    public boolean canDeleteTenant(UUID tenantId) {
+        return UserContextUtil.isSuperAdmin() && 
+               userRolePermissionService.hasPermission("ManageTenants");
+    }
+    
+    /**
+     * Check if user can create branches for a tenant
+     */
+    public boolean canCreateBranches(UUID tenantId) {
+        return userRolePermissionService.canManageBranches(tenantId);
+    }
+    
+    /**
+     * Check if user can view branches for a tenant
+     */
+    public boolean canViewBranches(UUID tenantId) {
+        return userRolePermissionService.canViewBranches(tenantId);
+    }
+    
+    /**
+     * Get detailed user information from UserRoleService
+     */
+    public AppUserDto getCurrentUserDetails() {
+        return userRolePermissionService.getCurrentUserDetails();
+    }
+    
+    /**
+     * Get current user's permissions
+     */
+    public List<PermissionDto> getCurrentUserPermissions() {
+        try {
+            Integer userId = UserContextUtil.getCurrentUserIdAsInteger();
+            return userRolePermissionService.getUserPermissions(userId);
+        } catch (Exception e) {
+            log.error("Failed to get current user permissions: {}", e.getMessage());
+            return List.of();
         }
     }
 } 

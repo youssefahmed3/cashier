@@ -133,6 +133,21 @@ public class UserContextUtil {
     }
     
     /**
+     * Get the current JWT token from request attributes
+     * Set by JwtAuthenticationFilter
+     */
+    public static String getCurrentJwtToken() {
+        HttpServletRequest request = getCurrentRequest();
+        if (request != null) {
+            String token = (String) request.getAttribute("jwtToken");
+            if (token != null) {
+                return token;
+            }
+        }
+        throw new IllegalStateException("JWT token not found in request context");
+    }
+    
+    /**
      * Get current HttpServletRequest
      */
     private static HttpServletRequest getCurrentRequest() {
