@@ -102,6 +102,30 @@ services:
     networks:
       - backend
 
+  product-service:
+    build: ../backend/springboot-services/product-service
+    volumes:
+      - ../backend/springboot-services/product-service:/app
+      - ~/.m2:/root/.m2
+    ports:
+      - "8005:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PRODUCT_DATASOURCE_URL=jdbc:postgresql://product-db:5432/product_db
+      - PRODUCT_POSTGRES_USER=product_db
+      - PRODUCT_POSTGRES_PASSWORD=product_db
+    depends_on:
+      - product-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.product.rule=PathPrefix(`/product`)"
+      - "traefik.http.routers.product.entrypoints=web"
+      - "traefik.http.services.product.loadbalancer.server.port=8080"
+      - "traefik.http.routers.product.middlewares=strip-product@docker"
+      - "traefik.http.middlewares.strip-product.stripprefix.prefixes=/product"
+    networks:
+      - backend
+
   
 
   tenant-service:
@@ -144,6 +168,23 @@ services:
       retries: 5
     networks:
       - backend
+
+  product-db:
+    image: postgres:14
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: product_db
+      POSTGRES_USER: product_db
+      POSTGRES_PASSWORD: product_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
 
   dotnet-db:
     image: mcr.microsoft.com/mssql/server:2022-latest

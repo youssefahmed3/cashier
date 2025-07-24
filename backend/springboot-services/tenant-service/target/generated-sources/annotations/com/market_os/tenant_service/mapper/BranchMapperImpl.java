@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-07-16T13:09:09+0300",
-    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.42.50.v20250628-1110, environment: Java 21.0.7 (Eclipse Adoptium)"
+    date = "2025-07-23T12:41:17+0000",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.11 (Eclipse Adoptium)"
 )
 @Component
 public class BranchMapperImpl implements BranchMapper {
@@ -29,9 +29,9 @@ public class BranchMapperImpl implements BranchMapper {
         branchDto.taxPercentage( branch.getTaxPercentage() );
         branchDto.createdAt( branch.getCreatedAt() );
         branchDto.id( branch.getId() );
-        branchDto.location( branch.getLocation() );
         branchDto.name( branch.getName() );
         branchDto.phone( branch.getPhone() );
+        branchDto.location( branch.getLocation() );
 
         return branchDto.build();
     }
@@ -59,9 +59,9 @@ public class BranchMapperImpl implements BranchMapper {
         Branch.BranchBuilder branch = Branch.builder();
 
         branch.taxPercentage( createBranchDto.getTaxPercentage() );
-        branch.location( createBranchDto.getLocation() );
         branch.name( createBranchDto.getName() );
         branch.phone( createBranchDto.getPhone() );
+        branch.location( createBranchDto.getLocation() );
 
         return branch.build();
     }
@@ -75,14 +75,14 @@ public class BranchMapperImpl implements BranchMapper {
         if ( updateBranchDto.getTaxPercentage() != null ) {
             branch.setTaxPercentage( updateBranchDto.getTaxPercentage() );
         }
-        if ( updateBranchDto.getLocation() != null ) {
-            branch.setLocation( updateBranchDto.getLocation() );
-        }
         if ( updateBranchDto.getName() != null ) {
             branch.setName( updateBranchDto.getName() );
         }
         if ( updateBranchDto.getPhone() != null ) {
             branch.setPhone( updateBranchDto.getPhone() );
+        }
+        if ( updateBranchDto.getLocation() != null ) {
+            branch.setLocation( updateBranchDto.getLocation() );
         }
     }
 }
