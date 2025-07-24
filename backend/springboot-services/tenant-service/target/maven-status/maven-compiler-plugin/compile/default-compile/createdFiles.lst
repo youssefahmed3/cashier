@@ -36,3 +36,4 @@ com\market_os\tenant_service\mapper\BranchMapperImpl.class
 com\market_os\tenant_service\dto\TenantWithBranchesDto$TenantWithBranchesDtoBuilder.class
 com\market_os\tenant_service\mapper\TenantMapperImpl.class
 com\market_os\tenant_service\dto\UserRoleDto.class
+
