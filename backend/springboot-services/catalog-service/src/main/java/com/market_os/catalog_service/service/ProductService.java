@@ -1,11 +1,12 @@
-package com.market_os.product_service.service;
-
-import com.market_os.product_service.model.Product;
-import com.market_os.product_service.repository.ProductRepository;
-import org.springframework.stereotype.Service;
+package com.market_os.catalog_service.service;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import com.market_os.catalog_service.model.Product;
+import com.market_os.catalog_service.repository.ProductRepository;
 
 @Service
 public class ProductService {
@@ -31,3 +32,4 @@ public class ProductService {
         repo.deleteById(id);
     }
 }
+

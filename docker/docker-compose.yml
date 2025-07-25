@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   backend:
 
@@ -94,40 +92,39 @@ services:
       - notification-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.notification.rule=PathPrefix(`/notification`)"
-      - "traefik.http.routers.notification.entrypoints=web"
-      - "traefik.http.services.notification.loadbalancer.server.port=8080"
-      - "traefik.http.routers.notification.middlewares=strip-notification@docker"
-      - "traefik.http.middlewares.strip-notification.stripprefix.prefixes=/notification"
+      - "traefik.http.routers.notifications.rule=PathPrefix(`/notifications`)"
+      - "traefik.http.routers.notifications.entrypoints=web"
+      - "traefik.http.services.notifications.loadbalancer.server.port=8080"
+      - "traefik.http.routers.notifications.middlewares=strip-notification@docker"
+      - "traefik.http.middlewares.strip-notifications.stripprefix.prefixes=/notifications"
     networks:
       - backend
 
-  product-service:
-    build: ../backend/springboot-services/product-service
+  catalog-service:
+    build: ../backend/springboot-services/catalog-service
     volumes:
-      - ../backend/springboot-services/product-service:/app
+      - ../backend/springboot-services/catalog-service:/app
       - ~/.m2:/root/.m2
     ports:
       - "8005:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_PRODUCT_DATASOURCE_URL=jdbc:postgresql://product-db:5432/product_db
-      - PRODUCT_POSTGRES_USER=product_db
-      - PRODUCT_POSTGRES_PASSWORD=product_db
+      - SPRING_CATALOG_DATASOURCE_URL=jdbc:postgresql://catalog-db:5432/catalog_db
+      - CATALOG_POSTGRES_USER=catalog_db
+      - CATALOG_POSTGRES_PASSWORD=catalog_db
     depends_on:
-      - product-db
+      - catalog-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.product.rule=PathPrefix(`/product`)"
-      - "traefik.http.routers.product.entrypoints=web"
-      - "traefik.http.services.product.loadbalancer.server.port=8080"
-      - "traefik.http.routers.product.middlewares=strip-product@docker"
-      - "traefik.http.middlewares.strip-product.stripprefix.prefixes=/product"
+      - "traefik.http.routers.catalog.rule=PathPrefix(`/catalog`)"
+      - "traefik.http.routers.catalog.entrypoints=web"
+      - "traefik.http.services.catalog.loadbalancer.server.port=8080"
+      - "traefik.http.routers.catalog.middlewares=strip-catalog@docker"
+      - "traefik.http.middlewares.strip-catalog.stripprefix.prefixes=/catalog"
     networks:
       - backend
 
   
-
   tenant-service:
     build: ../backend/springboot-services/tenant-service
     volumes:
@@ -183,14 +180,14 @@ services:
     networks:
       - backend
 
-  product-db:
+  catalog-db:
     image: postgres:14
     ports:
       - "5435:5432"
     environment:
-      POSTGRES_DB: product_db
-      POSTGRES_USER: product_db
-      POSTGRES_PASSWORD: product_db
+      POSTGRES_DB: catalog_db
+      POSTGRES_USER: catalog_db
+      POSTGRES_PASSWORD: catalog_db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 10s
@@ -227,5 +224,3 @@ services:
     networks:
       - backend
 
-volumes:
-  frontend_node_modules:

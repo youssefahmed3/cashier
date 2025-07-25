@@ -1,10 +1,10 @@
-package com.market_os.product_service;
+package com.market_os.catalog_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ProductServiceApplicationTests {
+class CatalogServiceApplicationTests {
 
 	@Test
 	void contextLoads() {
