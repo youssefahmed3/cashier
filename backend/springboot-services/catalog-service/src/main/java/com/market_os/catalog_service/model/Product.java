@@ -1,6 +1,20 @@
-package com.market_os.product_service.model;
+package com.market_os.catalog_service.model;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
+@JsonIdentityInfo(
+  generator = ObjectIdGenerators.PropertyGenerator.class,
+  property = "id"
+)
 
 @Entity
 public class Product {
@@ -14,6 +28,11 @@ public class Product {
     private String name;
     private String imgurl;
     private Boolean isactive;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    @JsonBackReference
+    private Category category;
 
     // Getters and setters
     public Long getId() {
@@ -71,4 +90,13 @@ public class Product {
     public void setIsactive(Boolean isactive) {
         this.isactive = isactive;
     }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
 }
+

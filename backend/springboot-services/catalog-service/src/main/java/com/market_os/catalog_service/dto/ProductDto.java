@@ -1,4 +1,4 @@
-package com.market_os.product_service.dto;
+package com.market_os.catalog_service.dto;
 
 public class ProductDto {
     private String description;
@@ -7,6 +7,7 @@ public class ProductDto {
     private String name;
     private String imgurl;
     private Boolean isactive;
+    private Long categoryId;
 
     public String getDescription() {
         return description;
@@ -55,4 +56,13 @@ public class ProductDto {
     public void setIsactive(Boolean isactive) {
         this.isactive = isactive;
     }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
 }
+
