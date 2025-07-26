@@ -1,8 +1,10 @@
 package com.market_os.tenant_service.config;
 
+import com.market_os.tenant_service.dto.TokenValidationRequest;
+import com.market_os.tenant_service.dto.TokenValidationResponse;
 import com.market_os.tenant_service.dto.UserRoleDto;
+import com.market_os.tenant_service.feign.TokenValidationClient;
 import com.market_os.tenant_service.service.UserTenantMappingService;
-import com.market_os.tenant_service.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +19,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,7 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
-    private final JwtUtil jwtUtil;
+    private final TokenValidationClient tokenValidationClient;
     private final UserTenantMappingService userTenantMappingService;
     
     @Override
@@ -46,13 +50,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 
-                // Validate token
-                if (jwtUtil.isTokenValid(token)) {
-                    // Extract user information from JWT token
-                    Integer userIdAsInteger = jwtUtil.getUserIdAsInteger(token);
-                    String email = jwtUtil.getEmail(token);
-                    String username = jwtUtil.getUsername(token);
-                    List<String> roles = jwtUtil.getRoles(token);
+                // Validate token using remote service
+                TokenValidationRequest validationRequest = new TokenValidationRequest(token);
+                TokenValidationResponse validationResponse = tokenValidationClient.validateToken(validationRequest);
+                
+                if (validationResponse.isSuccess()) {
+                    // Extract user information from validation response claims
+                    Map<String, String> claims = validationResponse.getClaims();
+                    
+                    Integer userIdAsInteger = Integer.parseInt(claims.get("userId"));
+                    String email = claims.get("email");
+                    String username = email != null ? email.substring(0, email.indexOf("@")) : "unknown";
+                    List<String> roles = claims.get("roles") != null ? 
+                        Arrays.asList(claims.get("roles").split(",")) : 
+                        List.of("USER");
                     
                     // Get tenant ID from user mapping service
                     UUID tenantId = null;
@@ -100,7 +111,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     log.debug("Authenticated user: {} (ID: {}) with roles: {} and tenant: {}", 
                             username, userIdAsInteger, roles, tenantId);
                 } else {
-                    log.warn("Invalid JWT token in request to: {}", requestPath);
+                    log.warn("Token validation failed for request to {}: {}", requestPath, validationResponse.getMessage());
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }

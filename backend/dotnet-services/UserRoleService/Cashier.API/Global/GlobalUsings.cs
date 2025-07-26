@@ -20,3 +20,5 @@ global using AuthenticationService = Cashier.Services.Services.AuthenticationSer
 global using Cashier.Shared.DTOS.AppRole;
 global using Cashier.Shared.DTOS.AppUser;
 global using Cashier.Shared.DTOS.Permission;
+global using Cashier.Validation.Interfaces;
+global using Cashier.Validation.Services;

@@ -7,7 +7,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/Sidebar/app-sidebar";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from 'sonner';
 import QueryClientProviderWrapper from "@/providers/QueryClientProviderWrapper";
 
 const geistSans = Geist({
@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <QueryClientProviderWrapper>
-          <Toaster position="top-center" />
+            <Toaster position="top-right" richColors />
           {children}
         </QueryClientProviderWrapper>
       </body>
