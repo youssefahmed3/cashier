@@ -19,7 +19,9 @@ namespace Order.Core.Entities
 
         public decimal? Total => OrderItems?.Sum(item => item.TotalPrice);
         public long BranchId { get; set; }
+        // CashierId most probably 
         public long UserId {  get; set; } 
+        public long? CustomerId { get; set; }
 
         public long ShiftId { get; set; }
 
