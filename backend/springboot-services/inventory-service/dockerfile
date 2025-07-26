@@ -1,0 +1,34 @@
+# Use OpenJDK 17 as base image
+FROM openjdk:17-jdk-slim
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && apt-get clean
+
+# Set working directory
+WORKDIR /app
+
+# Copy the JAR file
+COPY target/inventory-service-*.jar app.jar
+
+# Expose the ports
+EXPOSE 8081 9091
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8081/actuator/health || exit 1
+
+# Traefik Labels
+LABEL traefik.enable=true
+LABEL traefik.http.services.inventory-service.loadbalancer.server.port=8081
+LABEL traefik.http.routers.inventory-service.rule=Host(`inventory-service.localhost`) || PathPrefix(`/api/v1/inventory`)
+LABEL traefik.http.routers.inventory-service.entrypoints=web
+LABEL traefik.http.routers.inventory-service.middlewares=inventory-auth
+LABEL traefik.http.middlewares.inventory-auth.forwardauth.address=http://auth-service:5115/api/auth/validate
+
+# Management port for metrics
+LABEL traefik.http.services.inventory-management.loadbalancer.server.port=9091
+LABEL traefik.http.routers.inventory-management.rule=PathPrefix(`/actuator`)
+LABEL traefik.http.routers.inventory-management.entrypoints=management
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"] 
