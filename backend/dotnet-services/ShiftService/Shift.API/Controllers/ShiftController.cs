@@ -38,10 +38,10 @@ namespace Shift.API.Controllers
             return BadRequest(new { error = result.Error });
         }
 
-        [HttpGet("active/{branchId}")]
-        public async Task<IActionResult> GetActiveShift(long branchId)
+        [HttpGet("active/{branchId}/{userId}")]
+        public async Task<IActionResult> GetActiveShift(long branchId, long userId)
         {
-            var result = await _shiftService.GetActiveShiftAsync(branchId);
+            var result = await _shiftService.GetActiveShiftAsync(branchId, userId);
 
             if (result.IsSuccess)
                 return Ok(result.Value);
@@ -58,6 +58,15 @@ namespace Shift.API.Controllers
                 return Ok(result.Value);
 
             return BadRequest(new { error = result.Error });
+        }
+
+        [HttpGet("{shiftId}")]
+        public async Task<IActionResult> GetShiftById(long shiftId)
+        {
+            var result = await _shiftService.GetShiftByIdAsync(shiftId);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return NotFound(new { error = result.Error });
         }
 
         [HttpGet("{shiftId}/drawer-logs")]
