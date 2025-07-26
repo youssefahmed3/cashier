@@ -1,5 +1,10 @@
 import { ApiResponse, Confirm2FADto, ForgotPasswordDto, ForgotPasswordResponse, LoginDto, RegisterDto, ResetPasswordDto, ResetPasswordResponse, TwoFactorAuthApiResponse, ValidateResetCodeDto } from "@/types/dtos";
 
+
+export async function fetchUser() {
+
+}
+
 //Register function
 export async function registerUser(data: RegisterDto) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {

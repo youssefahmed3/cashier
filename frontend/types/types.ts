@@ -37,3 +37,21 @@ export type InventoryType = {
   purchase_date: string; /* For Now */
   expiry_date: string;
 };
+
+export type Tenant = {
+  id: string;
+  name: string;
+  email: string;
+  plan: "basic" | "premium" | "enterprise";
+  branches: number;
+  employees: number;
+  status: "active" | "inactive" | "suspended";
+};
+
+export type TenantColumn = {
+  tenant: Tenant;
+  plan: string;
+  branches: number;
+  employees: number;
+  status: "active" | "suspended";
+}
