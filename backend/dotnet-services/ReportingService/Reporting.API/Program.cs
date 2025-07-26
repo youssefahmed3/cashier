@@ -20,9 +20,6 @@ namespace Reporting.API
             builder.Services.AddDbContext<OrderDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            //builder.Services.AddDbContext<OrderDbContext>(options =>
-            //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

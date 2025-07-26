@@ -10,8 +10,5 @@ namespace Reporting.Core.Entities
         public string? Status { get; set; }
         public int Total { get; set; }
 
-        // Navigation Properties
-        public ICollection<OrderItem>? OrderItems { get; set; }
-
     }
 }
