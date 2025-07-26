@@ -1,3 +1,90 @@
+# Environment files
 .env
-.vscode
-.vs
+.env.local
+.env.production
+.env.test
+
+# IDE files
+.vscode/
+.vs/
+.idea/
+*.iws
+*.iml
+*.ipr
+.project
+.classpath
+.settings/
+.factorypath
+
+# Maven build artifacts
+target/
+*/target/
+**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Gradle build artifacts
+.gradle/
+build/
+*/build/
+**/build/
+
+# Spring Boot
+spring-boot-devtools.properties
+
+# Compiled files
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+
+# Logs
+*.log
+logs/
+*/logs/
+**/logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Database files
+*.db
+*.sqlite
+*.h2.db
+
+# Node modules (for frontend)
+node_modules/
+*/node_modules/
+**/node_modules/
+.next/
+dist/
+*/dist/
+**/dist/
+
+# Docker
+.dockerignore
+
+# Package files
+*.zip
+*.tar.gz
+*.rar
