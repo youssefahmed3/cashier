@@ -66,22 +66,11 @@ public class CashPaymentStrategy : IPaymentStrategy
         }
     }
 
-    public async Task<ResultDto<Payment>> RefundPaymentAsync(long paymentId, decimal amount)
+    public async Task<ResultDto<Payment>> RefundPaymentAsync(Payment originalPayment, SalesOrder order, decimal amount)
     {
         try
         {
             await _unitOfWork.BeginTransactionAsync();
-
-            var originalPayment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-            if (originalPayment == null || originalPayment.OrderId == null)
-                return ResultDto<Payment>.Failure("Original payment or related order not found.");
-
-            var order = await _unitOfWork.Orders.GetByIdAsync(originalPayment.OrderId.Value);
-            if (order.Status == OrderStatus.Refunded || order.Status == OrderStatus.PartiallyRefunded)
-                return ResultDto<Payment>.Failure("Related order already refunded.");
-
-            if (amount <= 0 || amount > originalPayment.Amount)
-                return ResultDto<Payment>.Failure("Invalid refund amount.");
 
             var refundPayment = new Payment
             {

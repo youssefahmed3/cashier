@@ -49,7 +49,7 @@ namespace Order.Services.Services
               
                 var strategy = _paymentStrategies[method];
                 var result = await strategy.ProcessPaymentAsync(request);
-                //TODO: Check if there any error happens throw ex 
+              
                 if (!result.IsSuccess)
                     throw new InvalidOperationException(result.Error);
 
@@ -69,15 +69,26 @@ namespace Order.Services.Services
             //TODO: Check the BranchId 
             try
             {
-                var payment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-                if (payment == null)
-                {
-                    return ResultDto<PaymentDto>.Failure("Payment not found.");
-                }
+                var originalPayment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
 
-                var strategy = _paymentStrategies[payment.Method];
-                var result = await strategy.RefundPaymentAsync(paymentId, amount);
-                //TODO: Check if there any error happens throw ex 
+                if (originalPayment == null || originalPayment.OrderId == null)
+                    return ResultDto<PaymentDto>.Failure("Payment not found or missing Order.");
+
+                var order = await _unitOfWork.Orders.GetByIdAsync(originalPayment.OrderId.Value);
+                if (order == null)
+                    return ResultDto<PaymentDto>.Failure("Order not found.");
+
+                if (order.Status == OrderStatus.Refunded || order.Status == OrderStatus.PartiallyRefunded)
+                    return ResultDto<PaymentDto>.Failure("Order already refunded.");
+
+                if (amount <= 0 || amount > originalPayment.Amount)
+                    return ResultDto<PaymentDto>.Failure("Invalid refund amount.");
+
+                if (!_paymentStrategies.TryGetValue(originalPayment.Method, out var strategy))
+                    return ResultDto<PaymentDto>.Failure("Unsupported payment method for refund.");
+
+                var result = await strategy.RefundPaymentAsync(originalPayment, order, amount);
+             
                 if (!result.IsSuccess)
                     throw new InvalidOperationException(result.Error);
                 var resultDto = _mapper.Map<PaymentDto>(result.Value);

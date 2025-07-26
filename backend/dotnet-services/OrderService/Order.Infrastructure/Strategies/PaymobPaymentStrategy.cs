@@ -77,27 +77,13 @@ namespace Order.Infrastructure.Strategies
             }
         }
 
-        public async Task<ResultDto<Payment>> RefundPaymentAsync(long paymentId, decimal amount)
+        public async Task<ResultDto<Payment>> RefundPaymentAsync(Payment originalPayment, SalesOrder order, decimal amount)
         {
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
 
-                var originalPayment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-                if (originalPayment == null || (originalPayment != null && originalPayment.OrderId == null))
-                    return ResultDto<Payment>.Failure("Original payment not found or related order not found");
-
-                var order = await _unitOfWork.Orders.GetByIdAsync(originalPayment.OrderId.Value);
-                if (order.Status == OrderStatus.Refunded || order.Status == OrderStatus.PartiallyRefunded)
-                    return ResultDto<Payment>.Failure("related order does not has refund");
-
-                if (amount <= 0 || amount > originalPayment.Amount)
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    return ResultDto<Payment>.Failure("Invalid refund amount.");
-                }
-
-                // Process Paymob refund (mocked)
+                // Process Paymob refund
                 var refundTransactionId = await ProcessPaymobRefundAsync(originalPayment.TransactionId, amount);
 
                 var refundPayment = new Payment
