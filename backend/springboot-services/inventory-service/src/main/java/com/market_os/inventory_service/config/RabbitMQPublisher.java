@@ -63,4 +63,28 @@ public class RabbitMQPublisher {
             log.error("Failed to publish low stock alert for item ID: {}", inventoryItem.getId(), e);
         }
     }
+
+    public void publishNotificationAlert(InventoryItemDto inventoryItem, String alertType, String message) {
+        try {
+            Map<String, Object> notificationMessage = new HashMap<>();
+            notificationMessage.put("itemId", inventoryItem.getId());
+            notificationMessage.put("productSku", inventoryItem.getProductSku());
+            notificationMessage.put("productName", inventoryItem.getProductName());
+            notificationMessage.put("alertType", alertType);
+            notificationMessage.put("message", message);
+            notificationMessage.put("timestamp", System.currentTimeMillis());
+            notificationMessage.put("eventType", "INVENTORY_NOTIFICATION");
+
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.NOTIFICATION_EXCHANGE,
+                    RabbitMQConfig.NOTIFICATION_ROUTING_KEY,
+                    notificationMessage
+            );
+            
+            log.info("Published notification alert for item ID: {}, Type: {}, Message: {}", 
+                    inventoryItem.getId(), alertType, message);
+        } catch (Exception e) {
+            log.error("Failed to publish notification alert for item ID: {}", inventoryItem.getId(), e);
+        }
+    }
 }

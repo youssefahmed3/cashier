@@ -22,7 +22,6 @@ import java.util.UUID;
 public class BranchServiceImpl implements BranchService {
     
     private final BranchRepository branchRepository;
-    private final BranchMapper branchMapper;
     private final TenantService tenantService;
     private final MessagePublisher messagePublisher;
     
@@ -45,7 +44,7 @@ public class BranchServiceImpl implements BranchService {
             throw new IllegalArgumentException("Branch with name '" + createBranchDto.getName() + "' already exists for this tenant");
         }
         
-        Branch branch = branchMapper.toEntity(createBranchDto);
+        Branch branch = BranchMapper.toEntity(createBranchDto);
         branch.setTenantId(tenantId);
         
         Branch savedBranch = branchRepository.save(branch);
@@ -62,7 +61,7 @@ public class BranchServiceImpl implements BranchService {
         messagePublisher.publishBranchCreated(branchCreatedEvent);
         
         log.info("Created branch with ID: {} for tenant ID: {}", savedBranch.getId(), tenantId);
-        return branchMapper.toDto(savedBranch);
+        return BranchMapper.toDto(savedBranch);
     }
     
     @Override
@@ -73,7 +72,7 @@ public class BranchServiceImpl implements BranchService {
         Branch branch = branchRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found with ID: " + id));
         
-        return branchMapper.toDto(branch);
+        return BranchMapper.toDto(branch);
     }
     
     @Override
@@ -84,7 +83,7 @@ public class BranchServiceImpl implements BranchService {
         Branch branch = branchRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found with ID: " + id + " for tenant: " + tenantId));
         
-        return branchMapper.toDto(branch);
+        return BranchMapper.toDto(branch);
     }
     
     @Override
@@ -93,7 +92,7 @@ public class BranchServiceImpl implements BranchService {
         log.info("Fetching branches for tenant ID: {}", tenantId);
         
         List<Branch> branches = branchRepository.findByTenantId(tenantId);
-        return branchMapper.toDtoList(branches);
+        return BranchMapper.toDtoList(branches);
     }
     
     @Override
@@ -102,7 +101,7 @@ public class BranchServiceImpl implements BranchService {
         log.info("Fetching all branches with pagination");
         
         Page<Branch> branches = branchRepository.findAll(pageable);
-        return branches.map(branchMapper::toDto);
+        return branches.map(BranchMapper::toDto);
     }
     
     @Override
@@ -119,7 +118,7 @@ public class BranchServiceImpl implements BranchService {
             throw new IllegalArgumentException("Branch with name '" + updateBranchDto.getName() + "' already exists for this tenant");
         }
         
-        branchMapper.updateEntityFromDto(updateBranchDto, branch);
+        BranchMapper.updateEntityFromDto(updateBranchDto, branch);
         Branch updatedBranch = branchRepository.save(branch);
         
         // Publish branch updated event
@@ -134,7 +133,7 @@ public class BranchServiceImpl implements BranchService {
         messagePublisher.publishBranchUpdated(branchUpdatedEvent);
         
         log.info("Updated branch with ID: {}", updatedBranch.getId());
-        return branchMapper.toDto(updatedBranch);
+        return BranchMapper.toDto(updatedBranch);
     }
     
     @Override
@@ -151,7 +150,7 @@ public class BranchServiceImpl implements BranchService {
             throw new IllegalArgumentException("Branch with name '" + updateBranchDto.getName() + "' already exists for this tenant");
         }
         
-        branchMapper.updateEntityFromDto(updateBranchDto, branch);
+        BranchMapper.updateEntityFromDto(updateBranchDto, branch);
         Branch updatedBranch = branchRepository.save(branch);
         
         // Publish branch updated event
@@ -166,7 +165,7 @@ public class BranchServiceImpl implements BranchService {
         messagePublisher.publishBranchUpdated(branchUpdatedEvent);
         
         log.info("Updated branch with ID: {} for tenant ID: {}", updatedBranch.getId(), tenantId);
-        return branchMapper.toDto(updatedBranch);
+        return BranchMapper.toDto(updatedBranch);
     }
     
     @Override

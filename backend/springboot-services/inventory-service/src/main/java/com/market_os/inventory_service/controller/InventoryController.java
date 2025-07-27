@@ -265,4 +265,96 @@ public class InventoryController {
         InventoryItemDto updatedItem = inventoryService.updateInventoryQuantity(id, newQuantity);
         return ResponseEntity.ok(updatedItem);
     }
+    
+    @PostMapping("/with-validation")
+    @Operation(summary = "Create inventory item with product validation", description = "Creates a new inventory item with validation from catalog service")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Inventory item created successfully with validation"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data or product not found in catalog"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<InventoryItemDto> createInventoryItemWithValidation(
+            @Valid @RequestBody CreateInventoryItemDto createInventoryItemDto) {
+        log.info("REST request to create inventory item with product validation: {}", createInventoryItemDto);
+        
+        InventoryItemDto createdItem = inventoryService.createInventoryItemWithProductValidation(createInventoryItemDto);
+        return new ResponseEntity<>(createdItem, HttpStatus.CREATED);
+    }
+    
+    @PutMapping("/{id}/with-notification")
+    @Operation(summary = "Update inventory item with notification", description = "Updates an inventory item and sends notifications for low stock")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Inventory item updated successfully with notification"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "404", description = "Inventory item not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<InventoryItemDto> updateInventoryItemWithNotification(
+            @Parameter(description = "Inventory item ID") @PathVariable Long id,
+            @Valid @RequestBody UpdateInventoryItemDto updateInventoryItemDto) {
+        log.info("REST request to update inventory item with notification for ID: {}", id);
+        
+        InventoryItemDto updatedItem = inventoryService.updateInventoryWithNotification(id, updateInventoryItemDto);
+        return ResponseEntity.ok(updatedItem);
+    }
+    
+    @GetMapping("/catalog/product/{productId}")
+    @Operation(summary = "Get product from catalog service", description = "Retrieves product information from catalog service")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Product information retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Product not found in catalog"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<ProductDto> getProductFromCatalog(
+            @Parameter(description = "Product ID") @PathVariable Long productId) {
+        log.info("REST request to get product from catalog service for ID: {}", productId);
+        
+        ProductDto product = inventoryService.getProductFromCatalog(productId);
+        return ResponseEntity.ok(product);
+    }
+    
+    @GetMapping("/catalog/product/barcode/{barcode}")
+    @Operation(summary = "Get product from catalog service by barcode", description = "Retrieves product information from catalog service by barcode")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Product information retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Product not found in catalog"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<ProductDto> getProductFromCatalogByBarcode(
+            @Parameter(description = "Product barcode") @PathVariable String barcode) {
+        log.info("REST request to get product from catalog service by barcode: {}", barcode);
+        
+        ProductDto product = inventoryService.getProductFromCatalogByBarcode(barcode);
+        return ResponseEntity.ok(product);
+    }
+    
+    @GetMapping("/tenant/{tenantId}")
+    @Operation(summary = "Get tenant from tenant service", description = "Retrieves tenant information from tenant service")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tenant information retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Tenant not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<TenantDto> getTenantFromTenantService(
+            @Parameter(description = "Tenant ID") @PathVariable Long tenantId) {
+        log.info("REST request to get tenant from tenant service for ID: {}", tenantId);
+        
+        TenantDto tenant = inventoryService.getTenantFromTenantService(tenantId);
+        return ResponseEntity.ok(tenant);
+    }
+    
+    @GetMapping("/tenant/branch/{branchId}")
+    @Operation(summary = "Get branch from tenant service", description = "Retrieves branch information from tenant service")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Branch information retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Branch not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<BranchDto> getBranchFromTenantService(
+            @Parameter(description = "Branch ID") @PathVariable Long branchId) {
+        log.info("REST request to get branch from tenant service for ID: {}", branchId);
+        
+        BranchDto branch = inventoryService.getBranchFromTenantService(branchId);
+        return ResponseEntity.ok(branch);
+    }
 } 

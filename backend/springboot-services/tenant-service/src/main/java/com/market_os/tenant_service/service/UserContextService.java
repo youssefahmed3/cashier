@@ -1,6 +1,5 @@
 package com.market_os.tenant_service.service;
 
-import com.market_os.tenant_service.dto.UserRoleDto;
 import com.market_os.tenant_service.dto.AppUserDto;
 import com.market_os.tenant_service.dto.PermissionDto;
 import com.market_os.tenant_service.util.UserContextUtil;

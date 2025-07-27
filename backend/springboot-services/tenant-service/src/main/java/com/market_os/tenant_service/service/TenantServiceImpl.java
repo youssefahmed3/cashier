@@ -23,7 +23,6 @@ import java.util.UUID;
 public class TenantServiceImpl implements TenantService {
     
     private final TenantRepository tenantRepository;
-    private final TenantMapper tenantMapper;
     private final SubscriptionServiceClient subscriptionServiceClient;
     private final MessagePublisher messagePublisher;
     private final FileStorageService fileStorageService;
@@ -37,7 +36,7 @@ public class TenantServiceImpl implements TenantService {
             throw new IllegalArgumentException("Tenant with name '" + createTenantDto.getName() + "' already exists");
         }
         
-        Tenant tenant = tenantMapper.toEntity(createTenantDto);
+        Tenant tenant = TenantMapper.toEntity(createTenantDto);
         Tenant savedTenant = tenantRepository.save(tenant);
         
         // Publish tenant created event
@@ -50,7 +49,7 @@ public class TenantServiceImpl implements TenantService {
         messagePublisher.publishTenantCreated(tenantCreatedEvent);
         
         log.info("Created tenant with ID: {}", savedTenant.getId());
-        return tenantMapper.toDto(savedTenant);
+        return TenantMapper.toDto(savedTenant);
     }
     
     @Override
@@ -61,7 +60,7 @@ public class TenantServiceImpl implements TenantService {
         Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + id));
         
-        return tenantMapper.toDto(tenant);
+        return TenantMapper.toDto(tenant);
     }
     
     @Override
@@ -72,7 +71,7 @@ public class TenantServiceImpl implements TenantService {
         Tenant tenant = tenantRepository.findByIdWithBranches(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + id));
         
-        return tenantMapper.toTenantWithBranchesDto(tenant);
+        return TenantMapper.toTenantWithBranchesDto(tenant);
     }
     
     @Override
@@ -81,7 +80,7 @@ public class TenantServiceImpl implements TenantService {
         log.info("Fetching all tenants with pagination");
         
         Page<Tenant> tenants = tenantRepository.findAll(pageable);
-        return tenants.map(tenantMapper::toDto);
+        return tenants.map(TenantMapper::toDto);
     }
     
     @Override
@@ -90,7 +89,7 @@ public class TenantServiceImpl implements TenantService {
         log.info("Fetching all active tenants");
         
         List<Tenant> activeTenants = tenantRepository.findByIsActiveTrue();
-        return tenantMapper.toDtoList(activeTenants);
+        return TenantMapper.toDtoList(activeTenants);
     }
     
     @Override
@@ -107,7 +106,7 @@ public class TenantServiceImpl implements TenantService {
             throw new IllegalArgumentException("Tenant with name '" + updateTenantDto.getName() + "' already exists");
         }
         
-        tenantMapper.updateEntityFromDto(updateTenantDto, tenant);
+        TenantMapper.updateEntityFromDto(updateTenantDto, tenant);
         Tenant updatedTenant = tenantRepository.save(tenant);
         
         // Publish tenant updated event
@@ -120,7 +119,7 @@ public class TenantServiceImpl implements TenantService {
         messagePublisher.publishTenantUpdated(tenantUpdatedEvent);
         
         log.info("Updated tenant with ID: {}", updatedTenant.getId());
-        return tenantMapper.toDto(updatedTenant);
+        return TenantMapper.toDto(updatedTenant);
     }
     
     @Override
@@ -215,6 +214,16 @@ public class TenantServiceImpl implements TenantService {
                 .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + tenantId));
         
         String oldLogoUrl = tenant.getLogoUrl();
+        
+        // Delete old logo if exists
+        if (oldLogoUrl != null) {
+            try {
+                fileStorageService.deleteTenantLogo(oldLogoUrl);
+            } catch (Exception e) {
+                log.warn("Could not delete old logo file: {}", e.getMessage());
+            }
+        }
+        
         tenant.setLogoUrl(null);
         Tenant updatedTenant = tenantRepository.save(tenant);
         
