@@ -40,12 +40,17 @@ export const useAuth = () => {
                 toast.success("Registration successful!");
                 router.push('/login');
             }
-            else{
-                toast.error("Registration failed!");
+            else {
+                if (data.errors && data.errors.length > 0) {
+                    data.errors.forEach((err) => toast.error(err));
+                } else {
+                    toast.error(data.message || "Registration failed!");
+                }
             }
         },
         onError: (error) => {
-            console.error('Registration error:', error.message);
+          toast.error("Something went wrong.");
+          console.error("Registration error:", error.message);
         },
     });
 
@@ -64,10 +69,16 @@ export const useAuth = () => {
                 localStorage.setItem("refresh-token", data.refreshToken!);
                 redirect('/tenant/dashboard'); // Redirect to the dashboard or home page
             }
-            else{
-                toast.error("Invalid credentials.");
-            }
+           if (data.errors?.length) {
+        data.errors.forEach((err) => toast.error(err));
+      } else {
+        toast.error(data.message || "Invalid credentials.");
+      }
         },
+         onError: (error) => {
+    toast.error("Login failed.");
+    console.error("Login error:", error.message);
+  },
     });
 
     // Confirm 2FA mutation
@@ -89,22 +100,22 @@ export const useAuth = () => {
     });
 
 
- const forgotPasswordMutation = useMutation<ForgotPasswordResponse, Error, ForgotPasswordDto>({
-    mutationFn: forgotPassword,
-    onSuccess: (data, variables) => {
-      if (data.success) {
-        localStorage.setItem("user-email", variables.email);
-        toast.success(data.message || "Reset code sent.");
-        router.push('/validateResetPasswordCode');
-      } else {
-        toast.error(data.message || "Something went wrong.");
-      }
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to send reset code.");
-      console.error("Forgot password error:", error.message);
-    },
-  });
+    const forgotPasswordMutation = useMutation<ForgotPasswordResponse, Error, ForgotPasswordDto>({
+        mutationFn: forgotPassword,
+        onSuccess: (data, variables) => {
+            if (data.success) {
+                localStorage.setItem("user-email", variables.email);
+                toast.success(data.message || "Reset code sent.");
+                router.push('/validateResetPasswordCode');
+            } else {
+                toast.error(data.message || "Something went wrong.");
+            }
+        },
+        onError: (error) => {
+            toast.error(error.message || "Failed to send reset code.");
+            console.error("Forgot password error:", error.message);
+        },
+    });
 
     // Validate reset code mutation
     const validateResetCodeMutation = useMutation<
