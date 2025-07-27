@@ -40,7 +40,7 @@ services:
     volumes:
       - ../backend/dotnet-services/AuthenticationService:/app
     ports:
-      - "8001:8085"
+      - "8001:7192"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
