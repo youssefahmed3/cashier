@@ -25,8 +25,7 @@ namespace Reporting.API.Controllers
                 {
                     Year = g.Key.Year,
                     Quarter = g.Key.Quarter,
-                    NewTenantsCount = g.Count(),
-                    Tenants = g.Select(t => new { t.Id, t.Name, t.CreatedAt, t.IsActive }).ToList()
+                    NewTenantsCount = g.Count()
                 })
                 .OrderBy(x => x.Year)
                 .ThenBy(x => x.Quarter)
