@@ -1,4 +1,4 @@
-
+using MassTransit;
 using Microsoft.OpenApi.Models;
 using Shift.Core.Interfaces.Repositories;
 using Shift.Core.Interfaces.Services;
@@ -39,7 +39,29 @@ namespace Shift.API
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            builder.Services.AddMassTransit(x =>
+            {
+                x.AddConsumer<DrawerLogEventConsumer>(configurator =>
+                {
+                    configurator.UseMessageRetry(r => r.Exponential(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(2)));
+                });
 
+                x.UsingRabbitMq((context, cfg) =>
+                {
+                    cfg.Host("localhost", "/", h =>
+                    {
+                        h.Username("guest");
+                        h.Password("guest");
+                    });
+
+                    cfg.ReceiveEndpoint("shift-service-drawer-logs", e =>
+                    {
+                        e.ConfigureConsumer<DrawerLogEventConsumer>(context);
+                    });
+                });
+            });
+
+            builder.Services.AddMassTransitHostedService();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -51,7 +73,6 @@ namespace Shift.API
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

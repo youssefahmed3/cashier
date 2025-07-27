@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
-using Shift.Core.Enums;
+﻿using Shift.Core.Enums;
 
 namespace Shift.Core.Entities
 {
@@ -18,7 +12,6 @@ namespace Shift.Core.Entities
         public long ShiftId { get; set; }
         public long BranchId { get; set; }
         public long? PaymentId { get; set; }
-
         public Shift? Shift { get; set; }
 
     }
