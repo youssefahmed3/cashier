@@ -97,7 +97,6 @@ public class JwtUtil {
      * Extract username from JWT token
      */
     public String getUsername(String token) {
-        Claims claims = parseToken(token);
         String email = getEmail(token);
         return email != null ? email.substring(0, email.indexOf("@")) : "unknown";
     }
