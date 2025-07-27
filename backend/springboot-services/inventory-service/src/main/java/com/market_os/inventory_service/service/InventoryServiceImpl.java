@@ -24,7 +24,6 @@ import java.util.List;
 public class InventoryServiceImpl implements InventoryService {
     
     private final InventoryRepository inventoryRepository;
-    private final InventoryMapper inventoryMapper;
     private final CatalogServiceClient catalogServiceClient;
     private final TenantServiceClient tenantServiceClient;
     private final RabbitMQPublisher rabbitMQPublisher;
@@ -33,11 +32,11 @@ public class InventoryServiceImpl implements InventoryService {
     public InventoryItemDto createInventoryItem(CreateInventoryItemDto createInventoryItemDto) {
         log.info("Creating new inventory item with product: {}", createInventoryItemDto.getProductName());
         
-        InventoryItem inventoryItem = inventoryMapper.toEntity(createInventoryItemDto);
+        InventoryItem inventoryItem = InventoryMapper.toEntity(createInventoryItemDto);
         InventoryItem savedItem = inventoryRepository.save(inventoryItem);
         
         log.info("Successfully created inventory item with ID: {}", savedItem.getId());
-        return inventoryMapper.toDto(savedItem);
+        return InventoryMapper.toDto(savedItem);
     }
     
     @Override
@@ -51,7 +50,7 @@ public class InventoryServiceImpl implements InventoryService {
                     return new RuntimeException("Inventory item not found with ID: " + id);
                 });
         
-        return inventoryMapper.toDto(inventoryItem);
+        return InventoryMapper.toDto(inventoryItem);
     }
     
     @Override
@@ -60,7 +59,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Fetching all inventory items with pagination");
         
         Page<InventoryItem> inventoryItems = inventoryRepository.findAll(pageable);
-        return inventoryItems.map(inventoryMapper::toDto);
+        return inventoryItems.map(InventoryMapper::toDto);
     }
     
     @Override
@@ -69,7 +68,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Fetching all active inventory items");
         
         List<InventoryItem> inventoryItems = inventoryRepository.findByIsActiveTrue();
-        return inventoryMapper.toDtoList(inventoryItems);
+        return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
@@ -82,11 +81,11 @@ public class InventoryServiceImpl implements InventoryService {
                     return new RuntimeException("Inventory item not found with ID: " + id);
                 });
         
-        inventoryMapper.updateEntityFromDto(updateInventoryItemDto, existingItem);
+        InventoryMapper.updateEntityFromDto(updateInventoryItemDto, existingItem);
         InventoryItem updatedItem = inventoryRepository.save(existingItem);
         
         log.info("Successfully updated inventory item with ID: {}", id);
-        return inventoryMapper.toDto(updatedItem);
+        return InventoryMapper.toDto(updatedItem);
     }
     
     @Override
@@ -108,7 +107,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public boolean existsById(Long id) {
-        return inventoryRepository.existsById(id);
+        return inventoryRepository.findByIdAndIsActiveTrue(id).isPresent();
     }
     
     @Override
@@ -117,7 +116,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Fetching inventory items by location: {}", location);
         
         List<InventoryItem> inventoryItems = inventoryRepository.findByLocationAndIsActiveTrue(location);
-        return inventoryMapper.toDtoList(inventoryItems);
+        return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
@@ -126,7 +125,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Fetching inventory items by product SKU: {}", productSku);
         
         List<InventoryItem> inventoryItems = inventoryRepository.findByProductSkuAndIsActiveTrue(productSku);
-        return inventoryMapper.toDtoList(inventoryItems);
+        return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
@@ -135,7 +134,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Fetching inventory items by supplier: {}", supplier);
         
         List<InventoryItem> inventoryItems = inventoryRepository.findBySupplierAndIsActiveTrue(supplier);
-        return inventoryMapper.toDtoList(inventoryItems);
+        return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
@@ -144,7 +143,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Fetching inventory items by purchase date range: {} to {}", startDate, endDate);
         
         List<InventoryItem> inventoryItems = inventoryRepository.findByPurchDateBetweenAndIsActiveTrue(startDate, endDate);
-        return inventoryMapper.toDtoList(inventoryItems);
+        return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
@@ -153,7 +152,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Fetching low stock items with threshold: {}", threshold);
         
         List<InventoryItem> inventoryItems = inventoryRepository.findLowStockItems(threshold);
-        return inventoryMapper.toDtoList(inventoryItems);
+        return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
@@ -161,52 +160,35 @@ public class InventoryServiceImpl implements InventoryService {
     public List<InventoryItemDto> searchInventoryItems(String location, String productName) {
         log.info("Searching inventory items by location: {} and product name: {}", location, productName);
         
-        List<InventoryItem> inventoryItems = inventoryRepository
-                .findByLocationAndProductNameContainingIgnoreCaseAndIsActiveTrue(location, productName);
-        return inventoryMapper.toDtoList(inventoryItems);
+        List<InventoryItem> inventoryItems = inventoryRepository.findByLocationAndProductNameContainingIgnoreCaseAndIsActiveTrue(location, productName);
+        return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Integer getTotalQuantityByProductSku(String productSku) {
-        log.info("Getting total quantity for product SKU: {}", productSku);
+        log.info("Calculating total quantity for product SKU: {}", productSku);
+        
         return inventoryRepository.getTotalQuantityByProductSku(productSku);
     }
     
     @Override
     @Transactional(readOnly = true)
     public InventoryStatsDto getInventoryStats() {
-        log.info("Calculating inventory statistics");
+        log.info("Calculating overall inventory statistics");
         
-        long totalItems = inventoryRepository.count();
-        Double totalValue = inventoryRepository.getTotalInventoryValue();
         List<InventoryItem> activeItems = inventoryRepository.findByIsActiveTrue();
+        long totalItems = activeItems.size();
+        Integer totalQuantity = activeItems.stream().mapToInt(InventoryItem::getQty).sum();
+        Double totalValue = inventoryRepository.getTotalInventoryValue();
         
-        Integer totalQuantity = activeItems.stream()
-                .mapToInt(InventoryItem::getQty)
-                .sum();
-        
-        Long lowStockCount = (long) inventoryRepository.findLowStockItems(10).size(); // Default threshold of 10
-        
-        Integer distinctLocations = (int) activeItems.stream()
-                .map(InventoryItem::getLocation)
-                .distinct()
-                .count();
-        
-        Integer distinctSuppliers = (int) activeItems.stream()
-                .map(InventoryItem::getSupplier)
-                .filter(supplier -> supplier != null && !supplier.isEmpty())
-                .distinct()
-                .count();
-        
-        return InventoryStatsDto.builder()
+        InventoryStatsDto stats = InventoryStatsDto.builder()
                 .totalItems(totalItems)
-                .totalValue(totalValue != null ? totalValue : 0.0)
                 .totalQuantity(totalQuantity)
-                .lowStockItemsCount(lowStockCount)
-                .distinctLocationsCount(distinctLocations)
-                .distinctSuppliersCount(distinctSuppliers)
+                .totalValue(totalValue != null ? totalValue : 0.0)
                 .build();
+        
+        return stats;
     }
     
     @Override
@@ -215,64 +197,51 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Calculating inventory statistics for location: {}", location);
         
         List<InventoryItem> locationItems = inventoryRepository.findByLocationAndIsActiveTrue(location);
+        long totalItems = locationItems.size();
+        Integer totalQuantity = locationItems.stream().mapToInt(InventoryItem::getQty).sum();
         Double totalValue = inventoryRepository.getTotalInventoryValueByLocation(location);
         
-        Integer totalQuantity = locationItems.stream()
-                .mapToInt(InventoryItem::getQty)
-                .sum();
-        
-        Long lowStockCount = locationItems.stream()
-                .filter(item -> item.getQty() <= 10) // Default threshold of 10
-                .count();
-        
-        Integer distinctSuppliers = (int) locationItems.stream()
-                .map(InventoryItem::getSupplier)
-                .filter(supplier -> supplier != null && !supplier.isEmpty())
-                .distinct()
-                .count();
-        
-        return InventoryStatsDto.builder()
-                .totalItems((long) locationItems.size())
-                .totalValue(totalValue != null ? totalValue : 0.0)
+        InventoryStatsDto stats = InventoryStatsDto.builder()
+                .totalItems(totalItems)
                 .totalQuantity(totalQuantity)
-                .lowStockItemsCount(lowStockCount)
-                .distinctLocationsCount(1) // Only one location
-                .distinctSuppliersCount(distinctSuppliers)
+                .totalValue(totalValue != null ? totalValue : 0.0)
                 .build();
+        
+        return stats;
     }
     
     @Override
     public InventoryItemDto updateInventoryQuantity(Long id, Integer newQuantity) {
-        log.info("Updating inventory quantity for item ID: {} to quantity: {}", id, newQuantity);
+        log.info("Updating inventory quantity for item ID: {} to: {}", id, newQuantity);
         
-        InventoryItem inventoryItem = inventoryRepository.findByIdAndIsActiveTrue(id)
+        InventoryItem existingItem = inventoryRepository.findByIdAndIsActiveTrue(id)
                 .orElseThrow(() -> {
                     log.error("Inventory item not found for quantity update with ID: {}", id);
                     return new RuntimeException("Inventory item not found with ID: " + id);
                 });
         
-        inventoryItem.setQty(newQuantity);
-        // Recalculate total cost if unit price is available
-        if (inventoryItem.getUnitPrice() != null) {
-            inventoryItem.setTotalCost(inventoryItem.getUnitPrice() * newQuantity);
+        existingItem.setQty(newQuantity);
+        
+        // Recalculate total cost
+        if (existingItem.getUnitPrice() != null) {
+            existingItem.setTotalCost(existingItem.getUnitPrice() * newQuantity);
         }
         
-        InventoryItem updatedItem = inventoryRepository.save(inventoryItem);
+        InventoryItem updatedItem = inventoryRepository.save(existingItem);
         
         log.info("Successfully updated inventory quantity for item ID: {}", id);
-        return inventoryMapper.toDto(updatedItem);
+        return InventoryMapper.toDto(updatedItem);
     }
     
     @Override
     @Transactional(readOnly = true)
     public ProductDto getProductFromCatalog(Long productId) {
         log.info("Fetching product from catalog service with ID: {}", productId);
+        
         try {
-            ProductDto product = catalogServiceClient.getProductById(productId);
-            log.info("Successfully fetched product from catalog: {}", product.getName());
-            return product;
+            return catalogServiceClient.getProductById(productId);
         } catch (Exception e) {
-            log.error("Failed to fetch product from catalog service for ID: {}", productId, e);
+            log.error("Error fetching product from catalog service: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch product from catalog service", e);
         }
     }
@@ -281,13 +250,12 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public ProductDto getProductFromCatalogByBarcode(String barcode) {
         log.info("Fetching product from catalog service by barcode: {}", barcode);
+        
         try {
-            ProductDto product = catalogServiceClient.getProductByBarcode(barcode);
-            log.info("Successfully fetched product from catalog by barcode: {}", product.getName());
-            return product;
+            return catalogServiceClient.getProductByBarcode(barcode);
         } catch (Exception e) {
-            log.error("Failed to fetch product from catalog service by barcode: {}", barcode, e);
-            throw new RuntimeException("Failed to fetch product from catalog service by barcode", e);
+            log.error("Error fetching product by barcode from catalog service: {}", e.getMessage());
+            throw new RuntimeException("Failed to fetch product by barcode from catalog service", e);
         }
     }
     
@@ -295,12 +263,11 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public TenantDto getTenantFromTenantService(Long tenantId) {
         log.info("Fetching tenant from tenant service with ID: {}", tenantId);
+        
         try {
-            TenantDto tenant = tenantServiceClient.getTenantById(tenantId);
-            log.info("Successfully fetched tenant from tenant service: {}", tenant.getName());
-            return tenant;
+            return tenantServiceClient.getTenantById(tenantId);
         } catch (Exception e) {
-            log.error("Failed to fetch tenant from tenant service for ID: {}", tenantId, e);
+            log.error("Error fetching tenant from tenant service: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch tenant from tenant service", e);
         }
     }
@@ -309,37 +276,33 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public BranchDto getBranchFromTenantService(Long branchId) {
         log.info("Fetching branch from tenant service with ID: {}", branchId);
+        
         try {
-            BranchDto branch = tenantServiceClient.getBranchById(branchId);
-            log.info("Successfully fetched branch from tenant service: {}", branch.getName());
-            return branch;
+            return tenantServiceClient.getBranchById(branchId);
         } catch (Exception e) {
-            log.error("Failed to fetch branch from tenant service for ID: {}", branchId, e);
+            log.error("Error fetching branch from tenant service: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch branch from tenant service", e);
         }
     }
     
     @Override
     public InventoryItemDto createInventoryItemWithProductValidation(CreateInventoryItemDto createInventoryItemDto) {
-        log.info("Creating inventory item with product validation from catalog service");
+        log.info("Creating inventory item with product validation for product: {}", createInventoryItemDto.getProductName());
         
-        // Validate product exists in catalog service using product SKU
-        if (createInventoryItemDto.getProductSku() != null && !createInventoryItemDto.getProductSku().isEmpty()) {
-            try {
-                ProductDto product = catalogServiceClient.getProductByBarcode(createInventoryItemDto.getProductSku());
-                log.info("Product validation successful for product: {}", product.getName());
-            } catch (Exception e) {
-                log.error("Product validation failed for product SKU: {}", createInventoryItemDto.getProductSku(), e);
-                throw new RuntimeException("Product not found in catalog service", e);
-            }
+        // Validate product exists in catalog service
+        try {
+            catalogServiceClient.getProductByBarcode(createInventoryItemDto.getProductSku());
+            log.info("Product validation successful for SKU: {}", createInventoryItemDto.getProductSku());
+        } catch (Exception e) {
+            log.error("Product validation failed for SKU: {}", createInventoryItemDto.getProductSku());
+            throw new RuntimeException("Product not found in catalog service", e);
         }
         
-        // Create inventory item
-        InventoryItem inventoryItem = inventoryMapper.toEntity(createInventoryItemDto);
+        InventoryItem inventoryItem = InventoryMapper.toEntity(createInventoryItemDto);
         InventoryItem savedItem = inventoryRepository.save(inventoryItem);
         
         log.info("Successfully created inventory item with product validation, ID: {}", savedItem.getId());
-        return inventoryMapper.toDto(savedItem);
+        return InventoryMapper.toDto(savedItem);
     }
     
     @Override
@@ -348,36 +311,35 @@ public class InventoryServiceImpl implements InventoryService {
         
         InventoryItem existingItem = inventoryRepository.findByIdAndIsActiveTrue(id)
                 .orElseThrow(() -> {
-                    log.error("Inventory item not found for update with ID: {}", id);
+                    log.error("Inventory item not found for update with notification, ID: {}", id);
                     return new RuntimeException("Inventory item not found with ID: " + id);
                 });
         
-        // Store old quantity for comparison
-        Integer oldQuantity = existingItem.getQty();
-        
-        inventoryMapper.updateEntityFromDto(updateInventoryItemDto, existingItem);
+        InventoryMapper.updateEntityFromDto(updateInventoryItemDto, existingItem);
         InventoryItem updatedItem = inventoryRepository.save(existingItem);
         
-        // Check for low stock and send notification
-        Integer newQuantity = updatedItem.getQty();
-        Integer lowStockThreshold = 10; // This could be configurable
-        
-        if (newQuantity <= lowStockThreshold && newQuantity < oldQuantity) {
-            log.info("Low stock detected for item ID: {}, quantity: {}", id, newQuantity);
-            
-            // Publish low stock alert via RabbitMQ
-            InventoryItemDto itemDto = inventoryMapper.toDto(updatedItem);
-            rabbitMQPublisher.publishLowStockAlert(itemDto, lowStockThreshold);
-            
-            // Publish notification alert
-            rabbitMQPublisher.publishNotificationAlert(
-                itemDto, 
-                "LOW_STOCK", 
-                "Low stock alert: " + itemDto.getProductName() + " has only " + newQuantity + " units remaining"
-            );
+        // Send notification via RabbitMQ
+        InventoryItemDto itemDto = InventoryMapper.toDto(updatedItem);
+        try {
+            rabbitMQPublisher.publishStockUpdate(itemDto);
+            log.info("Inventory update notification sent for item ID: {}", id);
+        } catch (Exception e) {
+            log.error("Failed to send inventory update notification for item ID: {}", id, e);
+            // Don't fail the update if notification fails
         }
         
-        log.info("Successfully updated inventory item with notification for ID: {}", id);
-        return inventoryMapper.toDto(updatedItem);
+        log.info("Successfully updated inventory item with notification, ID: {}", id);
+        
+        // Additional business logic for low stock alerts
+        if (updatedItem.getQty() != null && updatedItem.getQty() < 10) {
+            try {
+                rabbitMQPublisher.publishLowStockAlert(itemDto, 10);
+                log.info("Low stock alert sent for item ID: {}", id);
+            } catch (Exception e) {
+                log.error("Failed to send low stock alert for item ID: {}", id, e);
+            }
+        }
+        
+        return itemDto;
     }
 } 

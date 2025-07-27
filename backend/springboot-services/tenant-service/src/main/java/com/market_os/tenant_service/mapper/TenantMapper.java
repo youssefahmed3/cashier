@@ -2,53 +2,95 @@ package com.market_os.tenant_service.mapper;
 
 import com.market_os.tenant_service.dto.*;
 import com.market_os.tenant_service.model.Tenant;
-import org.mapstruct.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface TenantMapper {
+public class TenantMapper {
     
     /**
      * Map entity to DTO
      */
-    @Mapping(target = "logoUrl", source = "logoUrl")
-    @Mapping(target = "isActive", source = "isActive")
-    @Mapping(target = "createdAt", source = "createdAt")
-    TenantDto toDto(Tenant tenant);
+    public static TenantDto toDto(Tenant tenant) {
+        if (tenant == null) {
+            return null;
+        }
+        
+        TenantDto dto = new TenantDto();
+        dto.setId(tenant.getId());
+        dto.setName(tenant.getName());
+        dto.setIsActive(tenant.getIsActive());
+        dto.setLogoUrl(tenant.getLogoUrl());
+        dto.setCreatedAt(tenant.getCreatedAt());
+        return dto;
+    }
     
-    /**
-     * Map list of entities to DTOs
-     */
-    List<TenantDto> toDtoList(List<Tenant> tenants);
+ 
+     //Map list of entities to DTOs
+
+    public static List<TenantDto> toDtoList(List<Tenant> tenants) {
+        if (tenants == null) {
+            return null;
+        }
+        
+        return tenants.stream()
+                .map(TenantMapper::toDto)
+                .collect(Collectors.toList());
+    }
     
-    /**
-     * Map CreateTenantDto to entity
-     */
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "branches", ignore = true)
-    @Mapping(target = "logoUrl", ignore = true) // Set separately after file upload
-    @Mapping(target = "isActive", source = "isActive")
-    Tenant toEntity(CreateTenantDto createTenantDto);
+    
+     //Map CreateTenantDto to entity
+     
+    public static Tenant toEntity(CreateTenantDto createTenantDto) {
+        if (createTenantDto == null) {
+            return null;
+        }
+        
+        Tenant tenant = new Tenant();
+        tenant.setName(createTenantDto.getName());
+        tenant.setIsActive(createTenantDto.getIsActive());
+        // logoUrl will be set separately after file upload
+        return tenant;
+    }
     
     /**
      * Map entity to TenantWithBranchesDto
      */
-    @Mapping(target = "logoUrl", source = "logoUrl")
-    @Mapping(target = "isActive", source = "isActive")
-    @Mapping(target = "createdAt", source = "createdAt")
-    @Mapping(target = "branches", source = "branches")
-    TenantWithBranchesDto toTenantWithBranchesDto(Tenant tenant);
+    public static TenantWithBranchesDto toTenantWithBranchesDto(Tenant tenant) {
+        if (tenant == null) {
+            return null;
+        }
+        
+        TenantWithBranchesDto dto = new TenantWithBranchesDto();
+        dto.setId(tenant.getId());
+        dto.setName(tenant.getName());
+        dto.setIsActive(tenant.getIsActive());
+        dto.setLogoUrl(tenant.getLogoUrl());
+        dto.setCreatedAt(tenant.getCreatedAt());
+        
+        if (tenant.getBranches() != null) {
+            dto.setBranches(tenant.getBranches().stream()
+                    .map(BranchMapper::toDto)
+                    .collect(Collectors.toList()));
+        }
+        
+        return dto;
+    }
     
     /**
      * Update entity from UpdateTenantDto
      */
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "branches", ignore = true)
-    @Mapping(target = "logoUrl", ignore = true) // Updated separately via file upload
-    @Mapping(target = "isActive", source = "isActive")
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntityFromDto(UpdateTenantDto updateTenantDto, @MappingTarget Tenant tenant);
+    public static void updateEntityFromDto(UpdateTenantDto updateTenantDto, Tenant tenant) {
+        if (updateTenantDto == null || tenant == null) {
+            return;
+        }
+        
+        if (updateTenantDto.getName() != null) {
+            tenant.setName(updateTenantDto.getName());
+        }
+        if (updateTenantDto.getIsActive() != null) {
+            tenant.setIsActive(updateTenantDto.getIsActive());
+        }
+        // logoUrl will be updated separately via file upload
+    }
 } 
