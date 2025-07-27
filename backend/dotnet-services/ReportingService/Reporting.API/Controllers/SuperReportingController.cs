@@ -15,9 +15,9 @@ namespace Reporting.API.Controllers
             _context = context;
         }
 
-        // GET: api/superreporting/TenantsCountQuarterly
-        [HttpGet("TenantsCountQuarterly")]
-        public IActionResult GetTenantsCountQuarterly()
+        // GET: api/superreporting/GetNewTenantsMonthly
+        [HttpGet("GetNewTenantsMonthly")]
+        public IActionResult GetNewTenantsMonthly()
         {
             var tenants = _context.Tenants
                 .GroupBy(t => new { Year = t.CreatedAt.Year, Quarter = ((t.CreatedAt.Month - 1) / 3) + 1 })
