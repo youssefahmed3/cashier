@@ -93,4 +93,34 @@ public interface InventoryService {
      * Update inventory quantity (for stock adjustments)
      */
     InventoryItemDto updateInventoryQuantity(Long id, Integer newQuantity);
+    
+    /**
+     * Get product information from catalog service
+     */
+    ProductDto getProductFromCatalog(Long productId);
+    
+    /**
+     * Get product information from catalog service by barcode
+     */
+    ProductDto getProductFromCatalogByBarcode(String barcode);
+    
+    /**
+     * Get tenant information from tenant service
+     */
+    TenantDto getTenantFromTenantService(Long tenantId);
+    
+    /**
+     * Get branch information from tenant service
+     */
+    BranchDto getBranchFromTenantService(Long branchId);
+    
+    /**
+     * Create inventory item with product validation from catalog service
+     */
+    InventoryItemDto createInventoryItemWithProductValidation(CreateInventoryItemDto createInventoryItemDto);
+    
+    /**
+     * Update inventory with low stock notification
+     */
+    InventoryItemDto updateInventoryWithNotification(Long id, UpdateInventoryItemDto updateInventoryItemDto);
 } 
