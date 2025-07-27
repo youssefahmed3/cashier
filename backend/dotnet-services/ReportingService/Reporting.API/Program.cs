@@ -1,5 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
+using Reporing.Service;
 using Reporting.Infrastructure.Data;
 using Scalar.AspNetCore;
 
@@ -12,6 +13,8 @@ namespace Reporting.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+
+            builder.Services.AddInfrastructure(builder.Configuration);
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

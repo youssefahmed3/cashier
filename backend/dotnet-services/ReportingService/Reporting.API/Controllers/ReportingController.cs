@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using Reporting.Core.Entities;
+using Reporting.Core.Interfaces;
 using Reporting.Infrastructure.Data;
 using System.Globalization;
 
@@ -13,10 +14,13 @@ namespace Reporting.API.Controllers
     public class ReportingController : ControllerBase
     {
         private readonly OrderDbContext _context;
+        private readonly IOrderApiService _orderApiService;
 
-        public ReportingController(OrderDbContext context)
+        // Constructor to initialize both dependencies
+        public ReportingController(OrderDbContext context, IOrderApiService orderApiService)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _orderApiService = orderApiService ?? throw new ArgumentNullException(nameof(orderApiService));
         }
 
         // GET: api/reporting/DailySales
