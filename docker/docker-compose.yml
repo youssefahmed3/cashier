@@ -36,9 +36,9 @@ services:
 
 
   auth-service:
-    build: ../backend/dotnet-services/AuthenticationService
+    build: ../backend/dotnet-services/UserRoleService
     volumes:
-      - ../backend/dotnet-services/AuthenticationService:/app
+      - ../backend/dotnet-services/UserRoleService:/app
     ports:
       - "8001:7192"
     environment:

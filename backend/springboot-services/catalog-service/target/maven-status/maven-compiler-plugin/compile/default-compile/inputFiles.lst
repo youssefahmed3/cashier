@@ -1,4 +1,5 @@
 /app/src/main/java/com/market_os/catalog_service/CatalogServiceApplication.java
+/app/src/main/java/com/market_os/catalog_service/config/WebConfig.java
 /app/src/main/java/com/market_os/catalog_service/controller/CategoryController.java
 /app/src/main/java/com/market_os/catalog_service/controller/ProductController.java
 /app/src/main/java/com/market_os/catalog_service/dto/CategoryDto.java

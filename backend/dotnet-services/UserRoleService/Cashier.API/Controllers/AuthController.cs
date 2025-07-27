@@ -34,7 +34,17 @@
         public async Task<IActionResult> Login(LoginDto model)
         {
             var result = await _authService.LoginAsync(model);
-            return Ok(result);
+            // return Ok(result);
+             return Ok(new
+             {
+                 success = result.IsSuccess,
+                 message = result.Message,
+                 errors = result.Errors,
+                 requires2FA = result.Requires2FA,
+                 token = result.Token,
+                 refreshToken = result.RefreshToken
+                    
+            });
         }
 
         // POST: api/auth/confirm-2fa
