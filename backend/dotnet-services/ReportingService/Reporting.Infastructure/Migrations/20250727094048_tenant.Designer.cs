@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Reporting.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Reporting.Infrastructure.Data;
 namespace Reporting.Infrastructure.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    partial class OrderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250727094048_tenant")]
+    partial class tenant
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,7 +53,7 @@ namespace Reporting.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 3, 20, 14, 30, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2025, 7, 20, 14, 30, 0, 0, DateTimeKind.Unspecified),
                             Status = "Completed",
                             Total = 250,
                             UpdatedAt = new DateTime(2025, 7, 21, 9, 15, 0, 0, DateTimeKind.Unspecified)
@@ -65,7 +68,7 @@ namespace Reporting.Infrastructure.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 5, 22, 8, 20, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2025, 7, 22, 8, 20, 0, 0, DateTimeKind.Unspecified),
                             Status = "Cancelled",
                             Total = 0,
                             UpdatedAt = new DateTime(2025, 7, 22, 10, 0, 0, 0, DateTimeKind.Unspecified)
@@ -73,10 +76,10 @@ namespace Reporting.Infrastructure.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2024, 7, 22, 15, 10, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2025, 7, 22, 15, 10, 0, 0, DateTimeKind.Unspecified),
                             Status = "Completed",
                             Total = 320,
-                            UpdatedAt = new DateTime(2024, 7, 22, 16, 45, 0, 0, DateTimeKind.Unspecified)
+                            UpdatedAt = new DateTime(2025, 7, 22, 16, 45, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {

@@ -8,11 +8,11 @@ namespace Cashier.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
+    public class SubscriptionController : ControllerBase
     {
         private readonly SubscriptionDbContext _context;
 
-        public ValuesController(SubscriptionDbContext context)
+        public SubscriptionController(SubscriptionDbContext context)
         {
             _context = context;
         }
@@ -135,5 +135,7 @@ namespace Cashier.API.Controllers
             var count = await _context.Subscriptions.CountAsync();
             return Ok(count);
         }
+
+        
     }
 }
