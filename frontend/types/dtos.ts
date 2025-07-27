@@ -63,3 +63,18 @@ export interface ResetPasswordResponse {
     token: string
     refreshToken: string
 }
+
+export type CreateCategoryDto = {
+    name: string,
+    description: string
+}
+
+export type CreateProductDto = {
+    description: string,
+    price: number,
+    barcode: string,
+    name: string,
+    imgurl: string,
+    isactive: boolean,
+    categoryId?: number,
+}

@@ -218,8 +218,7 @@ services:
       - "1434:1433"
     networks:
       - backend
-    
-  
+
   tenant-db:
     image: postgres:14
     ports:
