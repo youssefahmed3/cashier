@@ -215,6 +215,16 @@ public class TenantServiceImpl implements TenantService {
                 .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + tenantId));
         
         String oldLogoUrl = tenant.getLogoUrl();
+        
+        // Delete old logo if exists
+        if (oldLogoUrl != null) {
+            try {
+                fileStorageService.deleteTenantLogo(oldLogoUrl);
+            } catch (Exception e) {
+                log.warn("Could not delete old logo file: {}", e.getMessage());
+            }
+        }
+        
         tenant.setLogoUrl(null);
         Tenant updatedTenant = tenantRepository.save(tenant);
         
