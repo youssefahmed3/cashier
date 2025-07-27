@@ -24,7 +24,8 @@ export interface ApiResponse {
     token: string
     refreshToken: string
     expiration: Date
-    requires2FA?: boolean;
+    requires2FA?: boolean
+    errors?: string[];
 }
 
 export interface TwoFactorAuthApiResponse {
