@@ -23,7 +23,7 @@ export async function registerUser(data: RegisterDto) {
 
 
 //Login function
-export async function loginUser(data: LoginDto) {
+export async function loginUser(data: LoginDto): Promise<ApiResponse> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/login`, {
     method: "POST",
     headers: {
@@ -33,8 +33,8 @@ export async function loginUser(data: LoginDto) {
   });
 
   const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Login failed");
 
+  // Don’t throw, return it to mutation to handle in `onSuccess`
   return json;
 }
 

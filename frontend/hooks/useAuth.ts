@@ -33,7 +33,7 @@ export const useAuth = () => {
         typeof window !== "undefined" ? !!localStorage.getItem("token") : false;
 
     // Register mutation
-    const registerMutation = useMutation<ApiResponse, Error, RegisterDto>({
+    const registerMutation = useMutation<ApiResponse, ApiResponse, RegisterDto>({
         mutationFn: registerUser,
         onSuccess: (data) => {
             if (data.success) {
@@ -48,9 +48,14 @@ export const useAuth = () => {
                 }
             }
         },
-        onError: (error) => {
-          toast.error("Something went wrong.");
-          console.error("Registration error:", error.message);
+        onError: (data) => {
+            toast.error("Something went wrong.");
+            if (data.errors && data.errors.length > 0) {
+                console.error("Registration error:", data.errors);
+                data.errors.forEach((err) => toast.error(err));
+            } else {
+                toast.error(data.message || "Registration failed!");
+            }
         },
     });
 
@@ -64,21 +69,16 @@ export const useAuth = () => {
                 router.push("/confirmTwoFactorAuth");
             } else if (data.success) {
                 toast.success("Login successful!");
-                console.log("Login successful");
                 localStorage.setItem("token", data.token!);
                 localStorage.setItem("refresh-token", data.refreshToken!);
-                redirect('/tenant/dashboard'); // Redirect to the dashboard or home page
+                router.replace('/tenant/dashboard');
+            } else {
+                toast.error(data.message || "Login failed.");
             }
-           if (data.errors?.length) {
-        data.errors.forEach((err) => toast.error(err));
-      } else {
-        toast.error(data.message || "Invalid credentials.");
-      }
         },
-         onError: (error) => {
-    toast.error("Login failed.");
-    console.error("Login error:", error.message);
-  },
+        onError: (error) => {
+            toast.error(error.message || "Invalid credentials.");
+        },
     });
 
     // Confirm 2FA mutation
@@ -89,7 +89,7 @@ export const useAuth = () => {
                 toast.success("2FA confirmed successfully!");
                 localStorage.removeItem("2fa-email");
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('refresh-Token', data.refreshToken);
+                localStorage.setItem('refresh-token', data.refreshToken);
                 /* TODO: fix the router depend on the role or the data fetching */
                 router.push('/login');
             }

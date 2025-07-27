@@ -5,7 +5,7 @@ import { CreateCategoryDto, CreateProductDto } from "@/types/dtos";
 
 /* GET:  /categories */
 export async function getCategories() {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/categories`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
@@ -19,7 +19,7 @@ export async function getCategories() {
 
 /* GET: /categories/{id} */
 export async function getCategoryById(id: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/categories/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories/${id}`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
@@ -33,7 +33,7 @@ export async function getCategoryById(id: number) {
 
 /* GET: /categories/{id}/products */
 export async function getProductsByCategory(id: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/categories/${id}/products`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories/${id}/products`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
@@ -47,7 +47,7 @@ export async function getProductsByCategory(id: number) {
 
 /* POST: /categories */
 export async function createCategory(createCategoryDto: CreateCategoryDto) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/categories`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -62,7 +62,7 @@ export async function createCategory(createCategoryDto: CreateCategoryDto) {
 
 /* PUT: /categories/{id} */
 export async function updateCategory(id: number, updateCategoryDto: CreateCategoryDto) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/categories/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories/${id}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"
@@ -77,7 +77,7 @@ export async function updateCategory(id: number, updateCategoryDto: CreateCatego
 
 /* DELETE: /categories/{id} */
 export async function deleteCategory(id: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/categories/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories/${id}`, {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json"
@@ -94,7 +94,7 @@ export async function deleteCategory(id: number) {
 
 /* GET: /products */
 export async function getProducts() {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
@@ -108,7 +108,7 @@ export async function getProducts() {
 
 /* GET: /products/{id} */
 export async function getProductById(id: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
@@ -121,7 +121,7 @@ export async function getProductById(id: number) {
 
 /* GET: /products/{id}/category */
 export async function getCategoryByProductId(id: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products/${id}/category`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}/category`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
@@ -135,7 +135,7 @@ export async function getCategoryByProductId(id: number) {
 
 /* POST: /products */
 export async function createProduct(createProductDto: CreateProductDto) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -150,7 +150,7 @@ export async function createProduct(createProductDto: CreateProductDto) {
 
 /* PUT: /products/{id} */
 export async function updateProduct(id: number, updateProductDto: CreateProductDto) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"
@@ -165,7 +165,7 @@ export async function updateProduct(id: number, updateProductDto: CreateProductD
 
 /* PUT: /products/{id}/activate */
 export async function activateProduct(id: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products/${id}/activate`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}/activate`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"
@@ -181,7 +181,7 @@ export async function activateProduct(id: number) {
 
 /* PUT: /products/{id}/disable */
 export async function disableProduct(id: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products/${id}/disable`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}/disable`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"
@@ -196,7 +196,7 @@ export async function disableProduct(id: number) {
 
 /* PUT: /products/{productId}/category/{categoryId} */
 export async function assignCategoryToProduct(productId: number, categoryId: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products/${productId}/category/${categoryId}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${productId}/category/${categoryId}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"
@@ -211,7 +211,7 @@ export async function assignCategoryToProduct(productId: number, categoryId: num
 
 /* DELETE: /products/{id} */
 export async function deleteProduct(id: number) {
-    const res = await fetch(`${process.env.NEXT_CATALOG_URL}/products/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}`, {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json"

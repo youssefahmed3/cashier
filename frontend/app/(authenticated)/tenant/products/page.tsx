@@ -1,3 +1,4 @@
+"use client";
 import CustomButton from "@/components/Button/Button";
 import TenantStatsCard from "@/components/TenantStatsCard/TenantStatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,8 +26,15 @@ import {
 import React from "react";
 import { columnInventory } from "../_components/columnInventory";
 import { columnProducts } from "../_components/columnProducts";
+import { useCatalog } from "@/hooks/useCatalog";
 
 const Page = () => {
+
+  const {products} = useCatalog();
+
+  console.log("Products:", products);
+  
+
   return (
     <div className="container-base">
       <header className="flex flex-col gap-6">
@@ -43,7 +51,7 @@ const Page = () => {
 
         {/* Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <TenantStatsCard title="Total Products" value="5" icon={<Box />} />
+          <TenantStatsCard title="Total Products" value={`${products?.length === undefined ? 0 : products?.length}`} icon={<Box />} />
           <TenantStatsCard title="Active Products" value="4" icon={<Tag />} />
           <TenantStatsCard title="Inactive Products" value="1" icon={<Tag />} />
           <TenantStatsCard
