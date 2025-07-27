@@ -7,7 +7,7 @@ export async function fetchUser() {
 
 //Register function
 export async function registerUser(data: RegisterDto) {
-  const res = await fetch(`${process.env.NEXT_AUTH_URL}/register`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -24,7 +24,7 @@ export async function registerUser(data: RegisterDto) {
 
 //Login function
 export async function loginUser(data: LoginDto) {
-  const res = await fetch(`${process.env.NEXT_AUTH_URL}/login`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -41,7 +41,7 @@ export async function loginUser(data: LoginDto) {
 
 //Confirm Two Factor Auth function
 export async function confirm2FA(data: Confirm2FADto): Promise<TwoFactorAuthApiResponse> {
-  const response = await fetch(`${process.env.NEXT_AUTH_URL}/confirm-2fa`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/confirm-2fa`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -55,7 +55,7 @@ export async function confirm2FA(data: Confirm2FADto): Promise<TwoFactorAuthApiR
 
 //Forget Password function
 export async function forgotPassword(data: ForgotPasswordDto): Promise<ForgotPasswordResponse> {
-  const response = await fetch(`${process.env.NEXT_AUTH_URL}/forgot-password`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/forgot-password`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -71,7 +71,7 @@ export async function forgotPassword(data: ForgotPasswordDto): Promise<ForgotPas
 export async function validateResetCode(
   data: ValidateResetCodeDto
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${process.env.NEXT_AUTH_URL}/validate-verification-code`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/validate-verification-code`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -85,7 +85,7 @@ export async function validateResetCode(
 
 //Reset Password function 
 export async function resetPassword(data: ResetPasswordDto): Promise<ResetPasswordResponse> {
-  const response = await fetch(`${process.env.NEXT_AUTH_URL}/reset-password`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/reset-password`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
