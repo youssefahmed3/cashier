@@ -55,3 +55,20 @@ export type TenantColumn = {
   employees: number;
   status: "active" | "suspended";
 }
+
+export interface Category {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  barcode: string;
+  imgurl: string;
+  isActive: boolean;
+  categoryId?: number;
+}

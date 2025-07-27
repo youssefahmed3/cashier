@@ -208,6 +208,17 @@ services:
     networks:
       - backend
 
+  auth-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: auth-db
+    environment:
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1434:1433"
+    networks:
+      - backend
+
   tenant-db:
     image: postgres:14
     ports:
