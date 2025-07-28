@@ -46,12 +46,13 @@ namespace Order.Infrastructure.Strategies
                     OrderId = paymentRequestDto.OrderId,
                     Amount = paymentRequestDto.Amount,
                     Method = PaymentMethod.Paymob,
-                    Status = PaymentStatus.Completed,
+                    Status = TransactionStatus.Completed,
                     BranchId = paymentRequestDto.BranchId,
                     TransactionId = transactionId,
                     CreatedAt = DateTime.UtcNow,
                     CompletedAt = DateTime.UtcNow,
                     Reference = clientSecret,
+
                 };
                 
 
@@ -92,7 +93,7 @@ namespace Order.Infrastructure.Strategies
                     OrderId = originalPayment.OrderId,
                     Amount = -amount,
                     Method = PaymentMethod.Paymob,
-                    Status = PaymentStatus.Refunded,
+                    Status = TransactionStatus.Refunded,
                     BranchId = originalPayment.BranchId,
                     TransactionId = refundTransactionId,
                     CreatedAt = DateTime.UtcNow,
@@ -160,9 +161,6 @@ namespace Order.Infrastructure.Strategies
 
             if (!result.IsSuccess)
                 throw new InvalidOperationException(result.Error);
-
-          
-
 
             return (result.Value.Special_Reference, result.Value.Client_Secret);
         }

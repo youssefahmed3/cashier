@@ -8,6 +8,8 @@ namespace Order.Infrastructure.Data
        public DbSet<SalesOrder> SalesOrder { get; set; }
        public DbSet<OrderItem> OrderItems { get; set; }
 
+       public DbSet<Refund> Refunds { get; set; }
+       public DbSet<RefundItem> RefundItems { get; set; }
        public DbSet<Payment> Payment { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -41,20 +43,53 @@ namespace Order.Infrastructure.Data
 
             modelBuilder.Entity<SalesOrder>().HasQueryFilter(o => !o.IsDeleted);
 
-
-
-
-
-
             modelBuilder.Entity<SalesOrder>()
                 .HasMany(o => o.OrderItems)
                 .WithOne()
                 .HasForeignKey(oi => oi.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
+            //Refund
+            modelBuilder.Entity<Refund>()
+                .HasKey(r => r.Id);
+            modelBuilder.Entity<Refund>()
+                .Property(r => r.Id)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<Refund>()
+                .Property(r => r.Amount)
+                .HasPrecision(18, 2);
+            modelBuilder.Entity<Refund>()
+                .Property(r => r.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            modelBuilder.Entity<RefundItem>()
+                .HasKey(ri => ri.Id);
+            modelBuilder.Entity<RefundItem>()
+                .Property(ri => ri.Id)
+                .ValueGeneratedOnAdd();
+            modelBuilder.Entity<RefundItem>()
+                .Property(ri => ri.UnitPrice)
+                .HasPrecision(18, 2);
+            modelBuilder.Entity<RefundItem>()
+                .Property(ri => ri.Quantity)
+                .HasPrecision(18, 2);
+            modelBuilder.Entity<RefundItem>()
+                .Property(ri => ri.CreatedAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+            modelBuilder.Entity<RefundItem>()
+                .Ignore(ri => ri.TotalPrice);
+
+            modelBuilder.Entity<Refund>()
+              .HasMany(r => r.RefundItems)
+              .WithOne(ri => ri.Refund)
+              .HasForeignKey(ri => ri.RefundId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RefundItem>()
+                .HasOne(ri => ri.OrderItem)
+                .WithMany()
+                .HasForeignKey(ri => ri.OrderItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
-
-
-
-
     }
 }

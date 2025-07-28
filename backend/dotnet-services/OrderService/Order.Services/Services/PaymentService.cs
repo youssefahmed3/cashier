@@ -64,46 +64,6 @@ namespace Order.Services.Services
 
             }
         }
-        public async Task<ResultDto<PaymentDto>> RefundPaymentAsync(long paymentId, decimal amount)
-        {
-            //TODO: Check the BranchId 
-            try
-            {
-                var originalPayment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-
-                if (originalPayment == null || originalPayment.OrderId == null)
-                    return ResultDto<PaymentDto>.Failure("Payment not found or missing Order.");
-
-                var order = await _unitOfWork.Orders.GetByIdAsync(originalPayment.OrderId.Value);
-                if (order == null)
-                    return ResultDto<PaymentDto>.Failure("Order not found.");
-
-                if (order.Status == OrderStatus.Refunded || order.Status == OrderStatus.PartiallyRefunded)
-                    return ResultDto<PaymentDto>.Failure("Order already refunded.");
-
-                if (amount <= 0 || amount > originalPayment.Amount)
-                    return ResultDto<PaymentDto>.Failure("Invalid refund amount.");
-
-                if (!_paymentStrategies.TryGetValue(originalPayment.Method, out var strategy))
-                    return ResultDto<PaymentDto>.Failure("Unsupported payment method for refund.");
-
-                var result = await strategy.RefundPaymentAsync(originalPayment, order, amount);
-             
-                if (!result.IsSuccess)
-                    throw new InvalidOperationException(result.Error);
-                var resultDto = _mapper.Map<PaymentDto>(result.Value);
-
-                return ResultDto<PaymentDto>.Success(resultDto);
-
-            }
-            catch (Exception ex)
-            {
-                return ResultDto<PaymentDto>.Failure($"Payment processing failed: {ex.Message}");
-
-            }
-
-        }
-
         public async Task<ResultDto<IEnumerable<PaymentDto>>> GetPaymentsByOrderIdAsync(long orderId)
         {
             try
@@ -137,5 +97,6 @@ namespace Order.Services.Services
                 return ResultDto<PaymentDto>.Failure($"Error retrieving payment: {ex.Message}");
             }
         }
+
     }
 }

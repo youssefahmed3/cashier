@@ -45,18 +45,21 @@ namespace Order.API
             builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+            builder.Services.AddScoped<IRefundRepository, RefundRepository>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             builder.Services.AddScoped<IOrderService<OrderDto, long, ResultDto<OrderDto>>, OrderService>();
             builder.Services.AddScoped<IOrderItemService, OrderItemService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<IRefundService, RefundService>();
             builder.Services.AddScoped<IUserContextService, UserContextService>();
 
             builder.Services.AddScoped<IPaymentStrategy, CashPaymentStrategy>();
             builder.Services.AddScoped<IPaymentStrategy, PaymobPaymentStrategy>();
             builder.Services.AddAutoMapper(typeof(OrderMappingProfile).Assembly);
             builder.Services.AddAutoMapper(typeof(PaymentMappingProfile).Assembly);
-            
+            builder.Services.AddAutoMapper(typeof(RefundMappingProfile).Assembly);
+
 
 
             // Add services to the container.

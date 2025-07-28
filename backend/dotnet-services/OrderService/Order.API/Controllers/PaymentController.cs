@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Order.Core.Interfaces.Repositories;
 using Order.Core.Interfaces.Services;
+using Order.Services.Services;
 using Shared.DTOS;
 
 namespace Order.API.Controllers
@@ -10,10 +12,12 @@ namespace Order.API.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly IRefundService _refundService;
 
-        public PaymentController(IPaymentService paymentService)
+        public PaymentController(IPaymentService paymentService, IRefundService refundService)
         {
             _paymentService = paymentService;
+            _refundService  = refundService;
         }
 
         [HttpPost("process")]
@@ -28,9 +32,9 @@ namespace Order.API.Controllers
         }
 
         [HttpPost("refund")]
-        public async Task<IActionResult> RefundPayment(RefundRequest refundRequest)
+        public async Task<IActionResult> RefundPayment(RefundRequestDto refundRequest)
         {
-            var result = await _paymentService.RefundPaymentAsync(refundRequest.PaymentId, refundRequest.Amount);
+            var result = await _refundService.ProcessRefundAsync(refundRequest);
 
             if (result.IsSuccess)
                 return Ok(result.Value);

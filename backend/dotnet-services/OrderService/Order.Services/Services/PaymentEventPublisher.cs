@@ -19,6 +19,7 @@ namespace Order.Services.Services
             _messagePublisher = messagePublisher;
         }
 
+        //TODO: Should i publish event to reflect stock after payment or refund for that order
         public async Task<ResultDto<bool>> PublishPaymentEventsAsync(Payment payment, PaymentRequestDto request, int shiftId)
         {
             var drawerLogEvent = new DrawerLogEvent

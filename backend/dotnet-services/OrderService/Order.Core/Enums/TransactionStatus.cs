@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Order.Core.Enums
 {
-    public enum PaymentStatus
+    public enum TransactionStatus
     {
         Pending = 0,
         Completed = 1,

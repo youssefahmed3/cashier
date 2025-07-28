@@ -4,6 +4,8 @@
     {
         public long Id { get; set; }
         public long ProductId { get; init; }
+
+        public string Name { get; set; }
         public decimal Quantity { get; init; }
         public decimal UnitPrice { get; init; }
         public long OrderId { get; init; }

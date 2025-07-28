@@ -35,7 +35,7 @@ public class CashPaymentStrategy : IPaymentStrategy
                 ShiftId = shiftId,
                 Method = PaymentMethod.Cash,
                 Amount = paymentRequestDto.Amount,
-                Status = PaymentStatus.Completed,
+                Status = TransactionStatus.Completed,
                 CreatedAt = DateTime.UtcNow,
                 CompletedAt = DateTime.UtcNow,
                 Reference = paymentRequestDto.Reference
@@ -53,7 +53,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             await _unitOfWork.SaveChangesAsync();
 
             // Fire and forget Payment event publishing
-            var eventResult = await _eventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto, shiftId);
+           // var eventResult = await _eventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto, shiftId);
 
             await _unitOfWork.CommitTransactionAsync();
 
@@ -79,7 +79,7 @@ public class CashPaymentStrategy : IPaymentStrategy
                 ShiftId = originalPayment.ShiftId,
                 Method = originalPayment.Method,
                 Amount = -amount,
-                Status = PaymentStatus.Refunded,
+                Status = TransactionStatus.Refunded,
                 CreatedAt = DateTime.UtcNow,
                 CompletedAt = DateTime.UtcNow,
                 Reference = $"Refund for Payment #{originalPayment.Id}",
@@ -102,7 +102,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             await _unitOfWork.SaveChangesAsync();
 
             // Fire and forget refund event publishing
-            var eventResult = await _eventPublisher.PublishRefundEventsAsync(refundPayment, originalPayment, amount);
+         //   var eventResult = await _eventPublisher.PublishRefundEventsAsync(refundPayment, originalPayment, amount);
 
             await _unitOfWork.CommitTransactionAsync();
 
