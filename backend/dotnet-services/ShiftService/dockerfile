@@ -1,0 +1,19 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+WORKDIR /app
+
+# Copy solution and project files for restore (enables Docker cache)
+COPY ShiftService.sln ./
+COPY Shift.API/*.csproj Shift.API/
+COPY Shift.Core/*.csproj Shift.Core/
+COPY Shift.Infrastructure/*.csproj Shift.Infrastructure/
+COPY Shift.Services/*.csproj Shift.Services/
+COPY Shared/*.csproj Shared/
+
+RUN dotnet restore
+
+# Copy the rest of the code
+COPY . ./
+
+EXPOSE 8080
+
+CMD ["dotnet", "watch", "--project", "Shift.API/Shift.API.csproj", "run"]

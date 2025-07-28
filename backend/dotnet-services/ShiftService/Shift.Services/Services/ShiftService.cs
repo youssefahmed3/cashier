@@ -28,7 +28,7 @@ namespace Shift.Services.Services
         {
             try
             {
-                var activeShift = await _unitOfWork.ShiftRepository.GetActiveShiftAsync(request.BranchId);
+                var activeShift = await _unitOfWork.ShiftRepository.GetActiveShiftAsync(request.BranchId, request.UserId);
                 if (activeShift != null)
                     return ResultDto<ShiftDto>.Failure("There is already an active shift for this User in that branch.");
 
@@ -124,11 +124,11 @@ namespace Shift.Services.Services
 
         }
 
-        public async Task<ResultDto<ShiftDto>> GetActiveShiftAsync(long branchId)
+        public async Task<ResultDto<ShiftDto>> GetActiveShiftAsync(long branchId, long userId)
         {
             try
             {
-                var activeShift = await _unitOfWork.ShiftRepository.GetActiveShiftAsync(branchId);
+                var activeShift = await _unitOfWork.ShiftRepository.GetActiveShiftAsync(branchId, userId);
                 if (activeShift == null)
                     return ResultDto<ShiftDto>.Failure("No active shift found.");
                 var shiftDto = _mapper.Map<ShiftDto>(activeShift);

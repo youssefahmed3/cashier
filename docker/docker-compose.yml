@@ -11,8 +11,8 @@ services:
       - --api.insecure=true
       - --entrypoints.web.address=:80
     ports:
-      - "80:80"       # Public HTTP traffic
-      - "8080:8080"   # Traefik Dashboard
+      - "80:80" # Public HTTP traffic
+      - "8080:8080" # Traefik Dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
@@ -54,7 +54,6 @@ services:
       - "traefik.http.middlewares.strip-auth.stripprefix.prefixes=/auth"
     networks:
       - backend
-    
 
   order-service:
     build: ../backend/dotnet-services/OrderService
@@ -74,6 +73,26 @@ services:
       - "traefik.http.routers.order.middlewares=strip-order@docker"
       - "traefik.http.middlewares.strip-order.stripprefix.prefixes=/order"
     networks:
+      - backend
+      
+  shift-service-dotnet:
+    build: ../backend/dotnet-services/ShiftService
+    volumes:
+      - ../backend/dotnet-services/ShiftService:/app
+    ports:
+      - "8011:8086"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - dotnet-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
+      - "traefik.http.routers.shift-dotnet.entrypoints=web"
+      - "traefik.http.services.shift-dotnet.loadbalancer.server.port=8086"
+      - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
+      - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift"
+     networks:
       - backend
 
   notification-service:
@@ -173,7 +192,7 @@ services:
       POSTGRES_USER: ${NOTIFICATION_POSTGRES_USER}
       POSTGRES_PASSWORD: ${NOTIFICATION_POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
       interval: 10s
       timeout: 5s
       retries: 5
