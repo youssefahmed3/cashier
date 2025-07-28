@@ -50,7 +50,6 @@ public class OrderItemService : IOrderItemService
         return ResultDto<OrderItemDto>.Success(dto);
     }
 
-    //TODO: I need to handle the when create to not take the id on dto 
     public async Task<ResultDto<OrderItemDto>> CreateAsync(OrderItemDto dto, long branchId)
     {
         var (isValid, _, error) = await ValidateOrderAsync(dto.OrderId, branchId);

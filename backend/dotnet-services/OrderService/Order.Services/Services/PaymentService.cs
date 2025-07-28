@@ -49,7 +49,7 @@ namespace Order.Services.Services
               
                 var strategy = _paymentStrategies[method];
                 var result = await strategy.ProcessPaymentAsync(request);
-                //TODO: Check if there any error happens throw ex 
+              
                 if (!result.IsSuccess)
                     throw new InvalidOperationException(result.Error);
 
@@ -64,35 +64,6 @@ namespace Order.Services.Services
 
             }
         }
-        public async Task<ResultDto<PaymentDto>> RefundPaymentAsync(long paymentId, decimal amount)
-        {
-            //TODO: Check the BranchId 
-            try
-            {
-                var payment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-                if (payment == null)
-                {
-                    return ResultDto<PaymentDto>.Failure("Payment not found.");
-                }
-
-                var strategy = _paymentStrategies[payment.Method];
-                var result = await strategy.RefundPaymentAsync(paymentId, amount);
-                //TODO: Check if there any error happens throw ex 
-                if (!result.IsSuccess)
-                    throw new InvalidOperationException(result.Error);
-                var resultDto = _mapper.Map<PaymentDto>(result.Value);
-
-                return ResultDto<PaymentDto>.Success(resultDto);
-
-            }
-            catch (Exception ex)
-            {
-                return ResultDto<PaymentDto>.Failure($"Payment processing failed: {ex.Message}");
-
-            }
-
-        }
-
         public async Task<ResultDto<IEnumerable<PaymentDto>>> GetPaymentsByOrderIdAsync(long orderId)
         {
             try
@@ -126,5 +97,6 @@ namespace Order.Services.Services
                 return ResultDto<PaymentDto>.Failure($"Error retrieving payment: {ex.Message}");
             }
         }
+
     }
 }

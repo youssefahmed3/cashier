@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using Order.Core.Entities;
 using Order.Core.Enums;
 using Order.Core.Interfaces.Services;
@@ -41,7 +42,7 @@ namespace Order.API.Controllers
         // POST api/<OrderController>
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] OrderDto orderDto)
-        {
+        { 
             var result = await _orderService.CreateOrderAsync(orderDto);
 
             if (!result.IsSuccess)
