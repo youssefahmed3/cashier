@@ -53,7 +53,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             await _unitOfWork.SaveChangesAsync();
 
             // Fire and forget Payment event publishing
-           // var eventResult = await _eventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto, shiftId);
+           var eventResult = await _eventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto, shiftId);
 
             await _unitOfWork.CommitTransactionAsync();
 
@@ -102,7 +102,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             await _unitOfWork.SaveChangesAsync();
 
             // Fire and forget refund event publishing
-         //   var eventResult = await _eventPublisher.PublishRefundEventsAsync(refundPayment, originalPayment, amount);
+            var eventResult = await _eventPublisher.PublishRefundEventsAsync(refundPayment, originalPayment, amount);
 
             await _unitOfWork.CommitTransactionAsync();
 
