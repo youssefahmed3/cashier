@@ -24,7 +24,9 @@ import {
 } from "lucide-react";
 import React from "react";
 import { columnsBranches } from "../_components/columnBranches";
-import { BranchType } from "@/app/types/types";
+import { BranchType } from "@/types/types";
+
+import { useQuery } from "@tanstack/react-query";
 
 /* Fake Data */
 const data: BranchType[] = [
@@ -120,7 +122,11 @@ const data: BranchType[] = [
   },
 ];
 
+
+
 const Page = () => {
+
+
   return (
     <div className="container-base">
       <header className="flex flex-col gap-6">

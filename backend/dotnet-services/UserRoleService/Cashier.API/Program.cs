@@ -31,7 +31,8 @@ namespace Cashier.API
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IUserRoleService, UserRoleService>();
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-            builder.Services.AddTransient<IEmailSender,EmailSender>();  
+            builder.Services.AddTransient<IEmailSender,EmailSender>();
+            builder.Services.AddScoped<ITokenValidator, TokenValidator>();
             builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JWTOptions"));
 
             var jwtOptions = builder.Configuration.GetSection("JWTOptions").Get<JwtOptions>();

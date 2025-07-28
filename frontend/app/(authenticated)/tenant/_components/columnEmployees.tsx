@@ -1,6 +1,6 @@
 "use client";
 
-import { BranchType, EmployeeType } from "@/app/types/types";
+import { BranchType, EmployeeType } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

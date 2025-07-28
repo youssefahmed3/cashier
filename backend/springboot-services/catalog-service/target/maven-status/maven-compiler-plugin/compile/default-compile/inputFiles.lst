@@ -1,0 +1,14 @@
+/app/src/main/java/com/market_os/catalog_service/CatalogServiceApplication.java
+/app/src/main/java/com/market_os/catalog_service/config/WebConfig.java
+/app/src/main/java/com/market_os/catalog_service/controller/CategoryController.java
+/app/src/main/java/com/market_os/catalog_service/controller/ProductController.java
+/app/src/main/java/com/market_os/catalog_service/dto/CategoryDto.java
+/app/src/main/java/com/market_os/catalog_service/dto/ProductDto.java
+/app/src/main/java/com/market_os/catalog_service/dto/ProductResponseDto.java
+/app/src/main/java/com/market_os/catalog_service/mapper/ProductMapper.java
+/app/src/main/java/com/market_os/catalog_service/model/Category.java
+/app/src/main/java/com/market_os/catalog_service/model/Product.java
+/app/src/main/java/com/market_os/catalog_service/repository/CategoryRepository.java
+/app/src/main/java/com/market_os/catalog_service/repository/ProductRepository.java
+/app/src/main/java/com/market_os/catalog_service/service/CategoryService.java
+/app/src/main/java/com/market_os/catalog_service/service/ProductService.java

@@ -1,12 +1,24 @@
-"use client"
-import { useState } from "react"
-import { registerUser, RegisterDto } from "@/lib/api"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+"use client";
 
-export function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { extractEmailFromJwtToken } from "@/lib/jwt";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
+import { RegisterDto } from "@/types/dtos";
+import { useAuth } from "@/hooks/useAuth";
+
+export function RegisterForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+  const router = useRouter();
+
   const [form, setForm] = useState<RegisterDto>({
     firstName: "",
     lastName: "",
@@ -15,8 +27,21 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
     phoneNumber: "",
     password: "",
   });
+
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<Error | string | null>(null);
+  const { register, registerError, registerStatus } = useAuth();
+
+  useEffect(() => {
+    if (token) {
+      const email = extractEmailFromJwtToken(token);
+      if (email) {
+        setForm((prev) => ({ ...prev, email }));
+      } else {
+        setMessage("Invalid or expired token.");
+      }
+    }
+  }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.id]: e.target.value });
@@ -26,10 +51,13 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    try {
+    register(form);
+    registerError && setMessage(registerError);
+    /* try {
       const result = await registerUser(form);
       if (result.success) {
         setMessage("Registration successful!");
+        router.push(`/login`);
       } else {
         setMessage(result.message || "Something went wrong.");
       }
@@ -37,7 +65,7 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
       setMessage(error.message);
     } finally {
       setLoading(false);
-    }
+    } */
   };
 
   return (
@@ -56,32 +84,68 @@ export function RegisterForm({ className, ...props }: React.ComponentProps<"div"
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
                 <div className="grid gap-3">
                   <Label htmlFor="firstName">Firstname</Label>
-                  <Input id="firstName" value={form.firstName} onChange={handleChange} required />
+                  <Input
+                    id="firstName"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="lastName">Lastname</Label>
-                  <Input id="lastName" value={form.lastName} onChange={handleChange} required />
+                  <Input
+                    id="lastName"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="username">Username</Label>
-                  <Input id="username" value={form.username} onChange={handleChange} required />
+                  <Input
+                    id="username"
+                    value={form.username}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={form.email} onChange={handleChange} required />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    readOnly={!!token}
+                  />
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input id="phoneNumber" type="tel" value={form.phoneNumber} onChange={handleChange} required />
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    value={form.phoneNumber}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" value={form.password} onChange={handleChange} required />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
               </div>
 
               {message && (
-                <p className="text-center text-sm text-red-600 dark:text-red-400">{message}</p>
+                <p className="text-center text-sm text-red-600 dark:text-red-400">
+                  {typeof message === "string" ? message : message?.message}
+                </p>
               )}
 
               <Button type="submit" className="w-full" disabled={loading}>

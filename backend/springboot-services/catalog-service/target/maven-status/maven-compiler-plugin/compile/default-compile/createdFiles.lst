@@ -1,0 +1,13 @@
+com/market_os/catalog_service/dto/ProductResponseDto.class
+com/market_os/catalog_service/controller/ProductController.class
+com/market_os/catalog_service/model/Product.class
+com/market_os/catalog_service/CatalogServiceApplication.class
+com/market_os/catalog_service/dto/ProductDto.class
+com/market_os/catalog_service/service/ProductService.class
+com/market_os/catalog_service/repository/CategoryRepository.class
+com/market_os/catalog_service/controller/CategoryController.class
+com/market_os/catalog_service/repository/ProductRepository.class
+com/market_os/catalog_service/model/Category.class
+com/market_os/catalog_service/dto/CategoryDto.class
+com/market_os/catalog_service/mapper/ProductMapper.class
+com/market_os/catalog_service/service/CategoryService.class

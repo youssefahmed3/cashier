@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { columnsBranches } from "../_components/columnBranches";
-import { BranchType } from "@/app/types/types";
+import { BranchType } from "@/types/types";
 
 /* Fake Data */
 const data: BranchType[] = [

@@ -1,0 +1,15 @@
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\config\RabbitMQPublisher.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\model\InventoryItem.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\repository\InventoryRepository.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\mapper\InventoryMapper.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\controller\InventoryController.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\InventoryServiceApplication.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\controller\HealthController.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\dto\InventoryStatsDto.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\service\InventoryService.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\dto\UpdateInventoryItemDto.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\config\SecurityConfig.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\config\RabbitMQConfig.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\dto\InventoryItemDto.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\service\InventoryServiceImpl.java
+D:\down\cashier-2\backend\springboot-services\inventory-service\src\main\java\com\market_os\inventory_service\dto\CreateInventoryItemDto.java
