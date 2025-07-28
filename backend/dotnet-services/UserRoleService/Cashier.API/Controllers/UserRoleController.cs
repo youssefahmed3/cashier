@@ -12,6 +12,13 @@
             var users = await _service.GetAllUsersAsync(filter);
             return Ok(users);
         }
+        // GET: api/userrole/me
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUserInfo()
+        {
+            var user = await _service.GetCurrentUserAsync();
+            return Ok(user);
+        }
         //GET : api/userrole/users/{userId}
         [HttpGet("users/{userId}")]
         public async Task<IActionResult> GetUserById(int userId)

@@ -1,9 +1,7 @@
+import { redirect } from "next/navigation";
 
 
-export default function Home() {
-  return (
-  <div className="container-base">
-    
-  </div>
-  );
+/* TODO: Still no authorization */
+export default function Page() {
+  redirect('/login');
 }

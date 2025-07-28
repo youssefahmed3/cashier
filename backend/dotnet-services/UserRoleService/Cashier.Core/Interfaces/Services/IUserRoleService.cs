@@ -1,8 +1,12 @@
-﻿namespace Cashier.Core.Interfaces.Services
+﻿using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
+
+namespace Cashier.Core.Interfaces.Services
 {
     public interface IUserRoleService
     {
         Task<List<AppUserDto>> GetAllUsersAsync(UserQueryDto? filter);
+        Task<AppUserWithRolesDto> GetCurrentUserAsync();
         Task<List<AppRoleDto>> GetAllRolesAsync();
         Task AssignRoleAsync(AssignRoleDto dto);
         Task<bool> UpdateUserAsync(UpdateUserDto dto);

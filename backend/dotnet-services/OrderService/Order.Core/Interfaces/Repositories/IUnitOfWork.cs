@@ -11,6 +11,8 @@ namespace Order.Core.Interfaces.Repositories
     {
          IOrderRepository Orders { get; }
         IGenericRepository<OrderItem, long> OrderItems { get; }
+        IRefundRepository Refunds { get; }
+        IGenericRepository<RefundItem, long> RefundItems { get; }
 
         IPaymentRepository PaymentRepo { get; }
         Task<int> SaveChangesAsync();

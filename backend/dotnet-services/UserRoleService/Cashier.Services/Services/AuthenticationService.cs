@@ -114,7 +114,7 @@
 
                 await _emailSender.SendEmailAsync(email);
 
-                return new LoginResponseDto { Requires2FA = true, Message = "Please confirm your email" };
+                return new LoginResponseDto {  Requires2FA = true, Message = "Please confirm your email" };
             }
 
             return GenerateTokensAsync(user);

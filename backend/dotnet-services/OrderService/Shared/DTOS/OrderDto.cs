@@ -11,7 +11,10 @@ namespace Shared.DTOS
     {
         public long OrderId { get; init; }
         public long BranchId { get; init; }
-        public long UserId { get; init; }
+        public long? UserId { get; set; }
+
+        public long? CustomerId { get; set; }
+
         public long ShiftId { get; init; }
         public string Status { get; init; } = "New";
         public List<OrderItemDto> Items { get; init; } = [];

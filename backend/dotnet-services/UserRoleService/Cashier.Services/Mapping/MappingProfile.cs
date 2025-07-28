@@ -9,6 +9,7 @@
             CreateMap<AppUser, AppUserToReturnDto>();
             CreateMap<Permission,PermissionDto>();
             CreateMap<RegisterDto, AppUser>();
+            CreateMap<AppUser, AppUserWithRolesDto>();
         }
     }
 }

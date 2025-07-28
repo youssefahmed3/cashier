@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   backend:
 
@@ -10,6 +8,7 @@ services:
     command:
       - --api.dashboard=true
       - --providers.docker=true
+      - --api.insecure=true
       - --entrypoints.web.address=:80
     ports:
       - "80:80" # Public HTTP traffic
@@ -23,23 +22,59 @@ services:
     networks:
       - backend
 
-  order-service-dotnet:
-    build: ../backend/dotnet-services/OrderService
-    volumes:
-      - ../backend/dotnet-services/OrderService:/app
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
     ports:
-      - "8010:8085"
+      - "5672:5672"     # AMQP protocol (for apps)
+      - "15672:15672"   # RabbitMQ dashboard (browser)
+    networks:
+      - backend
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+
+  auth-service:
+    build: ../backend/dotnet-services/UserRoleService
+    volumes:
+      - ../backend/dotnet-services/UserRoleService:/app
+    ports:
+      - "8001:7192"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       - dotnet-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.order-dotnet.rule=PathPrefix(`/order-service-dotnet`)"
-      - "traefik.http.routers.order-dotnet.entrypoints=web"
-      - "traefik.http.services.order-dotnet.loadbalancer.server.port=8085"
-      - "traefik.http.routers.order-dotnet.middlewares=strip-order-dotnet@docker"
-      - "traefik.http.middlewares.strip-order-dotnet.stripprefix.prefixes=/order-service-dotnet"
+      - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth.entrypoints=web"
+      - "traefik.http.services.auth.loadbalancer.server.port=8085"
+      - "traefik.http.routers.auth.middlewares=strip-auth@docker"
+      - "traefik.http.middlewares.strip-auth.stripprefix.prefixes=/auth"
+    networks:
+      - backend
+
+  order-service:
+    build: ../backend/dotnet-services/OrderService
+    volumes:
+      - ../backend/dotnet-services/OrderService:/app
+    ports:
+      - "8002:8085"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - dotnet-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.order.rule=PathPrefix(`/order`)"
+      - "traefik.http.routers.order.entrypoints=web"
+      - "traefik.http.services.order.loadbalancer.server.port=8085"
+      - "traefik.http.routers.order.middlewares=strip-order@docker"
+      - "traefik.http.middlewares.strip-order.stripprefix.prefixes=/order"
+    networks:
+      - backend
+      
   shift-service-dotnet:
     build: ../backend/dotnet-services/ShiftService
     volumes:
@@ -52,23 +87,13 @@ services:
       - dotnet-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift-service-dotnet`)"
+      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
       - "traefik.http.routers.shift-dotnet.entrypoints=web"
       - "traefik.http.services.shift-dotnet.loadbalancer.server.port=8086"
       - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
-      - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift-service-dotnet"
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672" # AMQP protocol (for apps)
-      - "15672:15672" # RabbitMQ dashboard (browser)
-    networks:
+      - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift"
+     networks:
       - backend
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
 
   notification-service:
     build: ../backend/springboot-services/notification-service
@@ -76,7 +101,7 @@ services:
       - ../backend/springboot-services/notification-service:/app
       - ~/.m2:/root/.m2
     ports:
-      - "8001:8080"
+      - "8003:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_NOTIFICATION_DATASOURCE_URL=${SPRING_NOTIFICATION_DATASOURCE_URL}
@@ -86,35 +111,75 @@ services:
       - notification-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.template.rule=PathPrefix(`/notification`)"
-      - "traefik.http.routers.template.entrypoints=web"
-      - "traefik.http.services.template.loadbalancer.server.port=8080"
-      - "traefik.http.routers.template.middlewares=strip-template@docker"
-      - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/notification"
+      - "traefik.http.routers.notifications.rule=PathPrefix(`/notifications`)"
+      - "traefik.http.routers.notifications.entrypoints=web"
+      - "traefik.http.services.notifications.loadbalancer.server.port=8080"
+      - "traefik.http.routers.notifications.middlewares=strip-notification@docker"
+      - "traefik.http.middlewares.strip-notifications.stripprefix.prefixes=/notifications"
     networks:
       - backend
 
-  starter-data-service:
-    build: ../backend/springboot-services/starter-data-service
+  catalog-service:
+    build: ../backend/springboot-services/catalog-service
     volumes:
-      - ../backend/springboot-services/starter-data-service:/app
+      - ../backend/springboot-services/catalog-service:/app
       - ~/.m2:/root/.m2
     ports:
-      - "8002:8080"
+      - "8005:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
-      - SPRING_STARTER_DATA_DATASOURCE_URL=${SPRING_STARTER_DATA_DATASOURCE_URL}
-      - STARTER_DATA_POSTGRES_USER=${STARTER_DATA_POSTGRES_USER}
-      - STARTER_DATA_POSTGRES_PASSWORD=${STARTER_DATA_POSTGRES_PASSWORD}
+      - SPRING_CATALOG_DATASOURCE_URL=jdbc:postgresql://catalog-db:5432/catalog_db
+      - CATALOG_POSTGRES_USER=catalog_db
+      - CATALOG_POSTGRES_PASSWORD=catalog_db
     depends_on:
-      - starter-data-db
+      - catalog-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.template.rule=PathPrefix(`/starter-data`)"
-      - "traefik.http.routers.template.entrypoints=web"
-      - "traefik.http.services.template.loadbalancer.server.port=8080"
-      - "traefik.http.routers.template.middlewares=strip-template@docker"
-      - "traefik.http.middlewares.strip-template.stripprefix.prefixes=/starter-data"
+      - "traefik.http.routers.catalog.rule=PathPrefix(`/catalog`)"
+      - "traefik.http.routers.catalog.entrypoints=web"
+      - "traefik.http.services.catalog.loadbalancer.server.port=8080"
+      - "traefik.http.routers.catalog.middlewares=strip-catalog@docker"
+      - "traefik.http.middlewares.strip-catalog.stripprefix.prefixes=/catalog"
+    networks:
+      - backend
+
+  
+  tenant-service:
+    build: ../backend/springboot-services/tenant-service
+    volumes:
+      - ../backend/springboot-services/tenant-service:/app
+      - ~/.m2:/root/.m2
+    ports:
+      - "8004:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - DB_HOST=tenant-db
+      - DB_PORT=5432
+      - DB_NAME=${TENANT_POSTGRES_DB:-tenant_db}
+      - DB_USERNAME=${TENANT_POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${TENANT_POSTGRES_PASSWORD:-postgres}
+      - SUBSCRIPTION_SERVICE_URL=${SUBSCRIPTION_SERVICE_URL:-http://subscription-service:8080}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:8085}
+      - USER_ROLE_SERVICE_URL=${USER_ROLE_SERVICE_URL:-http://auth-service:8085}
+      - JWT_SECRET=${JWT_SECRET:-mySecretKey123456789012345678901234567890}
+      - JWT_ISSUER=${JWT_ISSUER:-https://localhost:5115}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-https://localhost:5115}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
+      - SECURITY_USER_NAME=admin
+      - SECURITY_USER_PASSWORD=admin123
+    depends_on:
+      - tenant-db
+      - rabbitmq
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tenant.rule=PathPrefix(`/tenant`)"
+      - "traefik.http.routers.tenant.entrypoints=web"
+      - "traefik.http.services.tenant.loadbalancer.server.port=8080"
+      - "traefik.http.routers.tenant.middlewares=strip-tenant@docker"
+      - "traefik.http.middlewares.strip-tenant.stripprefix.prefixes=/tenant"
     networks:
       - backend
 
@@ -134,33 +199,22 @@ services:
     networks:
       - backend
 
-  order-db:
+  catalog-db:
     image: postgres:14
     ports:
-      - "5433:5432"
+      - "5435:5432"
     environment:
-      POSTGRES_DB: ${ORDER_POSTGRES_DB}
-      POSTGRES_USER: ${ORDER_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${ORDER_POSTGRES_PASSWORD}
+      POSTGRES_DB: catalog_db
+      POSTGRES_USER: catalog_db
+      POSTGRES_PASSWORD: catalog_db
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
-
-  starter-data-db:
-    image: postgres:14
-    ports:
-      - "5434:5432"
-    environment:
-      POSTGRES_DB: ${SARTER_DATA_POSTGRES_DB}
-      POSTGRES_USER: ${SARTER_DATA_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${SARTER_DATA_POSTGRES_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
-
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - backend
+
 
   dotnet-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -173,5 +227,31 @@ services:
     networks:
       - backend
 
-volumes:
-  frontend_node_modules:
+  auth-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: auth-db
+    environment:
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1434:1433"
+    networks:
+      - backend
+
+  tenant-db:
+    image: postgres:14
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: tenant_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+   

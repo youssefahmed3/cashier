@@ -1,16 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0
 WORKDIR /app
 
-# Copy solution and project files for restore (enables Docker cache)
 COPY CashierSolution.sln ./
 COPY Cashier.API/*.csproj Cashier.API/
 COPY Cashier.Core/*.csproj Cashier.Core/
 COPY Cashier.Infrastructure/*.csproj Cashier.Infrastructure/
 COPY Cashier.Services/*.csproj Cashier.Services/
 
+COPY Shared/*.csproj Shared/
+
 RUN dotnet restore
 
-# Copy the rest of the code
 COPY . ./
 
 EXPOSE 8080

@@ -23,7 +23,7 @@ namespace Order.Services.Mapping
 
             CreateMap<PaymentDto, Payment>()
             .ForMember(dest => dest.Method, opt => opt.MapFrom(src =>
-                EnumHelper.ConvertToEnum<PaymentStatus>(src.Status, PaymentStatus.Pending)))
+                EnumHelper.ConvertToEnum<TransactionStatus>(src.Status, TransactionStatus.Pending)))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src =>
                 EnumHelper.ConvertToEnum<PaymentMethod>(src.Method, PaymentMethod.Cash)))
             .ForMember(dest => dest.Order, opt => opt.Ignore()); // Ignore navigation

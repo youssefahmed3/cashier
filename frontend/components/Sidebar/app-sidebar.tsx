@@ -6,6 +6,8 @@ import {
   BookOpen,
   Bot,
   Box,
+  Building2,
+  ChartArea,
   Command,
   Frame,
   GalleryVerticalEnd,
@@ -29,123 +31,104 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
+type UserRole = "admin" | "superadmin"; // type fix
+
+const fetchedMockedUser = {
+  id: "1",
+  name: "John Doe",
+  email: "m@example.com",
+  avatar: "/avatars/shadcn.jpg",
+  role: "admin" as UserRole,
   branches: [
     {
+      id: "branch-1",
       name: "Branch 1",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
-    {
-      name: "Branch 2",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Branch 3",
-      logo: Command,
-      plan: "Free",
-    },
   ],
+};
+
+const data = {
   navMain: [
     {
       title: "Dashboard",
       url: "/tenant/dashboard",
       icon: LayoutDashboard,
       isActive: true,
+      role: "admin",
     },
     {
       title: "Employees",
       url: "/tenant/employees",
       icon: Users,
       isActive: true,
+      role: "admin",
     },
     {
       title: "Inventory",
       url: "/tenant/inventory",
       icon: Box,
-      /* items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ], */
+      role: "admin",
     },
     {
       title: "Products",
       url: "/tenant/products",
       icon: Box,
       isActive: true,
+      role: "admin",
     },
-
     {
       title: "Settings",
       url: "/tenant/settings",
       icon: Settings,
-      /* items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ], */
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      role: "admin",
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
+      title: "Dashboard",
+      url: "/superadmin/dashboard",
+      icon: LayoutDashboard,
+      role: "superadmin",
     },
     {
-      name: "Travel",
-      url: "#",
-      icon: Map,
+      title: "Tenants",
+      url: "/superadmin/tenants",
+      icon: Building2,
+      role: "superadmin",
+    },
+    {
+      title: "System Wide Analytics",
+      url: "/superadmin/analytics",
+      icon: ChartArea,
+      role: "superadmin",
+    },
+    {
+      title: "Settings",
+      url: "/superadmin/settings",
+      icon: Settings,
+      role: "superadmin",
     },
   ],
 };
+
+const filteredNavItems = data.navMain.filter(
+  (item) => item.role === fetchedMockedUser.role
+);
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher branches={data.branches} />
+        <TeamSwitcher
+          role={fetchedMockedUser.role}
+          branches={fetchedMockedUser.branches}
+        />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavItems} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={fetchedMockedUser} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
