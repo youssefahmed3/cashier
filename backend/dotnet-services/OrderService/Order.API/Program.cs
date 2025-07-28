@@ -1,8 +1,10 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Order.Core.Interfaces.Repositories;
 using Order.Core.Interfaces.Services;
 using Order.Core.Interfaces.Strategies;
+using Order.Infrastructure.Data;
 using Order.Infrastructure.Data.Configurations;
 using Order.Infrastructure.Extensions;
 using Order.Infrastructure.Repositories;
@@ -12,7 +14,6 @@ using Order.Infrastructure.Strategies;
 using Order.Services.Mapping;
 using Order.Services.Services;
 using Shared.DTOS;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Order.API
 {
@@ -21,7 +22,7 @@ namespace Order.API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            // builder.WebHost.UseUrls("http://0.0.0.0:8080");
+
             builder.Services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo
@@ -31,17 +32,13 @@ namespace Order.API
                 });
             });
 
-            //Add Db Service 
             builder.Services.ConfigureDbService(builder.Configuration);
             builder.Services.Configure<PaymobSettings>(builder.Configuration.GetSection("PaymobSettings"));
             builder.Services.AddHttpContextAccessor();
-            //builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection("RabbitMQSettings"));
             builder.Services.ConfigureMassTransitWithRabbitMq(builder.Configuration);
             builder.Services.AddScoped<IPaymentEventPublisher, PaymentEventPublisher>();
-
             builder.Services.AddHttpClient<IPaymobService, PaymobService>();
 
-            //if we used unit of work we will only register it 
             builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
@@ -56,20 +53,44 @@ namespace Order.API
 
             builder.Services.AddScoped<IPaymentStrategy, CashPaymentStrategy>();
             builder.Services.AddScoped<IPaymentStrategy, PaymobPaymentStrategy>();
+
             builder.Services.AddAutoMapper(typeof(OrderMappingProfile).Assembly);
             builder.Services.AddAutoMapper(typeof(PaymentMappingProfile).Assembly);
             builder.Services.AddAutoMapper(typeof(RefundMappingProfile).Assembly);
 
-
-
-            // Add services to the container.
             builder.Services.AddControllers();
-
             builder.Services.AddOpenApi();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            // === Apply DB Migrations ===
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var dbContext = services.GetRequiredService<OrderDbContext>();
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+
+                    if (dbContext.Database.GetPendingMigrations().Any())
+                    {
+                        logger.LogInformation("Applying database migrations...");
+                        dbContext.Database.Migrate();
+                        logger.LogInformation("Database migrations applied successfully.");
+                    }
+                    else
+                    {
+                        logger.LogInformation("No pending migrations found.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred while migrating the database.");
+                }
+            }
+
+            // === Configure HTTP Pipeline ===
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -81,12 +102,8 @@ namespace Order.API
                 });
             }
 
-           // app.UseHttpsRedirection();
             app.UseAuthorization();
-
             app.MapControllers();
-
-            // Add this line:
             app.MapGet("/ping", () => "pong");
 
             app.Run();
