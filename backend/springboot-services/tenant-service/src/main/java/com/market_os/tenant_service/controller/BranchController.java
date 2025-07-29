@@ -41,31 +41,21 @@ public class BranchController {
             @Parameter(description = "Tenant ID") @PathVariable UUID tenantId,
             @Valid @RequestBody CreateBranchDto createBranchDto) {
 
-        // Get user context from request attributes
-        UUID currentUserId = UserContextUtil.getCurrentUserId();
-        UUID currentUserTenantId = UserContextUtil.getCurrentUserTenantId();
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
 
-        log.info("Creating branch for tenant: {} by user: {} (tenant: {})",
-                tenantId, currentUserId, currentUserTenantId);
+        log.info("Creating branch for tenant: {} with roles: {}", tenantId, currentUserRoles);
 
-        // Check if user has permission to create branches for this tenant through
-        // UserRoleService
+        // For SUPER_ADMIN, allow creating branches for any tenant
+        if (currentUserRoles.contains("SUPER_ADMIN")) {
+            BranchDto createdBranch = branchService.createBranch(tenantId, createBranchDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdBranch);
+        }
+
+        // For other roles, check tenant access through UserRoleService
         if (!userContextService.canCreateBranches(tenantId)) {
-            log.warn("User {} attempted to create branch for tenant {} without permission", currentUserId, tenantId);
+            log.warn("User attempted to create branch for tenant {} without permission", tenantId);
             throw new AccessDeniedException("You don't have permission to create branches for this tenant");
-        }
-
-        // Additional validation through UserRoleService
-        AppUserDto userDetails = userContextService.getCurrentUserDetails();
-        if (userDetails != null && Boolean.TRUE.equals(userDetails.getIsSuspended())) {
-            log.warn("Suspended user {} attempted to create branch for tenant {}", currentUserId, tenantId);
-            throw new AccessDeniedException("Suspended users cannot create branches");
-        }
-
-        // Validate branch creation permissions
-        if (!userContextService.canCreateBranches(tenantId)) {
-            log.warn("User {} lacks branch creation permissions for tenant {}", currentUserId, tenantId);
-            throw new AccessDeniedException("You don't have branch creation permissions for this tenant");
         }
 
         BranchDto createdBranch = branchService.createBranch(tenantId, createBranchDto);
@@ -89,33 +79,18 @@ public class BranchController {
     public ResponseEntity<Page<BranchDto>> getAllBranches(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        // Get user context from request attributes
-        UUID currentUserId = UserContextUtil.getCurrentUserId();
+        // Get user roles from request attributes
         List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
 
-        log.info("Getting all branches with pagination by user: {} with roles: {}",
-                currentUserId, currentUserRoles);
+        log.info("Getting all branches with pagination with roles: {}", currentUserRoles);
 
-        // Validate user permissions through UserRoleService
-        if (!UserContextUtil.isSuperAdmin() && !userContextService.canCreateTenants()) {
-            log.warn("User {} attempted to access all branches without permission", currentUserId);
-            throw new AccessDeniedException("You don't have permission to view all branches");
+        // For SUPER_ADMIN, only check role - no user ID required
+        if (!currentUserRoles.contains("SUPER_ADMIN")) {
+            log.warn("Non-SUPER_ADMIN user attempted to access all branches with roles: {}", currentUserRoles);
+            throw new AccessDeniedException("Only SUPER_ADMIN can view all branches");
         }
 
-        // Apply filtering based on user permissions from UserRoleService
-        // SUPER_ADMIN can see all branches across all tenants
-        // ADMIN might see only branches in their organization/region
-        Page<BranchDto> branches;
-        if (UserContextUtil.isSuperAdmin()) {
-            branches = branchService.getAllBranches(pageable);
-        } else {
-            // For non-super-admin users, apply organization-level filtering
-            log.info("Applying organization-level filtering for non-super-admin user: {}", currentUserId);
-            branches = branchService.getAllBranches(pageable);
-            // Note: In a real implementation, you would filter the results based on the
-            // user's
-            // organization or region from the UserRoleService
-        }
+        Page<BranchDto> branches = branchService.getAllBranches(pageable);
 
         return ResponseEntity.ok(branches);
     }
@@ -126,29 +101,22 @@ public class BranchController {
     public ResponseEntity<List<BranchDto>> getBranchesByTenantId(
             @Parameter(description = "Tenant ID") @PathVariable UUID tenantId) {
 
-        // Get user context from request attributes
-        UUID currentUserId = UserContextUtil.getCurrentUserId();
-        UUID currentUserTenantId = UserContextUtil.getCurrentUserTenantId();
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
 
-        log.info("Getting branches for tenant: {} by user: {} (tenant: {})",
-                tenantId, currentUserId, currentUserTenantId);
+        log.info("Getting branches for tenant: {} with roles: {}", tenantId, currentUserRoles);
 
-        // Check if user has permission to view branches for this tenant through
-        // UserRoleService
+        // For SUPER_ADMIN, allow access to any tenant's branches
+        if (currentUserRoles.contains("SUPER_ADMIN")) {
+            List<BranchDto> branches = branchService.getBranchesByTenantId(tenantId);
+            return ResponseEntity.ok(branches);
+        }
+
+        // For other roles, check tenant access through UserRoleService
         if (!userContextService.canViewBranches(tenantId)) {
-            log.warn("User {} attempted to get branches for tenant {} without permission", currentUserId, tenantId);
+            log.warn("User attempted to get branches for tenant {} without permission", tenantId);
             throw new AccessDeniedException("You don't have permission to access branches for this tenant");
         }
-
-        // Additional filtering through UserRoleService
-        AppUserDto userDetails = userContextService.getCurrentUserDetails();
-        if (userDetails != null && Boolean.TRUE.equals(userDetails.getIsSuspended())) {
-            log.warn("Suspended user {} attempted to access branches for tenant {}", currentUserId, tenantId);
-            throw new AccessDeniedException("Suspended users cannot access branch information");
-        }
-
-        // Apply branch access permissions and location-based filtering
-        // Return only branches the user is authorized to see based on their permissions
 
         List<BranchDto> branches = branchService.getBranchesByTenantId(tenantId);
         return ResponseEntity.ok(branches);

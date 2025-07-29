@@ -17,31 +17,29 @@ public class UserContextUtil {
     /**
      * Get the current user ID from request attributes
      * Set by JwtAuthenticationFilter
+     * Returns null for SUPER_ADMIN users
      */
     public static UUID getCurrentUserId() {
         HttpServletRequest request = getCurrentRequest();
         if (request != null) {
             UUID userId = (UUID) request.getAttribute("userId");
-            if (userId != null) {
-                return userId;
-            }
+            return userId; // Can be null for SUPER_ADMIN
         }
-        throw new IllegalStateException("User ID not found in request context");
+        throw new IllegalStateException("Request context not found");
     }
     
     /**
      * Get the current user ID as integer from request attributes
      * Set by JwtAuthenticationFilter (for .NET service compatibility)
+     * Returns null for SUPER_ADMIN users
      */
     public static Integer getCurrentUserIdAsInteger() {
         HttpServletRequest request = getCurrentRequest();
         if (request != null) {
             Integer userId = (Integer) request.getAttribute("userIdAsInteger");
-            if (userId != null) {
-                return userId;
-            }
+            return userId; // Can be null for SUPER_ADMIN
         }
-        throw new IllegalStateException("User ID as integer not found in request context");
+        throw new IllegalStateException("Request context not found");
     }
     
     /**

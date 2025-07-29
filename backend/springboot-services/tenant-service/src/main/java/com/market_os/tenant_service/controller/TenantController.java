@@ -42,24 +42,16 @@ public class TenantController {
     @Operation(summary = "Create a new tenant")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<TenantDto> createTenant(@Valid @RequestBody CreateTenantDto createTenantDto) {
-        // Get user context from request attributes (set by JwtAuthenticationFilter)
-        UUID currentUserId = UserContextUtil.getCurrentUserId();
+        // Get user roles from request attributes (set by JwtAuthenticationFilter)
         List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
         
-        log.info("Creating tenant: {} by user: {} with roles: {}", 
-                createTenantDto.getName(), currentUserId, currentUserRoles);
+        log.info("Creating tenant: {} with roles: {}", 
+                createTenantDto.getName(), currentUserRoles);
         
-        // Validate user permissions through UserRoleService
-        if (!userContextService.canCreateTenants()) {
-            log.warn("User {} attempted to create tenant without sufficient permissions", currentUserId);
-            throw new AccessDeniedException("You don't have permission to create tenants");
-        }
-        
-        // Additional validation: check if user is suspended
-        AppUserDto userDetails = userContextService.getCurrentUserDetails();
-        if (userDetails != null && Boolean.TRUE.equals(userDetails.getIsSuspended())) {
-            log.warn("Suspended user {} attempted to create tenant", currentUserId);
-            throw new AccessDeniedException("Suspended users cannot create tenants");
+        // For SUPER_ADMIN, only check role - no user ID required as discussed 
+        if (!currentUserRoles.contains("SUPER_ADMIN")) {
+            log.warn("Non-SUPER_ADMIN user attempted to create tenant with roles: {}", currentUserRoles);
+            throw new AccessDeniedException("Only SUPER_ADMIN can create tenants");
         }
         
         TenantDto createdTenant = tenantService.createTenant(createTenantDto);
@@ -72,23 +64,21 @@ public class TenantController {
     public ResponseEntity<TenantDto> getTenantById(
             @Parameter(description = "Tenant ID") @PathVariable UUID id) {
         
-        // Get user context from request attributes
-        UUID currentUserId = UserContextUtil.getCurrentUserId();
-        UUID currentUserTenantId = UserContextUtil.getCurrentUserTenantId();
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
         
-        log.info("Getting tenant: {} by user: {} (tenant: {})", id, currentUserId, currentUserTenantId);
+        log.info("Getting tenant: {} with roles: {}", id, currentUserRoles);
         
-        // Check if user has access to this tenant through UserRoleService
-        if (!userContextService.canAccessTenant(id)) {
-            log.warn("User {} attempted to access tenant {} without permission", currentUserId, id);
-            throw new AccessDeniedException("You don't have permission to access this tenant");
+        // For SUPER_ADMIN, allow access to any tenant
+        if (currentUserRoles.contains("SUPER_ADMIN")) {
+            TenantDto tenant = tenantService.getTenantById(id);
+            return ResponseEntity.ok(tenant);
         }
         
-        // Additional validation: verify user's tenant membership and permissions
-        AppUserDto userDetails = userContextService.getCurrentUserDetails();
-        if (userDetails != null && Boolean.TRUE.equals(userDetails.getIsSuspended())) {
-            log.warn("Suspended user {} attempted to access tenant {}", currentUserId, id);
-            throw new AccessDeniedException("Suspended users cannot access tenant information");
+        // For other roles, check tenant access through UserRoleService
+        if (!userContextService.canAccessTenant(id)) {
+            log.warn("User attempted to access tenant {} without permission", id);
+            throw new AccessDeniedException("You don't have permission to access this tenant");
         }
         
         TenantDto tenant = tenantService.getTenantById(id);
@@ -100,7 +90,24 @@ public class TenantController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<TenantWithBranchesDto> getTenantWithBranchesById(
             @Parameter(description = "Tenant ID") @PathVariable UUID id) {
-        log.info("Getting tenant with branches: {}", id);
+        
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
+        
+        log.info("Getting tenant with branches: {} with roles: {}", id, currentUserRoles);
+        
+        // For SUPER_ADMIN, allow access to any tenant with branches
+        if (currentUserRoles.contains("SUPER_ADMIN")) {
+            TenantWithBranchesDto tenant = tenantService.getTenantWithBranchesById(id);
+            return ResponseEntity.ok(tenant);
+        }
+        
+        // For other roles, check tenant access through UserRoleService
+        if (!userContextService.canAccessTenant(id)) {
+            log.warn("User attempted to get tenant with branches {} without permission", id);
+            throw new AccessDeniedException("You don't have permission to access this tenant");
+        }
+        
         TenantWithBranchesDto tenant = tenantService.getTenantWithBranchesById(id);
         return ResponseEntity.ok(tenant);
     }
@@ -111,31 +118,18 @@ public class TenantController {
     public ResponseEntity<Page<TenantDto>> getAllTenants(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         
-        // Get user context from request attributes
-        UUID currentUserId = UserContextUtil.getCurrentUserId();
+        // Get user roles from request attributes
         List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
         
-        log.info("Getting all tenants with pagination by user: {} with roles: {}", 
-                currentUserId, currentUserRoles);
+        log.info("Getting all tenants with pagination with roles: {}", currentUserRoles);
         
-        // Validate user permissions through UserRoleService
-        if (!userContextService.canCreateTenants()) {
-            log.warn("User {} attempted to access all tenants without permission", currentUserId);
-            throw new AccessDeniedException("You don't have permission to view all tenants");
+        // For SUPER_ADMIN, only check role - no user ID required
+        if (!currentUserRoles.contains("SUPER_ADMIN")) {
+            log.warn("Non-SUPER_ADMIN user attempted to access all tenants with roles: {}", currentUserRoles);
+            throw new AccessDeniedException("Only SUPER_ADMIN can view all tenants");
         }
         
-        // Apply filtering based on user permissions
-        // SUPER_ADMIN can see all tenants, others are filtered
-        Page<TenantDto> tenants;
-        if (UserContextUtil.isSuperAdmin()) {
-            tenants = tenantService.getAllTenants(pageable);
-        } else {
-            // For non-super-admin users, apply organization-level filtering
-            // This would typically involve filtering by the user's organization or region
-            log.info("Applying organization-level filtering for non-super-admin user: {}", currentUserId);
-            tenants = tenantService.getAllTenants(pageable);
-        }
-        
+        Page<TenantDto> tenants = tenantService.getAllTenants(pageable);
         return ResponseEntity.ok(tenants);
     }
     
@@ -143,7 +137,21 @@ public class TenantController {
     @Operation(summary = "Get all active tenants")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<List<TenantDto>> getAllActiveTenants() {
-        log.info("Getting all active tenants");
+        
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
+        
+        log.info("Getting all active tenants with roles: {}", currentUserRoles);
+        
+        // For SUPER_ADMIN, return all active tenants
+        if (currentUserRoles.contains("SUPER_ADMIN")) {
+            List<TenantDto> activeTenants = tenantService.getAllActiveTenants();
+            return ResponseEntity.ok(activeTenants);
+        }
+        
+        // For other roles, this endpoint might need filtering based on user's tenant access
+        // For now, we'll return all active tenants, but in a real implementation,
+        // you might want to filter based on the user's organization or region
         List<TenantDto> activeTenants = tenantService.getAllActiveTenants();
         return ResponseEntity.ok(activeTenants);
     }
@@ -155,27 +163,16 @@ public class TenantController {
             @Parameter(description = "Tenant ID") @PathVariable UUID id,
             @Valid @RequestBody UpdateTenantDto updateTenantDto) {
         
-        // Get user context from request attributes
-        UUID currentUserId = UserContextUtil.getCurrentUserId();
-        UUID currentUserTenantId = UserContextUtil.getCurrentUserTenantId();
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
         
-        log.info("Updating tenant: {} by user: {} (tenant: {})", id, currentUserId, currentUserTenantId);
+        log.info("Updating tenant: {} with roles: {}", id, currentUserRoles);
         
-        // Check if user has permission to update this tenant through UserRoleService
-        if (!userContextService.canUpdateTenant(id)) {
-            log.warn("User {} attempted to update tenant {} without permission", currentUserId, id);
-            throw new AccessDeniedException("You don't have permission to update this tenant");
+        // For SUPER_ADMIN, only check role - no user ID required
+        if (!currentUserRoles.contains("SUPER_ADMIN")) {
+            log.warn("Non-SUPER_ADMIN user attempted to update tenant {} with roles: {}", id, currentUserRoles);
+            throw new AccessDeniedException("Only SUPER_ADMIN can update tenants");
         }
-        
-        // Additional validation: check specific permissions and business rules
-        AppUserDto userDetails = userContextService.getCurrentUserDetails();
-        if (userDetails != null && Boolean.TRUE.equals(userDetails.getIsSuspended())) {
-            log.warn("Suspended user {} attempted to update tenant {}", currentUserId, id);
-            throw new AccessDeniedException("Suspended users cannot update tenant information");
-        }
-        
-        // Field-level permission checks could be added here based on specific permissions
-        // For example, checking if user has permission to change tenant status, name, etc.
         
         TenantDto updatedTenant = tenantService.updateTenant(id, updateTenantDto);
         return ResponseEntity.ok(updatedTenant);
@@ -196,7 +193,24 @@ public class TenantController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<SubscriptionStatusDto> getTenantSubscriptionStatus(
             @Parameter(description = "Tenant ID") @PathVariable UUID id) {
-        log.info("Getting subscription status for tenant: {}", id);
+        
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
+        
+        log.info("Getting subscription status for tenant: {} with roles: {}", id, currentUserRoles);
+        
+        // For SUPER_ADMIN, allow access to any tenant's subscription status
+        if (currentUserRoles.contains("SUPER_ADMIN")) {
+            SubscriptionStatusDto subscriptionStatus = tenantService.getTenantSubscriptionStatus(id);
+            return ResponseEntity.ok(subscriptionStatus);
+        }
+        
+        // For other roles, check tenant access through UserRoleService
+        if (!userContextService.canAccessTenant(id)) {
+            log.warn("User attempted to get subscription status for tenant {} without permission", id);
+            throw new AccessDeniedException("You don't have permission to access this tenant's subscription status");
+        }
+        
         SubscriptionStatusDto subscriptionStatus = tenantService.getTenantSubscriptionStatus(id);
         return ResponseEntity.ok(subscriptionStatus);
     }
@@ -208,35 +222,28 @@ public class TenantController {
             @Parameter(description = "Tenant ID") @PathVariable UUID id,
             @Parameter(description = "Logo file") @RequestParam("logo") MultipartFile file) {
         
-        // Get user context from request attributes
-        UUID currentUserId = UserContextUtil.getCurrentUserId();
-        UUID currentUserTenantId = UserContextUtil.getCurrentUserTenantId();
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
         
-        log.info("Uploading logo for tenant: {} by user: {} (tenant: {})", 
-                id, currentUserId, currentUserTenantId);
+        log.info("Uploading logo for tenant: {} with roles: {}", id, currentUserRoles);
         
-        // Check if user has access to this tenant through UserRoleService
-        if (!userContextService.canUpdateTenant(id)) {
-            log.warn("User {} attempted to upload logo for tenant {} without permission", currentUserId, id);
-            throw new AccessDeniedException("You don't have permission to upload logo for this tenant");
-        }
-        
-        // Validate tenant exists
-        if (!tenantService.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        // Additional validation through UserRoleService
-        AppUserDto userDetails = userContextService.getCurrentUserDetails();
-        if (userDetails != null && Boolean.TRUE.equals(userDetails.getIsSuspended())) {
-            log.warn("Suspended user {} attempted to upload logo for tenant {}", currentUserId, id);
-            throw new AccessDeniedException("Suspended users cannot upload tenant logos");
-        }
-        
-        // Check file upload permissions
-        if (!userContextService.canUpdateTenant(id)) {
-            log.warn("User {} lacks file upload permissions for tenant {}", currentUserId, id);
-            throw new AccessDeniedException("You don't have file upload permissions for this tenant");
+        // For SUPER_ADMIN, allow uploading logo for any tenant
+        if (currentUserRoles.contains("SUPER_ADMIN")) {
+            // Validate tenant exists
+            if (!tenantService.existsById(id)) {
+                return ResponseEntity.notFound().build();
+            }
+        } else {
+            // For other roles, check tenant access through UserRoleService
+            if (!userContextService.canUpdateTenant(id)) {
+                log.warn("User attempted to upload logo for tenant {} without permission", id);
+                throw new AccessDeniedException("You don't have permission to upload logo for this tenant");
+            }
+            
+            // Validate tenant exists
+            if (!tenantService.existsById(id)) {
+                return ResponseEntity.notFound().build();
+            }
         }
         
         try {
@@ -264,7 +271,30 @@ public class TenantController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> deleteTenantLogo(
             @Parameter(description = "Tenant ID") @PathVariable UUID id) {
-        log.info("Deleting logo for tenant: {}", id);
+        
+        // Get user roles from request attributes
+        List<String> currentUserRoles = UserContextUtil.getCurrentUserRoles();
+        
+        log.info("Deleting logo for tenant: {} with roles: {}", id, currentUserRoles);
+        
+        // For SUPER_ADMIN, allow deleting logo for any tenant
+        if (currentUserRoles.contains("SUPER_ADMIN")) {
+            // Validate tenant exists
+            if (!tenantService.existsById(id)) {
+                return ResponseEntity.notFound().build();
+            }
+        } else {
+            // For other roles, check tenant access through UserRoleService
+            if (!userContextService.canUpdateTenant(id)) {
+                log.warn("User attempted to delete logo for tenant {} without permission", id);
+                throw new AccessDeniedException("You don't have permission to delete logo for this tenant");
+            }
+            
+            // Validate tenant exists
+            if (!tenantService.existsById(id)) {
+                return ResponseEntity.notFound().build();
+            }
+        }
         
         try {
             tenantService.deleteTenantLogo(id);

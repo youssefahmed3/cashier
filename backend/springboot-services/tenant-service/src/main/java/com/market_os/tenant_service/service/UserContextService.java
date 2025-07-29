@@ -57,7 +57,12 @@ public class UserContextService {
      */
     public boolean canAccessTenant(UUID tenantId) {
         try {
-            // Check using enhanced permission service
+            // SUPER_ADMIN can access any tenant
+            if (UserContextUtil.isSuperAdmin()) {
+                return true;
+            }
+            
+            // Check using enhanced permission service for other users
             boolean hasAccess = userRolePermissionService.canAccessTenant(tenantId);
             
             // Additional business logic checks
@@ -70,8 +75,7 @@ public class UserContextService {
                 }
                 
                 // Check if user has ViewTenants permission
-                if (!userRolePermissionService.hasPermission("ViewTenants") && 
-                    !UserContextUtil.isSuperAdmin()) {
+                if (!userRolePermissionService.hasPermission("ViewTenants")) {
                     log.warn("User lacks ViewTenants permission for tenant: {}", tenantId);
                     return false;
                 }
@@ -129,7 +133,7 @@ public class UserContextService {
             List<String> roles = UserContextUtil.getCurrentUserRoles();
             
             return String.format("User: %s, Tenant: %s, Roles: %s", 
-                    userId, tenantId, roles);
+                    userId != null ? userId.toString() : "SUPER_ADMIN", tenantId, roles);
         } catch (Exception e) {
             return "User: unknown";
         }
@@ -139,6 +143,11 @@ public class UserContextService {
      * Check if user can create tenants
      */
     public boolean canCreateTenants() {
+        // SUPER_ADMIN can always create tenants
+        if (UserContextUtil.isSuperAdmin()) {
+            return true;
+        }
+        
         return userRolePermissionService.canManageTenants() && 
                userRolePermissionService.hasPermission("ManageTenants");
     }
@@ -147,23 +156,32 @@ public class UserContextService {
      * Check if user can update a specific tenant
      */
     public boolean canUpdateTenant(UUID tenantId) {
+        // SUPER_ADMIN can update any tenant
+        if (UserContextUtil.isSuperAdmin()) {
+            return true;
+        }
+        
         return canAccessTenant(tenantId) && 
-               (UserContextUtil.isSuperAdmin() || 
-                userRolePermissionService.hasPermission("ManageTenants"));
+               userRolePermissionService.hasPermission("ManageTenants");
     }
     
     /**
      * Check if user can delete a specific tenant
      */
     public boolean canDeleteTenant(UUID tenantId) {
-        return UserContextUtil.isSuperAdmin() && 
-               userRolePermissionService.hasPermission("ManageTenants");
+        // Only SUPER_ADMIN can delete tenants
+        return UserContextUtil.isSuperAdmin();
     }
     
     /**
      * Check if user can create branches for a tenant
      */
     public boolean canCreateBranches(UUID tenantId) {
+        // SUPER_ADMIN can create branches for any tenant
+        if (UserContextUtil.isSuperAdmin()) {
+            return true;
+        }
+        
         return userRolePermissionService.canManageBranches(tenantId);
     }
     
@@ -171,6 +189,11 @@ public class UserContextService {
      * Check if user can view branches for a tenant
      */
     public boolean canViewBranches(UUID tenantId) {
+        // SUPER_ADMIN can view branches for any tenant
+        if (UserContextUtil.isSuperAdmin()) {
+            return true;
+        }
+        
         return userRolePermissionService.canViewBranches(tenantId);
     }
     
@@ -187,6 +210,11 @@ public class UserContextService {
     public List<PermissionDto> getCurrentUserPermissions() {
         try {
             Integer userId = UserContextUtil.getCurrentUserIdAsInteger();
+            if (userId == null) {
+                // SUPER_ADMIN has all permissions
+                log.debug("SUPER_ADMIN user - returning all permissions");
+                return List.of(); // Return empty list for SUPER_ADMIN as they have implicit permissions
+            }
             return userRolePermissionService.getUserPermissions(userId);
         } catch (Exception e) {
             log.error("Failed to get current user permissions: {}", e.getMessage());

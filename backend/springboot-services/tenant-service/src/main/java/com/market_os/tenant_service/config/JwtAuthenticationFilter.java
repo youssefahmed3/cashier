@@ -58,23 +58,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // Extract user information from validation response claims
                     Map<String, String> claims = validationResponse.getClaims();
 
-                    Integer userIdAsInteger = Integer.parseInt(claims.get("userId"));
                     String email = claims.get("email");
                     String username = email != null ? email.substring(0, email.indexOf("@")) : "unknown";
                     List<String> roles = claims.get("roles") != null ? Arrays.asList(claims.get("roles").split(","))
                             : List.of("USER");
 
-                    // Get tenant ID from user mapping service
+                    // Handle SUPER_ADMIN case - no user ID required
+                    Integer userIdAsInteger = null;
+                    UUID userId = null;
                     UUID tenantId = null;
-                    try {
-                        tenantId = userTenantMappingService.getTenantIdForUser(userIdAsInteger);
-                    } catch (Exception e) {
-                        log.warn("No tenant mapping found for user ID {}: {}", userIdAsInteger, e.getMessage());
-                        // For now, we'll continue without tenant ID
-                    }
 
-                    // Create UUID from integer user ID for backward compatibility
-                    UUID userId = UUID.nameUUIDFromBytes(userIdAsInteger.toString().getBytes());
+                    if (!roles.contains("SUPER_ADMIN")) {
+                        // For non-SUPER_ADMIN users, extract user ID and tenant mapping
+                        try {
+                            userIdAsInteger = Integer.parseInt(claims.get("userId"));
+                            userId = UUID.nameUUIDFromBytes(userIdAsInteger.toString().getBytes());
+                            
+                            // Get tenant ID from user mapping service
+                            try {
+                                tenantId = userTenantMappingService.getTenantIdForUser(userIdAsInteger);
+                            } catch (Exception e) {
+                                log.warn("No tenant mapping found for user ID {}: {}", userIdAsInteger, e.getMessage());
+                            }
+                        } catch (Exception e) {
+                            log.warn("Could not parse user ID from claims: {}", e.getMessage());
+                        }
+                    } else {
+                        log.debug("SUPER_ADMIN authentication - no user ID required");
+                    }
 
                     // Create UserRoleDto from token information
                     UserRoleDto userRole = UserRoleDto.builder()
