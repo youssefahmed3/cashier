@@ -8,6 +8,33 @@ export type BranchType = {
   status: "active" | "inactive" | "under_maintenance";
 };
 
+export type Role = "superadmin" | "admin" | "employee" | "cashier";
+
+export type UserType = {
+  id: number;
+  email: string;
+  firstname: string;
+  lastname: string;
+  isSuspended: boolean;
+  phoneNumber: string;
+  roles: Role[];
+};
+
+export type FullUserType = {
+  user: {
+    id: number;
+    email: string;
+    firstname: string;
+    lastname: string;
+    isSuspended: boolean;
+    phoneNumber: string;
+    roles: Role[];
+  }
+  branches: BranchType[]
+  inventory: InventoryType[]
+};
+
+
 export type EmployeeType = {
 
 };

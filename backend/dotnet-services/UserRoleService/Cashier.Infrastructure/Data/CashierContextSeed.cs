@@ -4,13 +4,24 @@
     {
         public static async Task SeedDataAsync(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager, CashierDbContext context)
         {
-            var basePath = @"..\Cashier.Infrastructure\Data\";
-            var dataSeedingPath = Path.Combine(basePath!, "DataSeeding");
-            var permissionsPath = Path.Combine(dataSeedingPath, "Permissions.json");
-            var userPermissionsPath = Path.Combine(dataSeedingPath, "UserPermissions.json");
-            var rolesPath = Path.Combine(dataSeedingPath, "Roles.json");
-            var usersPath = Path.Combine(dataSeedingPath, "Users.json");
-            var userRolesPath = Path.Combine(dataSeedingPath, "UserRoles.json");
+            Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
+            var basePath = "/app/Cashier.Infrastructure/Data/DataSeeding";
+            if (!Directory.Exists(basePath))
+            {
+                Console.WriteLine($"Directory does not exist: {basePath}");
+                return;
+            }
+            Console.WriteLine($"Seeding basePath: {basePath}");
+            var permissionsPath = Path.Combine(basePath, "Permissions.json");
+            var userPermissionsPath = Path.Combine(basePath, "UserPermissions.json");
+            var rolesPath = Path.Combine(basePath, "Roles.json");
+            var usersPath = Path.Combine(basePath, "Users.json");
+            var userRolesPath = Path.Combine(basePath, "UserRoles.json");
+            var files = Directory.GetFiles(basePath);
+            foreach (var file in files)
+            {
+                Console.WriteLine($"Found file: {file}");
+            }
 
             var permissions = JsonConvert.DeserializeObject<List<Permission>>(File.ReadAllText(permissionsPath));
             var userPermissions = JsonConvert.DeserializeObject<List<UserPermissions>>(File.ReadAllText(userPermissionsPath));

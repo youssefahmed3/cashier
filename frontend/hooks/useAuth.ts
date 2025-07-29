@@ -1,5 +1,7 @@
 "use client";
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Cookies from 'js-cookie';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { redirect, useRouter } from 'next/navigation';
 import {
     registerUser,
@@ -8,6 +10,7 @@ import {
     forgotPassword,
     validateResetCode,
     resetPassword,
+    fetchUser,
 } from '../lib/api/auth';
 import { toast } from 'sonner';
 
@@ -23,14 +26,19 @@ import {
     ResetPasswordResponse,
     TwoFactorAuthApiResponse
 } from '@/types/dtos';
+import { UserType } from '@/types/types';
 
 export const useAuth = () => {
     const queryClient = useQueryClient();
     const router = useRouter();
 
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+
     // Check if user is authenticated based on token presence
     const isAuthenticated =
-        typeof window !== "undefined" ? !!localStorage.getItem("token") : false;
+        typeof window !== "undefined" ? !!token : false;
+
 
     // Register mutation
     const registerMutation = useMutation<ApiResponse, ApiResponse, RegisterDto>({
@@ -69,8 +77,16 @@ export const useAuth = () => {
                 router.push("/confirmTwoFactorAuth");
             } else if (data.success) {
                 toast.success("Login successful!");
+
                 localStorage.setItem("token", data.token!);
                 localStorage.setItem("refresh-token", data.refreshToken!);
+
+                Cookies.set("auth-token", data.token!, {
+                    secure: true,
+                    sameSite: 'Strict',
+                    path: '/',
+                });
+
                 router.replace('/tenant/dashboard');
             } else {
                 toast.error(data.message || "Login failed.");
@@ -159,10 +175,13 @@ export const useAuth = () => {
     const logoutMutation = useMutation<void, Error>({
         mutationFn: async () => {
             toast.success("Logged out successfully.");
+
             localStorage.removeItem('token');
             localStorage.removeItem('refresh-token');
             localStorage.removeItem('tempToken');
             localStorage.removeItem('tempRefreshToken');
+
+            Cookies.remove('auth-token', { path: '/' });
         },
         onSuccess: () => {
             queryClient.clear();
@@ -173,6 +192,20 @@ export const useAuth = () => {
             console.error('Logout error:', error.message);
         },
     });
+
+    /* Remove Later */
+    const userQuery = useQuery<UserType, Error>({
+        queryKey: ['auth-user'],
+        queryFn: async () => {
+            if (!token) throw new Error("No auth token found");
+            return await fetchUser(token);
+        },
+        enabled: !!token,
+        retry: false,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
+
 
     return {
         isAuthenticated,
@@ -202,6 +235,10 @@ export const useAuth = () => {
         resetPassword: resetPasswordMutation.mutate,
         resetPasswordStatus: resetPasswordMutation.status,
         resetPasswordError: resetPasswordMutation.error,
+
+        user: userQuery.data,
+        userStatus: userQuery.status,
+        userError: userQuery.error,
 
         logout: logoutMutation.mutate,
         logoutStatus: logoutMutation.status,

@@ -79,3 +79,9 @@ export type CreateProductDto = {
     isactive: boolean,
     categoryId?: number,
 }
+
+
+export type UpdateTenantDto = {
+    name: string,
+    is_active: true
+}

@@ -12,6 +12,9 @@ COPY Cashier.Shared/*.csproj Cashier.Shared/
 RUN dotnet restore
 
 COPY . ./
+COPY Cashier.Infrastructure/Data/DataSeeding /app/Cashier.Infrastructure/Data/DataSeeding
+RUN echo "---- DataSeeding contents ----" && ls -lR /app/Cashier.Infrastructure/Data/DataSeeding || echo "DataSeeding not found"
+RUN echo "---- Directory tree for Cashier.Infrastructure/Data ----" && ls -lR /app/Cashier.Infrastructure/Data
 
 EXPOSE 8080
 

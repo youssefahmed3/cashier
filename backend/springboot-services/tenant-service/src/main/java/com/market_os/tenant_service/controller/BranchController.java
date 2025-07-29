@@ -85,8 +85,8 @@ public class BranchController {
 
     @GetMapping("/api/v1/branches")
     @Operation(summary = "Get all branches with pagination")
-/*     @PreAuthorize("hasRole('SUPER_ADMIN')")
- */    public ResponseEntity<Page<BranchDto>> getAllBranches(
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Page<BranchDto>> getAllBranches(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         // Get user context from request attributes

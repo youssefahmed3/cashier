@@ -1,10 +1,28 @@
+import { useAuth } from "@/hooks/useAuth";
 import { ApiResponse, Confirm2FADto, ForgotPasswordDto, ForgotPasswordResponse, LoginDto, RegisterDto, ResetPasswordDto, ResetPasswordResponse, TwoFactorAuthApiResponse, ValidateResetCodeDto } from "@/types/dtos";
+import { UserType } from "@/types/types";
 
+export async function fetchUser(token: string): Promise<UserType> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/userrole/me`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
 
-export async function fetchUser() {
+  if (!res.ok) {
+    throw new Error("Failed to fetch user");
+  }
 
+  const data = await res.json();
+  console.log(data);
+  
+  return {
+    ...data,
+    roles: data.roles.map((r: string) => r.toLowerCase()),
+  };
 }
-
 //Register function
 export async function registerUser(data: RegisterDto) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/register`, {
