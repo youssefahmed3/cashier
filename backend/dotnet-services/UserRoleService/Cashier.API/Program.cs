@@ -18,7 +18,10 @@ namespace Cashier.API
             builder.Services.AddOpenApi();
             builder.Services.AddDbContext<CashierDbContext>(options =>
             {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("DefaultConnection"),
+                    sqlOptions => sqlOptions.CommandTimeout(180) // 3 minutes
+                );
             });
             builder.Services.AddIdentity<AppUser, AppRole>(options =>
             {
@@ -75,20 +78,20 @@ namespace Cashier.API
             var _dbContext = services.GetRequiredService<CashierDbContext>();
             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger<Program>();
-            if (_dbContext.Database.GetPendingMigrations().Any())
+            try
             {
-                try
+                if (_dbContext.Database.GetPendingMigrations().Any())
                 {
                     await _dbContext.Database.MigrateAsync();
-                    var userManager = services.GetRequiredService<UserManager<AppUser>>();
-                    var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
-                    await CashierContextSeed.SeedDataAsync(userManager, roleManager, _dbContext);
                 }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "An error has been occured during applying the migration");
-                }
+                var userManager = services.GetRequiredService<UserManager<AppUser>>();
+                var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+                await CashierContextSeed.SeedDataAsync(userManager, roleManager, _dbContext);
             }
+            catch (Exception ex)
+{
+    logger.LogError(ex, "An error has been occured during migration or seeding: {Message}\n{StackTrace}", ex.Message, ex.StackTrace);
+}
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();

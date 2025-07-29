@@ -36,19 +36,18 @@ services:
 
   auth-service:
     build: ../backend/dotnet-services/UserRoleService
-    volumes:
-      - ../backend/dotnet-services/UserRoleService:/app
     ports:
       - "8001:7192"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
-      - dotnet-db
+      auth-db:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
       - "traefik.http.routers.auth.entrypoints=web"
-      - "traefik.http.services.auth.loadbalancer.server.port=8085"
+      - "traefik.http.services.auth.loadbalancer.server.port=7192"
       - "traefik.http.routers.auth.middlewares=strip-auth@docker"
       - "traefik.http.middlewares.strip-auth.stripprefix.prefixes=/auth"
     networks:
@@ -157,11 +156,11 @@ services:
       - DB_USERNAME=${TENANT_POSTGRES_USER:-postgres}
       - DB_PASSWORD=${TENANT_POSTGRES_PASSWORD:-postgres}
       - SUBSCRIPTION_SERVICE_URL=${SUBSCRIPTION_SERVICE_URL:-http://subscription-service:8080}
-      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:8085}
-      - USER_ROLE_SERVICE_URL=${USER_ROLE_SERVICE_URL:-http://auth-service:8085}
+      - AUTH_SERVICE_URL=http://auth-service:7192
+      - USER_ROLE_SERVICE_URL=http://auth-service:7192
       - JWT_SECRET=${JWT_SECRET:-mySecretKey123456789012345678901234567890}
-      - JWT_ISSUER=${JWT_ISSUER:-https://localhost:5115}
-      - JWT_AUDIENCE=${JWT_AUDIENCE:-https://localhost:5115}
+      - JWT_ISSUER=${JWT_ISSUER:-https://localhost:7192}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-https://localhost:3000}
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-guest}
@@ -232,6 +231,11 @@ services:
       ACCEPT_EULA: "Y"
     ports:
       - "1434:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "pidof sqlservr || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - backend
 

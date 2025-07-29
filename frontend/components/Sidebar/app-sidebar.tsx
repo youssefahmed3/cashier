@@ -30,6 +30,8 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
+import { Role } from "@/types/types";
 
 type UserRole = "admin" | "superadmin"; // type fix
 
@@ -56,71 +58,75 @@ const data = {
       url: "/tenant/dashboard",
       icon: LayoutDashboard,
       isActive: true,
-      role: "admin",
+      role: ["admin"] as Role[],
     },
     {
       title: "Employees",
       url: "/tenant/employees",
       icon: Users,
       isActive: true,
-      role: "admin",
+      role: ["admin"] as Role[],
     },
     {
       title: "Inventory",
       url: "/tenant/inventory",
       icon: Box,
-      role: "admin",
+      role: ["admin"] as Role[],
     },
     {
       title: "Products",
       url: "/tenant/products",
       icon: Box,
       isActive: true,
-      role: "admin",
+      role: ["admin"] as Role[],
     },
     {
       title: "Settings",
       url: "/tenant/settings",
       icon: Settings,
-      role: "admin",
+      role: ["admin"] as Role[],
     },
     {
       title: "Dashboard",
       url: "/superadmin/dashboard",
       icon: LayoutDashboard,
-      role: "superadmin",
+      role: ["superadmin"] as Role[],
     },
     {
       title: "Tenants",
       url: "/superadmin/tenants",
       icon: Building2,
-      role: "superadmin",
+      role: ["superadmin"] as Role[],
     },
     {
       title: "System Wide Analytics",
       url: "/superadmin/analytics",
       icon: ChartArea,
-      role: "superadmin",
+      role: ["superadmin"] as Role[],
     },
     {
       title: "Settings",
       url: "/superadmin/settings",
       icon: Settings,
-      role: "superadmin",
+      role: ["superadmin"] as Role[],
     },
   ],
 };
 
-const filteredNavItems = data.navMain.filter(
-  (item) => item.role === fetchedMockedUser.role
-);
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
+
+  if (!user) return null; // Or a skeleton/loading UI
+
+  const filteredNavItems = data.navMain.filter((item) =>
+    item.role.some((r) => user?.roles.includes(r))
+  );
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher
-          role={fetchedMockedUser.role}
+          role={user?.roles?.[0] ?? "admin"} // fallback to a safe default
           branches={fetchedMockedUser.branches}
         />
       </SidebarHeader>
@@ -128,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={filteredNavItems} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={fetchedMockedUser} />
+        <NavUser user={user!} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
