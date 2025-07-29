@@ -1,4 +1,4 @@
-﻿namespace Shared.DTOS
+﻿namespace Shared.Events
 {
     public class DrawerLogEvent
     {
