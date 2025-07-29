@@ -106,7 +106,14 @@ public class UserContextUtil {
      * Check if current user is SUPER_ADMIN
      */
     public static boolean isSuperAdmin() {
-        return hasRole("SUPER_ADMIN");
+        try {
+            List<String> roles = getCurrentUserRoles();
+            return roles.stream().anyMatch(role -> 
+                role.equals("SUPER_ADMIN") || role.equals("SuperAdmin"));
+        } catch (Exception e) {
+            log.warn("Failed to check if user is SUPER_ADMIN: {}", e.getMessage());
+            return false;
+        }
     }
     
     /**

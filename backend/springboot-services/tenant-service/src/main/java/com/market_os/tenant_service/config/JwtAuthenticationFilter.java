@@ -68,7 +68,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UUID userId = null;
                     UUID tenantId = null;
 
-                    if (!roles.contains("SUPER_ADMIN")) {
+                    // Check for SUPER_ADMIN role (handle both "SUPER_ADMIN" and "SuperAdmin" formats)
+                    boolean isSuperAdmin = roles.stream().anyMatch(role -> 
+                        role.equals("SUPER_ADMIN") || role.equals("SuperAdmin"));
+
+                    if (!isSuperAdmin) {
                         // For non-SUPER_ADMIN users, extract user ID and tenant mapping
                         try {
                             userIdAsInteger = Integer.parseInt(claims.get("userId"));
@@ -84,7 +88,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             log.warn("Could not parse user ID from claims: {}", e.getMessage());
                         }
                     } else {
-                        log.debug("SUPER_ADMIN authentication - no user ID required");
+                        // For SUPER_ADMIN, extract user ID but don't require tenant mapping
+                        try {
+                            userIdAsInteger = Integer.parseInt(claims.get("userId"));
+                            userId = UUID.nameUUIDFromBytes(userIdAsInteger.toString().getBytes());
+                            log.debug("SUPER_ADMIN authentication - user ID: {}, no tenant mapping required", userIdAsInteger);
+                        } catch (Exception e) {
+                            log.debug("SUPER_ADMIN authentication - could not parse user ID: {}", e.getMessage());
+                        }
                     }
 
                     // Create UserRoleDto from token information
