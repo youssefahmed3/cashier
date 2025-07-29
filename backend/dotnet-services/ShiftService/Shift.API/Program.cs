@@ -1,7 +1,9 @@
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Shift.Core.Interfaces.Repositories;
 using Shift.Core.Interfaces.Services;
+using Shift.Infrastructure.Data;
 using Shift.Infrastructure.Data.Configurations;
 using Shift.Infrastructure.Repositories;
 using Shift.Services.Mapping;
@@ -48,7 +50,7 @@ namespace Shift.API
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
-                    cfg.Host("localhost", "/", h =>
+                    cfg.Host("rabbitmq", "/", h =>
                     {
                         h.Username("guest");
                         h.Password("guest");
@@ -64,6 +66,32 @@ namespace Shift.API
             builder.Services.AddMassTransitHostedService();
             var app = builder.Build();
 
+            // === Apply DB Migrations ===
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var dbContext = services.GetRequiredService<ShiftDbContext>();
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+
+                    if (dbContext.Database.GetPendingMigrations().Any())
+                    {
+                        logger.LogInformation("Applying database migrations...");
+                        dbContext.Database.Migrate();
+                        logger.LogInformation("Database migrations applied successfully.");
+                    }
+                    else
+                    {
+                        logger.LogInformation("No pending migrations found.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred while migrating the database.");
+                }
+            }
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
