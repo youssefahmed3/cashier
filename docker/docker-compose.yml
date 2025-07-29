@@ -26,14 +26,13 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"     # AMQP protocol (for apps)
-      - "15672:15672"   # RabbitMQ dashboard (browser)
+      - "5672:5672" # AMQP protocol (for apps)
+      - "15672:15672" # RabbitMQ dashboard (browser)
     networks:
       - backend
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
-
 
   auth-service:
     build: ../backend/dotnet-services/UserRoleService
@@ -74,7 +73,7 @@ services:
       - "traefik.http.middlewares.strip-order.stripprefix.prefixes=/order"
     networks:
       - backend
-      
+
   shift-service-dotnet:
     build: ../backend/dotnet-services/ShiftService
     volumes:
@@ -92,7 +91,7 @@ services:
       - "traefik.http.services.shift-dotnet.loadbalancer.server.port=8086"
       - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
       - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift"
-     networks:
+    networks:
       - backend
 
   notification-service:
@@ -143,7 +142,6 @@ services:
     networks:
       - backend
 
-  
   tenant-service:
     build: ../backend/springboot-services/tenant-service
     volumes:
@@ -208,13 +206,12 @@ services:
       POSTGRES_USER: catalog_db
       POSTGRES_PASSWORD: catalog_db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - backend
-
 
   dotnet-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -247,11 +244,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - backend
-
-   
