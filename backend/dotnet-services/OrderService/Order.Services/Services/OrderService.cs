@@ -18,11 +18,13 @@ namespace Order.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IValidationService _validationService;
 
-        public OrderService(IUnitOfWork unitOfWork, IMapper mapper)
+        public OrderService(IUnitOfWork unitOfWork, IValidationService validationService, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _validationService = validationService;
         }
 
         public async Task<ResultDto<OrderDto>> CreateOrderAsync(OrderDto orderDto)
@@ -36,7 +38,10 @@ namespace Order.Services.Services
                     return ResultDto<OrderDto>.Failure("An order with the provided ID already exists.");
                 }
                 //TODO: Validate products/ inventory call external ProductService
-
+              //  var validationResult = await _validationService.ValidateShiftAsync(orderDto.ShiftId, orderDto.UserId.Value);
+                //if (!validationResult.IsSuccess) {
+                //    throw new InvalidOperationException(validationResult.Error);
+                //}
 
                var order = _mapper.Map<SalesOrder>(orderDto);
 
