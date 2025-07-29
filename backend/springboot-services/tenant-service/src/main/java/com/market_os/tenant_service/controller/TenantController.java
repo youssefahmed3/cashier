@@ -1,7 +1,6 @@
 package com.market_os.tenant_service.controller;
 
 import com.market_os.tenant_service.dto.*;
-import com.market_os.tenant_service.dto.AppUserDto;
 import com.market_os.tenant_service.service.FileStorageService;
 import com.market_os.tenant_service.service.TenantService;
 import com.market_os.tenant_service.service.UserContextService;

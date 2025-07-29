@@ -63,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     List<String> roles = claims.get("roles") != null ? Arrays.asList(claims.get("roles").split(","))
                             : List.of("USER");
 
-                    // Handle SUPER_ADMIN case - no user ID required
+                    // Handle SUPER_ADMIN case - no user ID or tenant mapping required
                     Integer userIdAsInteger = null;
                     UUID userId = null;
                     UUID tenantId = null;
