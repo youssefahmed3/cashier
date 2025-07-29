@@ -80,8 +80,21 @@ export type CreateProductDto = {
     categoryId?: number,
 }
 
+export type CreateTenantDto = {
+    name: string,
+    is_active: boolean
+}
+
 
 export type UpdateTenantDto = {
     name: string,
     is_active: true
+}
+
+
+export type CreateBranchDto = {
+    name: string,
+    phone: string,
+    location: string,
+    tax_percentage: number
 }
