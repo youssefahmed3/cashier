@@ -10,7 +10,6 @@ using Shift.Core.Entities;
 using Shift.Core.Interfaces.Repositories;
 using Shift.Core.Interfaces.Services;
 using Shift.Core.Enums;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Shift.Services.Services
 {
@@ -225,6 +224,30 @@ namespace Shift.Services.Services
             var expectedCash = salesTotal - refundTotal;
 
             return expectedCash;
+        }
+
+        public async Task<ResultDto<bool>> ValidateShiftForUserAsync(long shiftId, long userId)
+        {
+            try
+            {
+                var shiftResult = await GetShiftByIdAsync(shiftId);
+                if (!shiftResult.IsSuccess)
+                    return ResultDto<bool>.Success(false);
+
+                var shift = shiftResult.Value;
+
+                if (!shift.IsActive)
+                    return ResultDto<bool>.Success(false);
+
+                if (shift.UserId != userId)
+                    return ResultDto<bool>.Success(false);
+
+                return ResultDto<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return ResultDto<bool>.Failure($"Validation error: {ex.Message}");
+            }
         }
 
     }

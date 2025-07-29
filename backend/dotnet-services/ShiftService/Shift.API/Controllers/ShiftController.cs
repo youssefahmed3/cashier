@@ -5,7 +5,7 @@ using Shift.Core.Interfaces.Services;
 
 namespace Shift.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/shifts")]
     [ApiController]
     public class ShiftController : ControllerBase
     {
@@ -60,6 +60,7 @@ namespace Shift.API.Controllers
             return BadRequest(new { error = result.Error });
         }
 
+
         [HttpGet("{shiftId}")]
         public async Task<IActionResult> GetShiftById(long shiftId)
         {
@@ -67,6 +68,14 @@ namespace Shift.API.Controllers
             if (result.IsSuccess)
                 return Ok(result.Value);
             return NotFound(new { error = result.Error });
+        }
+
+
+        [HttpGet("validate/{shiftId}/{userId}")]
+        public async Task<IActionResult> ValidateShiftForUser(long shiftId, long userId)
+        {
+            var result = await _shiftService.ValidateShiftForUserAsync(shiftId, userId);
+            return Ok(new { isValid = result.IsSuccess && result.Value });
         }
 
         [HttpGet("{shiftId}/drawer-logs")]

@@ -14,6 +14,9 @@ namespace Shift.Core.Interfaces.Services
         Task<ResultDto<ShiftDto>> GetActiveShiftAsync(long branchId, long userId);
         Task<ResultDto<ShiftDto>> GetShiftByIdAsync(long shiftId);
         Task<ResultDto<IEnumerable<ShiftDto>>> GetShiftsByBranchAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null);
+
+        Task<ResultDto<bool>> ValidateShiftForUserAsync(long shiftId, long userId);
+
         Task<ResultDto<bool>> AddDrawerLogAsync(DrawerLogDto log);
         Task<ResultDto<IEnumerable<DrawerLogDto>>> GetDrawerLogsByShiftAsync(long shiftId);
     }
