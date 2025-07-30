@@ -1,11 +1,6 @@
 ﻿using Reporting.Core.Interfaces;
 using Reporting.Shared.DTOS;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Reporing.Service
 {

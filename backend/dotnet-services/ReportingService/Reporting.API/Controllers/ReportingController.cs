@@ -23,6 +23,41 @@ namespace Reporting.API.Controllers
             _orderApiService = orderApiService ?? throw new ArgumentNullException(nameof(orderApiService));
         }
 
+        // Add this method to ReportingController
+
+        [HttpPost("SyncExternalOrders")]
+        public async Task<IActionResult> SyncExternalOrders()
+        {
+            var externalOrders = await _orderApiService.GetAllOrdersAsync();
+
+            // Map OrderDto to Order
+            var orders = externalOrders.Select(dto => new Order
+            {
+                Id = dto.Id,
+                CreatedAt = dto.CreatedAt,
+                CompletedAt = dto.CompletedAt,
+                Status = dto.Status,
+                Ammount = dto.Ammount,
+                method = dto.method,
+                transactionId = dto.transactionId,
+                referance = dto.referance,
+                orderId = dto.orderId,
+                branchId = dto.branchId,
+                shiftId = dto.shiftId
+            }).ToList();
+
+            // Optional: Remove existing orders with same Ids to avoid duplicates
+            var existingIds = orders.Select(o => o.Id).ToList();
+            var existingOrders = await _context.Set<Order>().Where(o => existingIds.Contains(o.Id)).ToListAsync();
+            _context.Set<Order>().RemoveRange(existingOrders);
+
+            // Add new orders
+            await _context.Set<Order>().AddRangeAsync(orders);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "Orders synced successfully", Count = orders.Count });
+        }
+
         // GET: api/reporting/DailySales
         [HttpGet("DailySales")]
         public async Task<IActionResult> GetDailySales()
@@ -32,11 +67,10 @@ namespace Reporting.API.Controllers
                 .Select(g => new
                 {
                     Date = g.Key,
-                    TotalSum = g.Sum(o => o.Total)
+                    TotalSum = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
-
             return Ok(dailySales);
         }
 
@@ -60,7 +94,7 @@ namespace Reporting.API.Controllers
                 {
                     g.Key.Year,
                     g.Key.Week,
-                    TotalSum = g.Sum(o => o.Total)
+                    TotalSum = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Week)
                 .ToList();
@@ -82,7 +116,7 @@ namespace Reporting.API.Controllers
                 {
                     g.Key.Year,
                     g.Key.Month,
-                    TotalSum = g.Sum(o => o.Total)
+                    TotalSum = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToListAsync();
@@ -103,7 +137,7 @@ namespace Reporting.API.Controllers
                 {
                     g.Key.Year,
                     g.Key.Month,
-                    TotalSum = g.Sum(o => o.Total)
+                    TotalSum = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToListAsync();

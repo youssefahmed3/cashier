@@ -44,7 +44,7 @@ namespace Reporting.API.Controllers
                 {
                     Year = g.Key.Year,
                     Month = g.Key.Month,
-                    TotalValue = g.Sum(o => o.Total)
+                    TotalValue = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Year)
                 .ThenBy(x => x.Month)
