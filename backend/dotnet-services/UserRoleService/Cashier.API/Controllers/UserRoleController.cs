@@ -119,5 +119,16 @@
             var permissions = await _service.GetUserPermissionsAsync(userId);
             return Ok(permissions);
         }
+        //GET : api/userrole/current-tenant-id
+        [HttpGet("current-tenant-id")]
+        public async Task<IActionResult> GetCurrentTenantId()
+        {
+            var tenantId = await _service.GetCurrentTenantIdAsync();
+            if (tenantId == null)
+                return NotFound("Tenant not assigned for current user");
+
+            return Ok(new { TenantId = tenantId });
+        }
+
     }
 }
