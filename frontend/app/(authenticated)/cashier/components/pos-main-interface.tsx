@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Search, Scan, Plus, Minus, Trash2, User, CreditCard, DollarSign, Receipt, ShoppingCart } from "lucide-react"
+import { Search, Scan, Plus, Minus, Trash2, User, CreditCard, DollarSign, Receipt, ShoppingCart, Package } from "lucide-react"
 import { ProductSearch } from "./product-search"
 import { CustomerLookup } from "./customer-lookup"
 import { PaymentDialog } from "./payment-dialog"
@@ -14,6 +14,7 @@ import { ReceiptPreview } from "./receipt-preview"
 import { TransactionHistory } from "./transaction-history"
 import { POSCalculator } from "./pos-calculator"
 import { POSSettings } from "./pos-settings"
+import { BulkEntry } from "./bulk-entry"
 import type { CartItem, Customer } from "../page"
 
 interface POSMainInterfaceProps {
@@ -21,18 +22,18 @@ interface POSMainInterfaceProps {
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>
   currentCustomer: Customer | null
   setCurrentCustomer: React.Dispatch<React.SetStateAction<Customer | null>>
-  paymentMethod: "cash" | "card" | "digital"
-  setPaymentMethod: React.Dispatch<React.SetStateAction<"cash" | "card" | "digital">>
+  paymentMethod: "cash" | "card"
+  setPaymentMethod: React.Dispatch<React.SetStateAction<"cash" | "card">>
   activeTab: string
   setActiveTab: React.Dispatch<React.SetStateAction<string>>
 }
 
 // Sample quick access products
 const quickProducts = [
-  { id: "QP001", name: "Plastic Bag", price: 0.1, barcode: "BAG001", category: "Accessories", taxRate: 0.08 },
-  { id: "QP002", name: "Gift Card $25", price: 25.0, barcode: "GC025", category: "Gift Cards", taxRate: 0 },
-  { id: "QP003", name: "Bottle Deposit", price: 0.05, barcode: "DEP001", category: "Deposits", taxRate: 0 },
-  { id: "QP004", name: "Reusable Bag", price: 1.99, barcode: "RBAG001", category: "Accessories", taxRate: 0.08 },
+  { id: "QP001", name: "Plastic Bag", price: 0.5, barcode: "BAG001", category: "Accessories", taxRate: 0.14 },
+  { id: "QP002", name: "Gift Card 100 EGP", price: 100.0, barcode: "GC100", category: "Gift Cards", taxRate: 0 },
+  { id: "QP003", name: "Bottle Deposit", price: 0.25, barcode: "DEP001", category: "Deposits", taxRate: 0 },
+  { id: "QP004", name: "Reusable Bag", price: 5.0, barcode: "RBAG001", category: "Accessories", taxRate: 0.14 },
 ]
 
 export function POSMainInterface({
@@ -50,6 +51,7 @@ export function POSMainInterface({
   const [showCustomerLookup, setShowCustomerLookup] = React.useState(false)
   const [showPayment, setShowPayment] = React.useState(false)
   const [showReceipt, setShowReceipt] = React.useState(false)
+  const [showBulkEntry, setShowBulkEntry] = React.useState(false)
 
   // Calculate totals
   const subtotal = cart.reduce((sum, item) => {
@@ -67,6 +69,22 @@ export function POSMainInterface({
 
   const total = subtotal + totalTax
 
+  const getCategoryColor = (category: string) => {
+    const colors: { [key: string]: string } = {
+      "Rice": "bg-green-100 text-green-800",
+      "Oils": "bg-yellow-100 text-yellow-800",
+      "Sugar": "bg-blue-100 text-blue-800",
+      "Flour": "bg-orange-100 text-orange-800",
+      "Spices": "bg-red-100 text-red-800",
+      "Beverages": "bg-purple-100 text-purple-800",
+      "Accessories": "bg-indigo-100 text-indigo-800",
+      "Gift Cards": "bg-pink-100 text-pink-800",
+      "Deposits": "bg-teal-100 text-teal-800",
+      "General": "bg-gray-100 text-gray-800",
+    }
+    return colors[category] || colors["General"]
+  }
+
   const addToCart = (product: Omit<CartItem, "quantity">) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id)
@@ -75,6 +93,21 @@ export function POSMainInterface({
       } else {
         return [...prevCart, { ...product, quantity: 1 }]
       }
+    })
+  }
+
+  const addBulkToCart = (items: CartItem[]) => {
+    setCart((prevCart) => {
+      const newCart = [...prevCart]
+      items.forEach((item) => {
+        const existingItem = newCart.find((cartItem) => cartItem.id === item.id)
+        if (existingItem) {
+          existingItem.quantity += item.quantity
+        } else {
+          newCart.push(item)
+        }
+      })
+      return newCart
     })
   }
 
@@ -153,9 +186,9 @@ export function POSMainInterface({
   }
 
   const renderNewSaleInterface = () => (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background flex-col lg:flex-row">
       {/* Left Panel - Product Search & Quick Actions */}
-      <div className="w-1/3 p-4 border-r">
+      <div className="w-full lg:w-1/3 p-4 border-r">
         <div className="space-y-4">
           {/* Barcode Scanner */}
           <Card>
@@ -186,10 +219,14 @@ export function POSMainInterface({
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Product Search</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <Button onClick={() => setShowProductSearch(true)} className="w-full" variant="outline">
                 <Search className="mr-2 h-4 w-4" />
                 Search Products
+              </Button>
+              <Button onClick={() => setShowBulkEntry(true)} className="w-full" variant="outline">
+                <Package className="mr-2 h-4 w-4" />
+                Bulk Entry
               </Button>
             </CardContent>
           </Card>
@@ -209,7 +246,7 @@ export function POSMainInterface({
                     onClick={() => addToCart(product)}
                   >
                     <span className="font-medium">{product.name}</span>
-                    <span className="text-muted-foreground">${product.price.toFixed(2)}</span>
+                    <span className="text-muted-foreground">ج.م {product.price.toFixed(2)}</span>
                   </Button>
                 ))}
               </div>
@@ -250,7 +287,7 @@ export function POSMainInterface({
       </div>
 
       {/* Right Panel - Cart & Checkout */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 w-full lg:w-2/3">
         <div className="h-full flex flex-col">
           {/* Cart Header */}
           <div className="flex items-center justify-between mb-4">
@@ -272,22 +309,36 @@ export function POSMainInterface({
                   <div className="text-center">
                     <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>Cart is empty</p>
-                    <p className="text-sm">Scan or search for products to add them</p>
+                    <p className="text-sm">Scan barcode or search for products to add them</p>
                   </div>
                 </div>
               ) : (
                 <div className="max-h-96 overflow-y-auto">
                   {cart.map((item) => (
                     <div key={item.id} className="flex items-center justify-between p-4 border-b">
-                      <div className="flex-1">
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          ${item.price.toFixed(2)} each
-                          {item.discount && (
-                            <Badge variant="secondary" className="ml-2">
-                              {item.discount}% off
+                      <div className="flex items-center space-x-3 flex-1">
+                        {/* Product Image */}
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <Package className="h-6 w-6 text-gray-400" />
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <div className="font-medium truncate">{item.name}</div>
+                            <Badge variant="secondary" className={getCategoryColor(item.category)}>
+                              {item.category}
                             </Badge>
-                          )}
+                          </div>
+                                                      <div className="text-sm text-muted-foreground">
+                              EGP {item.price.toFixed(2)} each
+                            {item.discount && (
+                              <Badge variant="secondary" className="ml-2">
+                                {item.discount}% off
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -307,7 +358,7 @@ export function POSMainInterface({
                           <Plus className="h-4 w-4" />
                         </Button>
                         <div className="w-20 text-right font-medium">
-                          ${(item.price * item.quantity * (1 - (item.discount || 0) / 100)).toFixed(2)}
+                          EGP {(item.price * item.quantity * (1 - (item.discount || 0) / 100)).toFixed(2)}
                         </div>
                         <Button size="icon" variant="outline" onClick={() => removeFromCart(item.id)}>
                           <Trash2 className="h-4 w-4" />
@@ -326,23 +377,23 @@ export function POSMainInterface({
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>EGP {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax:</span>
-                  <span>${totalTax.toFixed(2)}</span>
+                  <span>EGP {totalTax.toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>EGP {total.toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Payment Buttons */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <Button
               size="lg"
               className="h-16"
@@ -367,18 +418,6 @@ export function POSMainInterface({
               <CreditCard className="mr-2 h-5 w-5" />
               Card
             </Button>
-            <Button
-              size="lg"
-              className="h-16"
-              disabled={cart.length === 0}
-              onClick={() => {
-                setPaymentMethod("digital")
-                setActiveTab("payment")
-              }}
-            >
-              <Receipt className="mr-2 h-5 w-5" />
-              Digital
-            </Button>
           </div>
         </div>
       </div>
@@ -391,6 +430,8 @@ export function POSMainInterface({
 
       {/* Dialogs */}
       <ProductSearch open={showProductSearch} onOpenChange={setShowProductSearch} onAddToCart={addToCart} />
+
+      <BulkEntry open={showBulkEntry} onOpenChange={setShowBulkEntry} onAddToCart={addBulkToCart} />
 
       <ReceiptPreview
         open={showReceipt}
