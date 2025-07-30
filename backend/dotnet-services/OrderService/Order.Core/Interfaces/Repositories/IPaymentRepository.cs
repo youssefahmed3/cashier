@@ -11,6 +11,7 @@ namespace Order.Core.Interfaces.Repositories
     {
         Task<IEnumerable<Payment>> GetPaymentByOrderIdAsync(long orderId);
         Task<IEnumerable<Payment>> GetPaymentByBranchIdAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null);
-
+        Task<IEnumerable<Payment>> GetCompletedOrRefundedByBranchIdAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null);
+        Task<IEnumerable<Payment>> GetAllCompletedOrRefundedAsync(DateTime? fromDate = null, DateTime? toDate = null);
     }
 }
