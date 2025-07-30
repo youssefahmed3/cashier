@@ -2,6 +2,6 @@
 {
     public class UserRole : IdentityUserRole<int>
     {
-        public int TenantId { get; set; }
+        public Guid TenantId { get; set; }
     }
 }

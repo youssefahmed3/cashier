@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cashier.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(CashierDbContext))]
-    [Migration("20250713121757_Intial-Create")]
+    [Migration("20250730212257_Intial-Create")]
     partial class IntialCreate
     {
         /// <inheritdoc />
@@ -179,8 +179,8 @@ namespace Cashier.Infrastructure.Data.Migrations
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("UserId", "RoleId");
 
