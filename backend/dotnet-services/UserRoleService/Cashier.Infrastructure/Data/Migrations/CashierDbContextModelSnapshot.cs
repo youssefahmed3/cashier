@@ -176,8 +176,8 @@ namespace Cashier.Infrastructure.Data.Migrations
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("UserId", "RoleId");
 

@@ -60,14 +60,14 @@
         }
         // GET: api/userrole/user/{userId}/tenant/{tenantId}/roles
         [HttpGet("user/{userId}/tenant/{tenantId}/roles")]
-        public async Task<IActionResult> GetUserRoles(int userId, int tenantId)
+        public async Task<IActionResult> GetUserRoles(int userId, Guid tenantId)
         {
             var roles = await _service.GetUserRolesAsync(userId, tenantId);
             return Ok(roles);
         }
         // GET: api/userrole/role/{roleId}/tenant/{tenantId}/users
         [HttpGet("role/{roleId}/tenant/{tenantId}/users")]
-        public async Task<IActionResult> GetUsersInRole(int roleId, int tenantId)
+        public async Task<IActionResult> GetUsersInRole(int roleId, Guid tenantId)
         {
             var users = await _service.GetUsersInRoleAsync(roleId, tenantId);
             return Ok(users);
@@ -107,7 +107,7 @@
         }
         // GET: api/userrole/tenant/{tenantId}/users-with-roles
         [HttpGet("tenant/{tenantId}/users-with-roles")]
-        public async Task<IActionResult> GetUsersWithRolesByTenant(int tenantId)
+        public async Task<IActionResult> GetUsersWithRolesByTenant(Guid tenantId)
         {
             var usersWithRoles = await _service.GetUsersWithRolesByTenantAsync(tenantId);
             return Ok(usersWithRoles);
