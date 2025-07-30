@@ -98,5 +98,33 @@ namespace Order.Services.Services
             }
         }
 
+        public async Task<ResultDto<IEnumerable<PaymentDto>>> GetAllPaymentsAsync(DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            try
+            {
+                var payments = await _unitOfWork.PaymentRepo.GetAllCompletedOrRefundedAsync(fromDate, toDate);
+                var paymentDtos = _mapper.Map<IEnumerable<PaymentDto>>(payments);
+                return ResultDto<IEnumerable<PaymentDto>>.Success(paymentDtos);
+            }
+            catch (Exception ex)
+            {
+                return ResultDto<IEnumerable<PaymentDto>>.Failure($"Error retrieving all payments: {ex.Message}");
+            }
+        }
+        public async Task<ResultDto<IEnumerable<PaymentDto>>> GetPaymentsByBranchIdAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            try
+            {
+                var payments = await _unitOfWork.PaymentRepo.GetCompletedOrRefundedByBranchIdAsync(branchId, fromDate, toDate);
+                var paymentDtos = _mapper.Map<IEnumerable<PaymentDto>>(payments);
+                return ResultDto<IEnumerable<PaymentDto>>.Success(paymentDtos);
+            }
+            catch (Exception ex)
+            {
+                return ResultDto<IEnumerable<PaymentDto>>.Failure($"Error retrieving payments for branch: {ex.Message}");
+            }
+        }
+
+
     }
 }
