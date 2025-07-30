@@ -62,8 +62,8 @@ export function ReceiptPreview({ open, onOpenChange, cart, total, customer, onCo
             <div className="text-center mb-4">
               <div className="font-bold text-lg">SuperMarket Pro</div>
               <div>Downtown Branch</div>
-              <div>123 Main St, Downtown</div>
-              <div>Phone: (555) 123-4567</div>
+              <div>north 90th street</div>
+              <div>Phone: +201501711718</div>
             </div>
 
             <Separator className="my-4" />
@@ -111,10 +111,10 @@ export function ReceiptPreview({ open, onOpenChange, cart, total, customer, onCo
                   <div key={item.id} className="mb-2">
                     <div className="flex justify-between">
                       <span className="flex-1">{item.name}</span>
-                      <span>${finalPrice.toFixed(2)}</span>
+                      <span>EGP {finalPrice.toFixed(2)}</span>
                     </div>
                     <div className="text-xs text-muted-foreground ml-2">
-                      {item.quantity} x ${item.price.toFixed(2)}
+                      {item.quantity} x EGP {item.price.toFixed(2)}
                       {item.discount && ` (${item.discount}% off)`}
                     </div>
                   </div>
@@ -128,16 +128,16 @@ export function ReceiptPreview({ open, onOpenChange, cart, total, customer, onCo
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>EGP {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax:</span>
-                <span>${totalTax.toFixed(2)}</span>
+                <span>EGP {totalTax.toFixed(2)}</span>
               </div>
               <Separator className="my-2" />
               <div className="flex justify-between font-bold text-base">
                 <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
+                <span>EGP {total.toFixed(2)}</span>
               </div>
             </div>
 
@@ -147,7 +147,7 @@ export function ReceiptPreview({ open, onOpenChange, cart, total, customer, onCo
             <div className="text-center text-xs">
               <div>Thank you for shopping with us!</div>
               <div>Return policy: 30 days with receipt</div>
-              <div>Customer Service: (555) 123-4567</div>
+              <div>Customer Service: +201501711718</div>
             </div>
           </CardContent>
         </Card>

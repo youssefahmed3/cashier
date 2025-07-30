@@ -111,7 +111,7 @@ const transactionData: Transaction[] = [
     ],
     customer: { id: "CUST002", name: "Sarah Johnson", loyaltyPoints: 850, membershipLevel: "silver" },
     total: 14.95,
-    paymentMethod: "digital",
+    paymentMethod: "card",
     cashier: "Jane Doe",
     status: "completed",
   },
@@ -456,7 +456,7 @@ export function TransactionHistory() {
                 <SelectItem value="all">All Payments</SelectItem>
                 <SelectItem value="cash">Cash</SelectItem>
                 <SelectItem value="card">Card</SelectItem>
-                <SelectItem value="digital">Digital</SelectItem>
+                
               </SelectContent>
             </Select>
             <DropdownMenu>
