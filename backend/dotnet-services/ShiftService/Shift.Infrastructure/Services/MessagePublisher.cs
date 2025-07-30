@@ -4,10 +4,9 @@ using System.Linq;
 using MassTransit;
 using MassTransit.Transports;
 using Microsoft.Extensions.Logging;
-using Order.Core.Interfaces.Services;
-using Shared.DTOS;
+using Shift.Core.Interfaces.Services;
 
-namespace Order.Infrastructure.Services
+namespace Shift.Infrastructure.Services
 {
     public class MessagePublisher : IMessagePublisher
     {
@@ -24,7 +23,8 @@ namespace Order.Infrastructure.Services
             _sendEndpointProvider = sendEndpointProvider;
             _logger = logger;
         }
-        private async Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class
+
+        public async Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class
         {
             try
             {
@@ -37,7 +37,8 @@ namespace Order.Infrastructure.Services
                 throw;
             }
         }
-        private async Task PublishAsync<T>(T message, string queueName, CancellationToken cancellationToken = default) where T : class
+
+        public async Task PublishToQueueAsync<T>(T message, string queueName, CancellationToken cancellationToken = default) where T : class
         {
             try
             {
@@ -51,27 +52,5 @@ namespace Order.Infrastructure.Services
                 throw;
             }
         }
-
-        public async Task<ResultDto<bool>> PublishEventSafelyAsync<T>(T message, string queueName = null) where T : class
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(queueName))
-                {
-                    await PublishAsync(message);
-                }
-                else
-                {
-                    await PublishAsync(message, queueName);
-                }
-                return ResultDto<bool>.Success(true);
-            }
-            catch (Exception ex)
-            {
-                return ResultDto<bool>.Failure($"Failed to publish event of type {typeof(T).Name}: {ex.Message}");
-            }
-        }
-
     }
-
 }

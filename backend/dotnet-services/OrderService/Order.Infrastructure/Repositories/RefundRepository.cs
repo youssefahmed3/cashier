@@ -54,6 +54,7 @@ namespace Order.Infrastructure.Repositories
                         UnitPrice = orderItem.UnitPrice,
                         RefundId = refund.Id,
                         OrderItemId = itemDto.OrderItemId,
+                        ProductId = itemDto.ProductId,
 
                     };
                     await _refundItemRepo.AddAsync(refundItem);

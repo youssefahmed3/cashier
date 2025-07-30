@@ -19,5 +19,7 @@ namespace Cashier.Core.Interfaces.Services
         Task<bool> UnsuspendUserAsync(int userId);
         Task<List<UserWithRolesDto>> GetUsersWithRolesByTenantAsync(int tenantId);
         Task<List<PermissionDto>> GetUserPermissionsAsync(int userId);
+        Task<int?> GetCurrentTenantIdAsync();
+
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Order.Core.Entities;
+using Order.Core.Interfaces.Repositories;
 using Order.Core.Interfaces.Services;
 using Shared.DTOS;
 using Shared.Events;
@@ -13,15 +14,18 @@ namespace Order.Services.Services
     public class PaymentEventPublisher : IPaymentEventPublisher
     {
         private readonly IMessagePublisher _messagePublisher;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public PaymentEventPublisher(IMessagePublisher messagePublisher)
+        public PaymentEventPublisher(IMessagePublisher messagePublisher, IUnitOfWork unitOfWork)
         {
             _messagePublisher = messagePublisher;
+            _unitOfWork = unitOfWork;
         }
 
-        //TODO: Should i publish event to reflect stock after payment or refund for that order
         public async Task<ResultDto<bool>> PublishPaymentEventsAsync(Payment payment, PaymentRequestDto request, int shiftId)
         {
+            var results = new List<ResultDto<bool>>();
+
             var drawerLogEvent = new DrawerLogEvent
             {
                 BranchId = request.BranchId,
@@ -32,49 +36,50 @@ namespace Order.Services.Services
                 CreatedAt = DateTime.UtcNow,
                 PaymentId = payment.Id,
             };
-            var drawerResult = await PublishEventSafelyAsync(drawerLogEvent);
-            if (!drawerResult.IsSuccess)
+            var drawerResult = await _messagePublisher.PublishEventSafelyAsync(drawerLogEvent);
+            results.Add(drawerResult);
+
+            var stockResult = await PublishStockDecreaseEventAsync(request.OrderId, request.BranchId);
+            results.Add(stockResult);
+
+            if (results.Any(r => !r.IsSuccess))
             {
-                return ResultDto<bool>.Failure("One or more events failed to publish.");
+                var failedEvents = results.Where(r => !r.IsSuccess).Select(r => r.Error);
+                return ResultDto<bool>.Failure($"One or more events failed to publish: {string.Join(", ", failedEvents)}");
             }
 
             return ResultDto<bool>.Success(true);
 
         }
-
-        public async Task<ResultDto<bool>> PublishRefundEventsAsync(Payment refundPayment, Payment originalPayment, decimal amount)
-        {
-            var drawerLogEvent = new DrawerLogEvent
-            {
-                BranchId = originalPayment.BranchId,
-                ShiftId = originalPayment.ShiftId,
-                TransactionType = "Refund",
-                Amount = amount,
-                Reference = $"Cash refund for Order #{originalPayment.OrderId}",
-                CreatedAt = DateTime.UtcNow,
-                PaymentId = refundPayment.Id,
-            };
-
-            var drawerResult = await PublishEventSafelyAsync(drawerLogEvent);
-            if (!drawerResult.IsSuccess)
-            {
-                return ResultDto<bool>.Failure("One or more events failed to publish.");
-            }
-
-            return ResultDto<bool>.Success(true);
-
-        }
-
-        private async Task<ResultDto<bool>> PublishEventSafelyAsync<T>(T message) where T : class
+        private async Task<ResultDto<bool>> PublishStockDecreaseEventAsync(long orderId, long branchId)
         {
             try
             {
-                await _messagePublisher.PublishAsync(message);
-                return ResultDto<bool>.Success(true);
+                // Get order with items to determine what stock to decrease
+                var order = await _unitOfWork.Orders.GetOrderWithItemsAsync(orderId);
+                if (order == null)
+                {
+                    return ResultDto<bool>.Failure($"Order {orderId} not found for stock decrease");
+                }
+
+                var stockEvent = new StockUpdateEvent
+                {
+                    EventType = "StockDecrease",
+                    BranchId = branchId,
+                    Items = order.OrderItems.Select(item => new StockUpdateItem
+                    {
+                        ProductId = item.ProductId,
+                        Quantity = item.Qty,
+                    }).ToList(),
+                    CreatedAt = DateTime.UtcNow,
+                    Reference = $"Stock decrease for completed Order #{orderId}",
+                };
+
+                return await _messagePublisher.PublishEventSafelyAsync(stockEvent, "stock-decrease");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                return ResultDto<bool>.Failure($"Failed to publish event of type {typeof(T).Name} because {ex}");
+                return ResultDto<bool>.Failure($"Failed to publish stock decrease event: {ex.Message}");
             }
         }
     }

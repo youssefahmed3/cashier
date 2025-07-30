@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -18,12 +19,17 @@ namespace Order.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly Dictionary<PaymentMethod, IPaymentStrategy> _paymentStrategies;
+        private readonly IRefundEventPublisher _refundEventPublisher; 
         private readonly IMapper _mapper;
 
-        public RefundService(IUnitOfWork unitOfWork, IEnumerable<IPaymentStrategy> paymentStrategies, IMapper mapper)
+        public RefundService(IUnitOfWork unitOfWork,
+            IEnumerable<IPaymentStrategy> paymentStrategies,
+            IRefundEventPublisher refundEventPublisher,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _paymentStrategies = paymentStrategies.ToDictionary(s => s.SupportedPaymentMethod);
+            _refundEventPublisher = refundEventPublisher;
             _mapper = mapper;
         }
         public async Task<ResultDto<RefundDto>> ProcessRefundAsync(RefundRequestDto refundRequest)
@@ -58,6 +64,10 @@ namespace Order.Services.Services
 
                 var refund = await _unitOfWork.Refunds.CreateRefundWithItemsAsync(refundRequest, refundAmount, originalPayment.Id);
                 await _unitOfWork.SaveChangesAsync();
+
+                //Publish stock restock event
+               var stockRestockResult = await _refundEventPublisher.PublishStockRestockEventsAsync(refund, originalPayment, refund.RefundItems.ToList());
+
 
                 var resultDto = _mapper.Map<RefundDto>(refund);
                 return ResultDto<RefundDto>.Success(resultDto);
