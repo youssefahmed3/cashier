@@ -11,6 +11,5 @@ namespace Order.Core.Interfaces.Services
     public interface IPaymentEventPublisher
     {
         Task<ResultDto<bool>> PublishPaymentEventsAsync(Payment payment, PaymentRequestDto request, int shiftId);
-        Task<ResultDto<bool>> PublishRefundEventsAsync(Payment refundPayment, Payment originalPayment, decimal amount);
     }
 }

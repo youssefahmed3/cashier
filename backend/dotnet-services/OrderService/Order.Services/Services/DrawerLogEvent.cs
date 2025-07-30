@@ -11,5 +11,7 @@
         public long BranchId { get; set; }
         public long? PaymentId { get; set; }
 
+        //TODO: think if you need cashierId or orderId in drawerLog 
+
     }
 }
