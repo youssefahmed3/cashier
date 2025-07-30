@@ -10,19 +10,23 @@ using Shift.Core.Entities;
 using Shift.Core.Interfaces.Repositories;
 using Shift.Core.Interfaces.Services;
 using Shift.Core.Enums;
+using Shared.Events;
 
 namespace Shift.Services.Services
 {
     public class ShiftService : IShiftService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMessagePublisher _messagePublisher;
         private readonly IMapper _mapper;
 
-        public ShiftService(IUnitOfWork unitOfWork, IMapper mapper)
+        public ShiftService(IUnitOfWork unitOfWork, IMessagePublisher messagePublisher, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _messagePublisher = messagePublisher;
             _mapper = mapper;
         }
+
         public async Task<ResultDto<ShiftDto>> StartShiftAsync(StartShiftDto request)
         {
             try
@@ -90,7 +94,6 @@ namespace Shift.Services.Services
                 activeShift.CashDifference = request.EndingCash - activeShift.ExpectedCash;
                 activeShift.IsActive = false;
 
-                //TODO Check for Fraud and tell the Admin via notification
                 _unitOfWork.ShiftRepository.Update(activeShift);
 
                 var closingLog = new DrawerLog()
@@ -108,6 +111,10 @@ namespace Shift.Services.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 await _unitOfWork.CommitTransactionAsync();
+
+                // Check for Fraud and tell the Admin via notification
+                await CheckAndPublishFraudAsync(activeShift);
+
 
                 var shiftDto = _mapper.Map<ShiftDto>(activeShift);
 
@@ -247,6 +254,26 @@ namespace Shift.Services.Services
             catch (Exception ex)
             {
                 return ResultDto<bool>.Failure($"Validation error: {ex.Message}");
+            }
+        }
+
+        private async Task CheckAndPublishFraudAsync(Core.Entities.Shift shift)
+        {
+            if (!shift.CashDifference.HasValue)
+                return;
+
+            if (Math.Abs(shift.CashDifference.Value) > 10)
+            {
+                var fraudEvent = new FraudDetectedEvent
+                {
+                    ShiftId = shift.Id,
+                    UserId = shift.UserId,
+                    BranchId = shift.BranchId,
+                    CashDifference = shift.CashDifference.Value,
+                    Notes = $"Cash difference of {shift.CashDifference} detected in shift {shift.Id}"
+                };
+
+                await _messagePublisher.PublishToQueueAsync(fraudEvent, "fraud-alerts");
             }
         }
 

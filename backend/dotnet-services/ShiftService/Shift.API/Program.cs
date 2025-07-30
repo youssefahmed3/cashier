@@ -5,6 +5,7 @@ using Shift.Core.Interfaces.Repositories;
 using Shift.Core.Interfaces.Services;
 using Shift.Infrastructure.Data;
 using Shift.Infrastructure.Data.Configurations;
+using Shift.Infrastructure.Extensions;
 using Shift.Infrastructure.Repositories;
 using Shift.Services.Mapping;
 using Shift.Services.Services;
@@ -41,29 +42,7 @@ namespace Shift.API
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
-            builder.Services.AddMassTransit(x =>
-            {
-                x.AddConsumer<DrawerLogEventConsumer>(configurator =>
-                {
-                    configurator.UseMessageRetry(r => r.Exponential(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(2)));
-                });
-
-                x.UsingRabbitMq((context, cfg) =>
-                {
-                    cfg.Host("rabbitmq", "/", h =>
-                    {
-                        h.Username("guest");
-                        h.Password("guest");
-                    });
-
-                    cfg.ReceiveEndpoint("shift-service-drawer-logs", e =>
-                    {
-                        e.ConfigureConsumer<DrawerLogEventConsumer>(context);
-                    });
-                });
-            });
-
-            builder.Services.AddMassTransitHostedService();
+            builder.Services.ConfigureMassTransitWithRabbitMq(builder.Configuration);
             var app = builder.Build();
 
             // === Apply DB Migrations ===
