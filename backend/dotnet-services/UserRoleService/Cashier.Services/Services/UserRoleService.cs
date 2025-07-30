@@ -237,6 +237,19 @@
 
             return permissions.ToList();
         }
+        //Get tenantId for specific user
+        public async Task<int?> GetCurrentTenantIdAsync()
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return null;
+
+            var userRoles = await _unitOfWork.GetRepository<UserRole, int>().GetAllAsync();
+            var userTenant = userRoles.FirstOrDefault(ur => ur.UserId.ToString() == userId);
+
+            return userTenant?.TenantId;
+        }
+
         // ---------- Private Helper Methods ----------
         // Checks if the current user is authorized (SuperAdmin or Admin) to assign permissions.
         private async Task<(bool IsAuthorized, string Message)> EnsureCurrentUserIsAuthorizedAsync()
