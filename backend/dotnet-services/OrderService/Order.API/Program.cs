@@ -37,6 +37,7 @@ namespace Order.API
             builder.Services.AddHttpContextAccessor();
             builder.Services.ConfigureMassTransitWithRabbitMq(builder.Configuration);
             builder.Services.AddScoped<IPaymentEventPublisher, PaymentEventPublisher>();
+            builder.Services.AddScoped<IRefundEventPublisher,  RefundEventPublisher>();
             builder.Services.AddHttpClient<IPaymobService, PaymobService>();
 
             builder.Services.AddScoped(typeof(IGenericRepository<,>), typeof(GenericRepository<,>));

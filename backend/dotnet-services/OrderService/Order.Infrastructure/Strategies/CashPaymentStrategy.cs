@@ -9,12 +9,14 @@ using Shared.Events;
 public class CashPaymentStrategy : IPaymentStrategy
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IPaymentEventPublisher _eventPublisher;
+    private readonly IPaymentEventPublisher _paymenteventPublisher;
+    private readonly IRefundEventPublisher _refundEventPublisher;
 
-    public CashPaymentStrategy(IUnitOfWork unitOfWork, IPaymentEventPublisher eventPublisher)
+    public CashPaymentStrategy(IUnitOfWork unitOfWork, IPaymentEventPublisher paymenteventPublisher, IRefundEventPublisher refundEventPublisher)
     {
         _unitOfWork = unitOfWork;
-        _eventPublisher = eventPublisher;
+        _paymenteventPublisher = paymenteventPublisher;
+        _refundEventPublisher = refundEventPublisher;
     }
 
     public PaymentMethod SupportedPaymentMethod => PaymentMethod.Cash;
@@ -53,7 +55,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             await _unitOfWork.SaveChangesAsync();
 
             // Fire and forget Payment event publishing
-           var eventResult = await _eventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto, shiftId);
+           var eventResult = await _paymenteventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto, shiftId);
 
             await _unitOfWork.CommitTransactionAsync();
 
@@ -102,7 +104,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             await _unitOfWork.SaveChangesAsync();
 
             // Fire and forget refund event publishing
-            var eventResult = await _eventPublisher.PublishRefundEventsAsync(refundPayment, originalPayment, amount);
+            var eventResult = await _refundEventPublisher.PublishRefundEventsAsync(refundPayment, originalPayment, amount);
 
             await _unitOfWork.CommitTransactionAsync();
 

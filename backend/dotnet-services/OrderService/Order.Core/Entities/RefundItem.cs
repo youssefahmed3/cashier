@@ -15,8 +15,11 @@
 
         public long RefundId { get; set; }
         public long OrderItemId { get; set; }
+        public long ProductId { get; set; }
+
 
         public virtual Refund? Refund { get; set; }
         public virtual OrderItem? OrderItem { get; set; }
+
     }
 }
