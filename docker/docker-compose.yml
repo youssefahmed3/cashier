@@ -53,6 +53,22 @@ services:
     networks:
       - backend
 
+  receipt-service:
+    build: ../backend/dotnet-services/ReceiptService
+    ports:
+      - "8004:7048"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.receipt.rule=PathPrefix(`/receipt`)"
+      - "traefik.http.routers.receipt.entrypoints=web"
+      - "traefik.http.services.receipt.loadbalancer.server.port=7048"
+      - "traefik.http.routers.receipt.middlewares=strip-receipt@docker"
+      - "traefik.http.middlewares.strip-receipt.stripprefix.prefixes=/receipt"
+    networks:
+      - backend
+      
   order-service:
     build: ../backend/dotnet-services/OrderService
     volumes:
