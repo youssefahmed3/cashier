@@ -10,6 +10,8 @@
         Task LogoutAsync(int userId);
         (bool Success, string Message) ValidateVerificationCode(string email, string verificationCode);
         Task<(bool Success, string Message)> ForgotPasswordAsync(string email);
+        Task AnnouceSuperAdmin(SuperAdminConfirmationEmailDto dto);
+        Task AnnouceAdmin(string adminEmail);
         Task<(bool Success, string Message, string? Token, string? refereshToken)> ResetPasswordAsync(string email, string code, string newPassword);
     }
 }

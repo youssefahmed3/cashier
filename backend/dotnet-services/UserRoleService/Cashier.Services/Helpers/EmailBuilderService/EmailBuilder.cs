@@ -33,7 +33,35 @@
                 <p style='margin-top: 15px;'>This code is valid for 15 minutes.</p>";
             return WrapWithLayout(title, body);
         }
+        public static string BuildSuperAdminConfirmationEmail(SuperAdminConfirmationEmailDto dto)
+        {
+            var title = "🎉 New Tenant Registiration";
+            var body = $@"
+                <p>Tenant with name {dto.Name} registered:</p>
+                <p>Tenant phone : {dto.Phone}</p>
+                <p>Tenant address : {dto.Address}</p>
+                <p>Tenant type : {dto.BusinessType}</p>
+                <p>Tenant email : {dto.ContactEmail}</p>
+                <p style='margin-top: 15px;'>Please confirm the tenant email from your dashboard.</p>";
 
+            return WrapWithLayout(title, body);
+        }
+        public static string BuildAdminConfirmationEmail(string loginLink)
+        {
+            var title = "🎉Registration Completed successfully";
+            var body = $@"
+                <p>
+                   Your account has been successfully confirmed by our admin.
+                   You can now log in and start using the platform.
+                   If you have any questions or need assistance,
+                   feel free to reach out.</p>
+                <div class='cta-buttons'>
+                    <a href='{loginLink}'>Login now</a>
+                </div>
+                <p style='margin-top: 15px;'>Please login with your credintals to access your dashboard.</p>";
+
+            return WrapWithLayout(title, body);
+        }
         private static string WrapWithLayout(string headerTitle, string contentHtml)
         {
             return $@"
