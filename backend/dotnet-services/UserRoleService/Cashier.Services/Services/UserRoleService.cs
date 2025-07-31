@@ -22,7 +22,15 @@
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
                 .ToList();
-
+            // Fetch roles for each user
+            var result = new List<AppUserDto>();
+            foreach (var user in users)
+            {
+                var userDto = _mapper.Map<AppUserDto>(user);
+                var roles = await _userManager.GetRolesAsync(user);
+                userDto.Roles = roles.ToList();
+                result.Add(userDto);
+            }
             return users.Select(_mapper.Map<AppUserDto>).ToList();
         }
         //Retrive data of current logged in user 
