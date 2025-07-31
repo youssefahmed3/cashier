@@ -2,11 +2,16 @@
     {
         "UserId": 3,
         "RoleId": 1,
-        "TenantId": 1
+        "TenantId": "4a0f27a2-9b5d-4b96-9f7e-420cc7d6d79a"
     },
     {
         "UserId": 2,
         "RoleId": 2,
-        "TenantId": 1
+        "TenantId": "a7d3f6b8-8109-44c0-960f-bae1f5d45f8f"
+    },
+    {
+        "UserId": 1,
+        "RoleId": 1,
+        "TenantId": "b6dc4a4d-e2db-45dc-a1ee-bc71fd517a8d"
     }
 ]

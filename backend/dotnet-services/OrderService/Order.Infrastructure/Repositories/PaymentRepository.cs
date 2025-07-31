@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Order.Core.Entities;
+using Order.Core.Enums;
 using Order.Core.Interfaces.Repositories;
 using Order.Infrastructure.Data;
 
@@ -34,5 +35,35 @@ namespace Order.Infrastructure.Repositories
         {
             return await _dbSet.Where(o  => o.OrderId == orderId).ToListAsync();
         }
+
+        public async Task<IEnumerable<Payment>> GetAllCompletedOrRefundedAsync(DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            var query = _dbSet.Where(p =>
+                p.Status == TransactionStatus.Completed || p.Status == TransactionStatus.Refunded);
+
+            if (fromDate.HasValue)
+                query = query.Where(p => p.CreatedAt >= fromDate.Value);
+
+            if (toDate.HasValue)
+                query = query.Where(p => p.CreatedAt <= toDate.Value);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<IEnumerable<Payment>> GetCompletedOrRefundedByBranchIdAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            var query = _dbSet.Where(p =>
+                p.BranchId == branchId &&
+                (p.Status == TransactionStatus.Completed || p.Status == TransactionStatus.Refunded));
+
+            if (fromDate.HasValue)
+                query = query.Where(p => p.CreatedAt >= fromDate.Value);
+
+            if (toDate.HasValue)
+                query = query.Where(p => p.CreatedAt <= toDate.Value);
+
+            return await query.ToListAsync();
+        }
+
     }
 }

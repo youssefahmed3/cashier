@@ -63,5 +63,27 @@ namespace Order.API.Controllers
 
             return BadRequest(new { error = result.Error });
         }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllPayments([FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null)
+        {
+            var result = await _paymentService.GetAllPaymentsAsync(fromDate, toDate);
+
+            if (result.IsSuccess)
+                return Ok(result.Value);
+
+            return BadRequest(new { error = result.Error });
+        }
+
+        [HttpGet("branch/{branchId}")]
+        public async Task<IActionResult> GetPaymentsByBranch(long branchId, [FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null)
+        {
+            var result = await _paymentService.GetPaymentsByBranchIdAsync(branchId, fromDate, toDate);
+
+            if (result.IsSuccess)
+                return Ok(result.Value);
+
+            return BadRequest(new { error = result.Error });
+        }
     }
 }

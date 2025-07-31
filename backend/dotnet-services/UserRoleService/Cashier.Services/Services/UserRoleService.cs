@@ -101,7 +101,7 @@
             return true;
         }
         // Gets the roles assigned to a user for a specific tenant.
-        public async Task<List<UserRoleInfoDto>> GetUserRolesAsync(int userId, int tenantId)
+        public async Task<List<UserRoleInfoDto>> GetUserRolesAsync(int userId, Guid tenantId)
         {
             var userRoleRepo = _unitOfWork.GetRepository<UserRole, int>();
             var roleRepo = _unitOfWork.GetRepository<AppRole, int>();
@@ -121,7 +121,7 @@
             return assignedRoles.ToList();
         }
         // Gets all users assigned to a role in a specific tenant.
-        public async Task<List<AppUserDto>> GetUsersInRoleAsync(int roleId, int tenantId)
+        public async Task<List<AppUserDto>> GetUsersInRoleAsync(int roleId, Guid tenantId)
         {
             var userRoleRepo = _unitOfWork.GetRepository<UserRole, int>();
             var userRepo = _unitOfWork.GetRepository<AppUser, int>();
@@ -197,7 +197,7 @@
         }
 
         // Gets all users in a tenant with their assigned roles.
-        public async Task<List<UserWithRolesDto>> GetUsersWithRolesByTenantAsync(int tenantId)
+        public async Task<List<UserWithRolesDto>> GetUsersWithRolesByTenantAsync(Guid tenantId)
         {
             var userRepo = _unitOfWork.GetRepository<AppUser, int>();
             var userRoleRepo = _unitOfWork.GetRepository<UserRole, int>();
@@ -238,7 +238,7 @@
             return permissions.ToList();
         }
         //Get tenantId for specific user
-        public async Task<int?> GetCurrentTenantIdAsync()
+        public async Task<Guid?> GetCurrentTenantIdAsync()
         {
             var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
