@@ -87,6 +87,27 @@
             });
         }
 
+        // POST: api/auth/annouce-super-admin
+        [HttpPost("annouce-super-admin")]
+        public async Task<IActionResult> AnnouceSuperAdmin(SuperAdminConfirmationEmailDto dto)
+        {
+            await _authService.AnnouceSuperAdmin(dto);
+            return Ok(new
+            {
+                message = "Email sent successfully"
+            });
+        }
+
+        // POST: api/auth/annouce-admin
+        [HttpPost("annouce-admin")]
+        public async Task<IActionResult> AnnouceAdmin([FromBody]string email)
+        {
+            await _authService.AnnouceAdmin(email);
+            return Ok(new
+            {
+                message = "Email sent successfully"
+            });
+        }
         // POST: api/auth/validate-verification-code
         [HttpPost("validate-verification-code")]
         public IActionResult ValidateVerificationCode([FromBody] ValidateVerificationCodeDto model)
