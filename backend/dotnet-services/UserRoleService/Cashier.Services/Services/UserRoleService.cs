@@ -4,35 +4,78 @@
         IHttpContextAccessor _httpContextAccessor, UserManager<AppUser> _userManager) : IUserRoleService
     {
         // Retrieves a paginated and filtered list of users.
+        //public async Task<List<AppUserDto>> GetAllUsersAsync(UserQueryDto? filter)
+        //{
+        //    filter ??= new UserQueryDto();
+
+        //    var query = await _unitOfWork.GetRepository<AppUser, int>().GetAllAsync();
+
+        //    if (!string.IsNullOrWhiteSpace(filter.Email))
+        //        query = query.Where(u => u.Email != null && u.Email.Contains(filter.Email));
+
+        //    if (!string.IsNullOrWhiteSpace(filter.FirstName))
+        //        query = query.Where(u => (u.Firstname != null && u.Firstname.Contains(filter.FirstName))
+        //                              || (u.Lastname != null && u.Lastname.Contains(filter.FirstName)));
+
+        //    var users = query
+        //        .Where(u => !u.IsSuspended)
+        //        .Skip((filter.PageNumber - 1) * filter.PageSize)
+        //        .Take(filter.PageSize)
+        //        .ToList();
+        //    // Fetch roles for each user
+        //    var result = new List<AppUserDto>();
+        //    foreach (var user in users)
+        //    {
+        //        var userDto = _mapper.Map<AppUserDto>(user);
+        //        var roles = await _userManager.GetRolesAsync(user);
+        //        userDto.Roles = roles.ToList();
+        //        result.Add(userDto);
+        //    }
+        //    return users.Select(_mapper.Map<AppUserDto>).ToList();
+        //}
         public async Task<List<AppUserDto>> GetAllUsersAsync(UserQueryDto? filter)
         {
             filter ??= new UserQueryDto();
 
-            var query = await _unitOfWork.GetRepository<AppUser, int>().GetAllAsync();
+            var users = await _unitOfWork.GetRepository<AppUser, int>().GetAllAsync();
+            var roles = await _unitOfWork.GetRepository<AppRole, int>().GetAllAsync();
+            var userRoles = await _unitOfWork.GetRepository<UserRole, int>().GetAllAsync();
 
+            // Apply filters
             if (!string.IsNullOrWhiteSpace(filter.Email))
-                query = query.Where(u => u.Email != null && u.Email.Contains(filter.Email));
+                users = users.Where(u => u.Email != null && u.Email.Contains(filter.Email)).ToList();
 
             if (!string.IsNullOrWhiteSpace(filter.FirstName))
-                query = query.Where(u => (u.Firstname != null && u.Firstname.Contains(filter.FirstName))
-                                      || (u.Lastname != null && u.Lastname.Contains(filter.FirstName)));
+                users = users.Where(u =>
+                    (u.Firstname != null && u.Firstname.Contains(filter.FirstName)) ||
+                    (u.Lastname != null && u.Lastname.Contains(filter.FirstName))
+                ).ToList();
 
-            var users = query
+            users = users
                 .Where(u => !u.IsSuspended)
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
                 .ToList();
-            // Fetch roles for each user
-            var result = new List<AppUserDto>();
-            foreach (var user in users)
+
+            // Build final result with roles
+            var result = users.Select(u => new AppUserDto
             {
-                var userDto = _mapper.Map<AppUserDto>(user);
-                var roles = await _userManager.GetRolesAsync(user);
-                userDto.Roles = roles.ToList();
-                result.Add(userDto);
-            }
-            return users.Select(_mapper.Map<AppUserDto>).ToList();
+                Id = u.Id,
+                Email = u?.Email??"",
+                Firstname = u.Firstname,
+                Lastname = u.Lastname,
+                Roles = userRoles
+               .Where(ur => ur.UserId == u.Id)
+               .Join(roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+               .Where(name => name != null)       
+               .Select(name => name!)            
+               .ToList()
+                  }).ToList();
+
+
+            return result;
         }
+
         //Retrive data of current logged in user 
         public async Task<AppUserWithRolesDto> GetCurrentUserAsync()
         {
