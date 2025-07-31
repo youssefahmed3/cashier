@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
+using Order.API.Extensions;
+using Order.API.Middleware;
 using Order.Core.Interfaces.Repositories;
 using Order.Core.Interfaces.Services;
 using Order.Core.Interfaces.Strategies;
@@ -31,11 +34,24 @@ namespace Order.API
                     Version = "v1"
                 });
             });
+            builder.Services.AddAuthentication("CustomJwt")
+                            .AddScheme<AuthenticationSchemeOptions, CustomJwtAuthenticationHandler>("CustomJwt", options => { });
+            builder.Services.AddAuthorization();
 
             builder.Services.ConfigureDbService(builder.Configuration);
             builder.Services.Configure<PaymobSettings>(builder.Configuration.GetSection("PaymobSettings"));
             builder.Services.AddHttpContextAccessor();
             builder.Services.ConfigureMassTransitWithRabbitMq(builder.Configuration);
+            builder.Services.AddHttpClient<ITokenValidationClient, TokenValidationClient>(client =>
+            {
+                var baseUrl = builder.Configuration["ServicesURLs:BaseUrl"];
+                if (!string.IsNullOrEmpty(baseUrl))
+                {
+                    client.BaseAddress = new Uri(baseUrl);
+                }
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+
             builder.Services.AddScoped<IPaymentEventPublisher, PaymentEventPublisher>();
             builder.Services.AddScoped<IRefundEventPublisher,  RefundEventPublisher>();
             builder.Services.AddHttpClient<IPaymobService, PaymobService>();
@@ -52,6 +68,8 @@ namespace Order.API
             builder.Services.AddScoped<IRefundService, RefundService>();
             builder.Services.AddScoped<IUserContextService, UserContextService>();
             builder.Services.AddScoped<IValidationService, ValidationService>();
+            builder.Services.AddScoped<IPaymobCallbackService, PaymobCallbackService>();
+
 
             builder.Services.AddScoped<IPaymentStrategy, CashPaymentStrategy>();
             builder.Services.AddScoped<IPaymentStrategy, PaymobPaymentStrategy>();
@@ -103,7 +121,9 @@ namespace Order.API
                     options.RoutePrefix = string.Empty;
                 });
             }
-
+            // Use JWT authentication middleware
+            app.UseJwtAuthentication();  // Your middleware first
+            app.UseAuthentication();     // Then ASP.NET Core auth
             app.UseAuthorization();
             app.MapControllers();
             app.MapGet("/ping", () => "pong");

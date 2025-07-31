@@ -65,5 +65,12 @@ namespace Order.Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
+        public async Task<Payment?> GetPaymentByTransactionIdAsync(string specialReference)
+        {
+            return await _dbSet
+                .Where(p => p.TransactionId == specialReference)
+                .FirstOrDefaultAsync();
+        }
+
     }
 }

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Order.Core.Interfaces.Services;
 using Shared.DTOS;
 
 namespace Order.API.Controllers
 {
+    [Authorize(Roles = "Admin,Cashier")]
     [Route("api/items")]
     [ApiController]
     public class OrderItemController : ControllerBase

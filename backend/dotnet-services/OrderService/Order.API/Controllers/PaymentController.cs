@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Order.Core.Interfaces.Repositories;
 using Order.Core.Interfaces.Services;
@@ -7,6 +8,8 @@ using Shared.DTOS;
 
 namespace Order.API.Controllers
 {
+    [Authorize]
+
     [Route("api/[controller]")]
     [ApiController]
     public class PaymentController : ControllerBase
