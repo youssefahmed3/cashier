@@ -1,6 +1,9 @@
 using MassTransit;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Shift.API.Extensions;
+using Shift.API.Middleware;
 using Shift.Core.Interfaces.Repositories;
 using Shift.Core.Interfaces.Services;
 using Shift.Infrastructure.Data;
@@ -29,6 +32,9 @@ namespace Shift.API
 
             // Add services to the container.
             builder.Services.ConfigureDbService(builder.Configuration);
+            builder.Services.AddAuthentication("CustomJwt")
+                            .AddScheme<AuthenticationSchemeOptions, CustomJwtAuthenticationHandler>("CustomJwt", options => { });
+            builder.Services.AddAuthorization();
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
@@ -43,6 +49,15 @@ namespace Shift.API
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
             builder.Services.ConfigureMassTransitWithRabbitMq(builder.Configuration);
+            builder.Services.AddHttpClient<ITokenValidationClient, TokenValidationClient>(client =>
+            {
+                var baseUrl = builder.Configuration["ServicesURLs:BaseUrl"];
+                if (!string.IsNullOrEmpty(baseUrl))
+                {
+                    client.BaseAddress = new Uri(baseUrl);
+                }
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
             var app = builder.Build();
 
             // === Apply DB Migrations ===
@@ -77,10 +92,9 @@ namespace Shift.API
                 app.MapOpenApi();
             }
 
-            app.UseHttpsRedirection();
-
+            app.UseJwtAuthentication();  
+            app.UseAuthentication();     
             app.UseAuthorization();
-
             app.MapControllers();
 
             app.Run();
