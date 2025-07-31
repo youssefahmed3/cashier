@@ -1,11 +1,10 @@
 package com.market_os.customerservice.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "loyalty_program")
 public class LoyaltyProgram {
@@ -61,20 +60,49 @@ public class LoyaltyProgram {
     }
 
     private Integer calculatePointsToNextTier() {
-        return switch (tier) {
-            case BRONZE -> Tier.SILVER.threshold - points;
-            case SILVER -> Tier.GOLD.threshold - points;
-            case GOLD -> Tier.PLATINUM.threshold - points;
-            case PLATINUM -> 0;
-        };
+        switch (tier) {
+            case BRONZE:
+                return Tier.SILVER.threshold - points;
+            case SILVER:
+                return Tier.GOLD.threshold - points;
+            case GOLD:
+                return Tier.PLATINUM.threshold - points;
+            case PLATINUM:
+                return 0;
+            default:
+                throw new IllegalStateException("Unknown tier: " + tier);
+        }
     }
 
     private Integer getDiscountForTier() {
-        return switch (tier) {
-            case BRONZE -> 0;
-            case SILVER -> 5;
-            case GOLD -> 10;
-            case PLATINUM -> 15;
-        };
+        switch (tier) {
+            case BRONZE: return 0;
+            case SILVER: return 5;
+            case GOLD: return 10;
+            case PLATINUM: return 15;
+            default: throw new IllegalStateException("Unknown tier: " + tier);
+        }
     }
+
+    // Add getters and setters below
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
+
+    public Integer getPoints() { return points; }
+    public void setPoints(Integer points) { this.points = points; }
+
+    public Tier getTier() { return tier; }
+    public void setTier(Tier tier) { this.tier = tier; }
+
+    public LocalDateTime getLastUpdated() { return lastUpdated; }
+    public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
+
+    public Integer getPointsToNextTier() { return pointsToNextTier; }
+    public void setPointsToNextTier(Integer pointsToNextTier) { this.pointsToNextTier = pointsToNextTier; }
+
+    public Integer getDiscountPercentage() { return discountPercentage; }
+    public void setDiscountPercentage(Integer discountPercentage) { this.discountPercentage = discountPercentage; }
 }
