@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Order.Core.Entities;
 using Order.Core.Enums;
@@ -9,6 +10,7 @@ using Shared.DTOS;
 
 namespace Order.API.Controllers
 {
+    [Authorize(Roles = "Admin,Cashier")]
     [Route("api/orders")]
     [ApiController]
     public class OrderController : ControllerBase
