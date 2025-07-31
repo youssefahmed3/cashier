@@ -52,6 +52,7 @@ namespace Order.API
             builder.Services.AddScoped<IRefundService, RefundService>();
             builder.Services.AddScoped<IUserContextService, UserContextService>();
             builder.Services.AddScoped<IValidationService, ValidationService>();
+            builder.Services.AddScoped<IPaymobCallbackService, PaymobCallbackService>();
 
             builder.Services.AddScoped<IPaymentStrategy, CashPaymentStrategy>();
             builder.Services.AddScoped<IPaymentStrategy, PaymobPaymentStrategy>();
