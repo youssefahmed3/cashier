@@ -71,4 +71,16 @@ public interface InventoryRepository extends JpaRepository<InventoryItem, Long> 
      */
     @Query("SELECT COALESCE(SUM(i.totalCost), 0.0) FROM InventoryItem i WHERE i.location = :location AND i.isActive = true")
     Double getTotalInventoryValueByLocation(@Param("location") String location);
+    
+    /**
+     * Find inventory items by product ID (for stock updates)
+     */
+    @Query("SELECT i FROM InventoryItem i WHERE i.productSku = :productId AND i.isActive = true ORDER BY i.createdAt ASC")
+    List<InventoryItem> findByProductIdOrderByCreatedAtAsc(@Param("productId") String productId);
+    
+    /**
+     * Update quantity for inventory item
+     */
+    @Query("UPDATE InventoryItem i SET i.qty = i.qty + :quantityChange, i.updatedAt = CURRENT_TIMESTAMP WHERE i.id = :id AND i.isActive = true")
+    void updateQuantityById(@Param("id") Long id, @Param("quantityChange") Integer quantityChange);
 } 

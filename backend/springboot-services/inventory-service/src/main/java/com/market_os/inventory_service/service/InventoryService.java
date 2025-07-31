@@ -123,4 +123,19 @@ public interface InventoryService {
      * Update inventory with low stock notification
      */
     InventoryItemDto updateInventoryWithNotification(Long id, UpdateInventoryItemDto updateInventoryItemDto);
+    
+    /**
+     * Decrease stock quantity for order completion
+     */
+    void decreaseStockForOrder(StockUpdateEvent stockUpdateEvent);
+    
+    /**
+     * Restock items for refund
+     */
+    void restockItemsForRefund(StockUpdateEvent stockUpdateEvent);
+    
+    /**
+     * Update stock quantity by product SKU
+     */
+    void updateStockQuantityByProductSku(String productSku, Integer quantityChange);
 } 

@@ -342,4 +342,109 @@ public class InventoryServiceImpl implements InventoryService {
         
         return itemDto;
     }
+    
+    @Override
+    public void decreaseStockForOrder(StockUpdateEvent stockUpdateEvent) {
+        log.info("Processing stock decrease for order: {}", stockUpdateEvent.getOrderId());
+        
+        if (stockUpdateEvent.getItems() == null || stockUpdateEvent.getItems().isEmpty()) {
+            log.warn("No items found in stock decrease event for order: {}", stockUpdateEvent.getOrderId());
+            return;
+        }
+        
+        for (StockUpdateItem item : stockUpdateEvent.getItems()) {
+            try {
+                // Convert productId to string for SKU lookup
+                String productSku = String.valueOf(item.getProductId());
+                int quantityToDecrease = item.getQuantity().intValue();
+                
+                log.info("Decreasing stock for product SKU: {} by quantity: {}", productSku, quantityToDecrease);
+                updateStockQuantityByProductSku(productSku, -quantityToDecrease);
+                
+            } catch (Exception e) {
+                log.error("Error decreasing stock for product ID: {}", item.getProductId(), e);
+                throw new RuntimeException("Failed to decrease stock for product: " + item.getProductId(), e);
+            }
+        }
+        
+        log.info("Successfully processed stock decrease for order: {}", stockUpdateEvent.getOrderId());
+    }
+    
+    @Override
+    public void restockItemsForRefund(StockUpdateEvent stockUpdateEvent) {
+        log.info("Processing stock restock for refund: {}", stockUpdateEvent.getRefundId());
+        
+        if (stockUpdateEvent.getItems() == null || stockUpdateEvent.getItems().isEmpty()) {
+            log.warn("No items found in stock restock event for refund: {}", stockUpdateEvent.getRefundId());
+            return;
+        }
+        
+        for (StockUpdateItem item : stockUpdateEvent.getItems()) {
+            try {
+                // Convert productId to string for SKU lookup
+                String productSku = String.valueOf(item.getProductId());
+                int quantityToRestock = item.getQuantity().intValue();
+                
+                log.info("Restocking product SKU: {} by quantity: {}", productSku, quantityToRestock);
+                updateStockQuantityByProductSku(productSku, quantityToRestock);
+                
+            } catch (Exception e) {
+                log.error("Error restocking product ID: {}", item.getProductId(), e);
+                throw new RuntimeException("Failed to restock product: " + item.getProductId(), e);
+            }
+        }
+        
+        log.info("Successfully processed stock restock for refund: {}", stockUpdateEvent.getRefundId());
+    }
+    
+    @Override
+    public void updateStockQuantityByProductSku(String productSku, Integer quantityChange) {
+        log.info("Updating stock quantity for product SKU: {} by change: {}", productSku, quantityChange);
+        
+        // Find all inventory items for this product SKU
+        List<InventoryItem> inventoryItems = inventoryRepository.findByProductIdOrderByCreatedAtAsc(productSku);
+        
+        if (inventoryItems.isEmpty()) {
+            log.warn("No inventory items found for product SKU: {}", productSku);
+            throw new RuntimeException("No inventory items found for product SKU: " + productSku);
+        }
+        
+        int remainingQuantity = Math.abs(quantityChange);
+        boolean isDecrease = quantityChange < 0;
+        
+        for (InventoryItem item : inventoryItems) {
+            if (remainingQuantity <= 0) break;
+            
+            int currentQuantity = item.getQty();
+            int quantityToUpdate;
+            
+            if (isDecrease) {
+                // For decrease, we can't go below 0
+                quantityToUpdate = Math.min(currentQuantity, remainingQuantity);
+                if (quantityToUpdate > currentQuantity) {
+                    log.error("Insufficient stock for product SKU: {}. Available: {}, Requested: {}", 
+                             productSku, currentQuantity, remainingQuantity);
+                    throw new RuntimeException("Insufficient stock for product SKU: " + productSku);
+                }
+            } else {
+                // For increase, we can add to any item
+                quantityToUpdate = remainingQuantity;
+            }
+            
+            // Update the quantity
+            inventoryRepository.updateQuantityById(item.getId(), isDecrease ? -quantityToUpdate : quantityToUpdate);
+            remainingQuantity -= quantityToUpdate;
+            
+            log.info("Updated inventory item ID: {} for product SKU: {} by quantity: {}", 
+                    item.getId(), productSku, isDecrease ? -quantityToUpdate : quantityToUpdate);
+        }
+        
+        if (remainingQuantity > 0 && isDecrease) {
+            log.error("Insufficient stock for product SKU: {}. Remaining quantity needed: {}", 
+                     productSku, remainingQuantity);
+            throw new RuntimeException("Insufficient stock for product SKU: " + productSku);
+        }
+        
+        log.info("Successfully updated stock quantity for product SKU: {}", productSku);
+    }
 } 

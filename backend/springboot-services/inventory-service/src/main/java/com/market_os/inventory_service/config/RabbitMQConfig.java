@@ -20,11 +20,15 @@ public class RabbitMQConfig {
     public static final String INVENTORY_STOCK_QUEUE = "inventory.stock.queue";
     public static final String INVENTORY_LOW_STOCK_QUEUE = "inventory.low-stock.queue";
     public static final String INVENTORY_NOTIFICATION_QUEUE = "inventory.notification.queue";
+    public static final String STOCK_DECREASE_QUEUE = "stock.decrease";
+    public static final String STOCK_RESTOCK_QUEUE = "stock.restock";
 
     // Routing Keys
     public static final String STOCK_UPDATE_ROUTING_KEY = "inventory.stock.update";
     public static final String LOW_STOCK_ROUTING_KEY = "inventory.stock.low";
     public static final String NOTIFICATION_ROUTING_KEY = "notification.inventory";
+    public static final String STOCK_DECREASE_ROUTING_KEY = "stock.decrease";
+    public static final String STOCK_RESTOCK_ROUTING_KEY = "stock.restock";
 
     @Bean
     public MessageConverter messageConverter() {
@@ -73,6 +77,16 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(INVENTORY_NOTIFICATION_QUEUE).build();
     }
 
+    @Bean
+    public Queue stockDecreaseQueue() {
+        return QueueBuilder.durable(STOCK_DECREASE_QUEUE).build();
+    }
+
+    @Bean
+    public Queue stockRestockQueue() {
+        return QueueBuilder.durable(STOCK_RESTOCK_QUEUE).build();
+    }
+
     // Bindings
     @Bean
     public Binding stockUpdateBinding() {
@@ -96,5 +110,21 @@ public class RabbitMQConfig {
                 .bind(inventoryNotificationQueue())
                 .to(notificationExchange())
                 .with(NOTIFICATION_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding stockDecreaseBinding() {
+        return BindingBuilder
+                .bind(stockDecreaseQueue())
+                .to(inventoryExchange())
+                .with(STOCK_DECREASE_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding stockRestockBinding() {
+        return BindingBuilder
+                .bind(stockRestockQueue())
+                .to(inventoryExchange())
+                .with(STOCK_RESTOCK_ROUTING_KEY);
     }
 }
