@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOS;
 using Shift.Core.Interfaces.Services;
@@ -16,6 +17,7 @@ namespace Shift.API.Controllers
             _shiftService = shiftService;
         }
 
+        [Authorize(Roles = "Admin,Cashier")]
         [HttpPost("start")]
         public async Task<IActionResult> StartShift([FromBody] StartShiftDto request)
         {
@@ -27,6 +29,7 @@ namespace Shift.API.Controllers
             return BadRequest(new { error = result.Error });
         }
 
+        [Authorize(Roles = "Admin,Cashier")]
         [HttpPost("end")]
         public async Task<IActionResult> EndShift([FromBody] EndShiftDto request)
         {
@@ -37,7 +40,7 @@ namespace Shift.API.Controllers
 
             return BadRequest(new { error = result.Error });
         }
-
+        [Authorize(Roles = "Admin,Cashier")]
         [HttpGet("active/{branchId}/{userId}")]
         public async Task<IActionResult> GetActiveShift(long branchId, long userId)
         {
@@ -48,7 +51,7 @@ namespace Shift.API.Controllers
 
             return NotFound(new { error = result.Error });
         }
-
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("branch/{branchId}")]
         public async Task<IActionResult> GetShiftsByBranch(long branchId, [FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null)
         {
@@ -59,8 +62,7 @@ namespace Shift.API.Controllers
 
             return BadRequest(new { error = result.Error });
         }
-
-
+        [Authorize(Roles = "Admin,Cashier")]
         [HttpGet("{shiftId}")]
         public async Task<IActionResult> GetShiftById(long shiftId)
         {
@@ -70,6 +72,8 @@ namespace Shift.API.Controllers
             return NotFound(new { error = result.Error });
         }
 
+        //Temp to configure it 
+        [AllowAnonymous]
 
         [HttpGet("validate/{shiftId}/{userId}")]
         public async Task<IActionResult> ValidateShiftForUser(long shiftId, long userId)
@@ -78,6 +82,7 @@ namespace Shift.API.Controllers
             return Ok(new { isValid = result.IsSuccess && result.Value });
         }
 
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("{shiftId}/drawer-logs")]
         public async Task<IActionResult> GetDrawerLogs(long shiftId)
         {
@@ -89,16 +94,16 @@ namespace Shift.API.Controllers
             return BadRequest(new { error = result.Error });
         }
 
-        [HttpPost("/drawer-log")]
-        public async Task<IActionResult> AddDrawerLog(DrawerLogDto logRequest)
-        {
-            var result = await _shiftService.AddDrawerLogAsync(logRequest);
+        //[HttpPost("/drawer-log")]
+        //public async Task<IActionResult> AddDrawerLog(DrawerLogDto logRequest)
+        //{
+        //    var result = await _shiftService.AddDrawerLogAsync(logRequest);
 
-            if (result.IsSuccess)
-                return Ok();
+        //    if (result.IsSuccess)
+        //        return Ok();
 
-            return BadRequest(new { error = result.Error });
-        }
+        //    return BadRequest(new { error = result.Error });
+        //}
     }
 
 
