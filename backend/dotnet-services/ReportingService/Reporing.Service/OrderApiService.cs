@@ -15,7 +15,7 @@ namespace Reporing.Service
 
         public async Task<List<OrderDto>> GetAllOrdersAsync()
         {
-            var response = await _httpClient.GetAsync("https://externalapi.com/api/orders");
+            var response = await _httpClient.GetAsync("https://localhost:1433/api/payment/all");
             response.EnsureSuccessStatusCode();
 
             var contentStream = await response.Content.ReadAsStreamAsync();
