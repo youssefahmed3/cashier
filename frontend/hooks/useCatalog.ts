@@ -28,6 +28,11 @@ interface ApiResponse {
 export const useCatalog = () => {
   const queryClient = useQueryClient();
 
+  const getToken = (): string => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("token") ?? "";
+  };
+
   // Category Queries
   const categoriesQuery = useQuery<Category[], Error, Category[], QueryKey>({
     queryKey: ['categories'] as const,
@@ -221,7 +226,7 @@ export const useCatalog = () => {
     updateProduct: updateProductMutation.mutate,
     updateProductStatus: updateProductMutation.status,
     updateProductError: updateProductMutation.error,
-    
+
     activateProduct: activateProductMutation.mutate,
     activateProductStatus: activateProductMutation.status,
     activateProductError: activateProductMutation.error,
@@ -233,7 +238,7 @@ export const useCatalog = () => {
     assignCategoryToProduct: assignCategoryToProductMutation.mutate,
     assignCategoryToProductStatus: assignCategoryToProductMutation.status,
     assignCategoryToProductError: assignCategoryToProductMutation.error,
-    
+
     deleteProduct: deleteProductMutation.mutate,
     deleteProductStatus: deleteProductMutation.status,
     deleteProductError: deleteProductMutation.error,

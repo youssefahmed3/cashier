@@ -1,9 +1,9 @@
 import { useAuth } from "@/hooks/useAuth";
-import { ApiResponse, Confirm2FADto, ForgotPasswordDto, ForgotPasswordResponse, LoginDto, RegisterDto, ResetPasswordDto, ResetPasswordResponse, TwoFactorAuthApiResponse, ValidateResetCodeDto } from "@/types/dtos";
-import { UserType } from "@/types/types";
+import { ApiResponse, AssignRoleDto, Confirm2FADto, ForgotPasswordDto, ForgotPasswordResponse, LoginDto, RegisterDto, ResetPasswordDto, ResetPasswordResponse, TwoFactorAuthApiResponse, ValidateResetCodeDto } from "@/types/dtos";
+import { UserType, validateTokenResult } from "@/types/types";
 
 export async function fetchUser(token: string): Promise<UserType> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/userrole/me`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/UserRole/me`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -17,12 +17,29 @@ export async function fetchUser(token: string): Promise<UserType> {
 
   const data = await res.json();
   console.log(data);
-  
+
   return {
     ...data,
     roles: data.roles.map((r: string) => r.toLowerCase()),
   };
 }
+
+/* http://localhost:8001/auth/api/auth/register  */
+export async function getTenantId(token: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/UserRole/current-tenant-id`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Something went wrong");
+  return json;
+}
+
+
 //Register function
 export async function registerUser(data: RegisterDto) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/auth/register`, {
@@ -114,3 +131,82 @@ export async function resetPassword(data: ResetPasswordDto): Promise<ResetPasswo
   return await response.json()
 }
 
+// GET: api/userrole/users
+export async function getAllUsers(token: string) : Promise<UserType[]> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/UserRole/users`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Something went wrong");
+  return json;
+}
+
+
+/* GET: api/userrole/roles */
+export async function getAllRoles(token: string) : Promise<{
+  id: number;
+  name: string;
+}[]> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/UserRole/roles`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Something went wrong");
+  return json;
+}
+
+/* POST: userrole/users/suspend/ */
+export async function suspendUser(token: string, userId: number) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/UserRole/users/suspend/${userId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Something went wrong");
+  return json;
+}
+
+
+/* POST: /userrole/assign-role */
+export async function assignRole(token: string, assignRoleDto: AssignRoleDto) {
+  console.log("test");
+  
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/UserRole/assign-role`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(assignRoleDto)
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Something went wrong");
+  return json;
+}
+
+
+/* POST: /api/token/validate */
+export async function validateToken(token: string) : Promise<validateTokenResult> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/token/validate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ token })
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Something went wrong");
+  // console.log(json);
+  return json;
+}

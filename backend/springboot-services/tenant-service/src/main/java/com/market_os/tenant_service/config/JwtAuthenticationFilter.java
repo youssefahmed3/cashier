@@ -60,24 +60,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     String email = claims.get("email");
                     String username = email != null ? email.substring(0, email.indexOf("@")) : "unknown";
-                    List<String> roles = claims.get("roles") != null ? Arrays.asList(claims.get("roles").split(","))
+                    
+                    // NORMALIZE ROLES - Convert "SuperAdmin" to "SUPER_ADMIN"
+                    List<String> originalRoles = claims.get("roles") != null ? Arrays.asList(claims.get("roles").split(","))
                             : List.of("USER");
+                    
+                    // Convert roles to consistent format
+                    List<String> normalizedRoles = originalRoles.stream()
+                            .map(role -> {
+                                if (role.equals("SuperAdmin") || role.equals("Super_Admin")) {
+                                    return "SUPER_ADMIN";
+                                }
+                                return role.toUpperCase(); // Convert other roles to uppercase for consistency
+                            })
+                            .collect(Collectors.toList());
 
                     // Handle SUPER_ADMIN case - no user ID or tenant mapping required
                     Integer userIdAsInteger = null;
                     UUID userId = null;
                     UUID tenantId = null;
 
-                    // Check for SUPER_ADMIN role (handle both "SUPER_ADMIN" and "SuperAdmin" formats)
-                    boolean isSuperAdmin = roles.stream().anyMatch(role -> 
-                        role.equals("SUPER_ADMIN") || role.equals("SuperAdmin"));
-
+                    System.out.println("Testing if it will reach");
+                    // Check for SuperAdmin role (using normalized roles now)
+                    boolean isSuperAdmin = normalizedRoles.contains("SUPER_ADMIN");
+                            
+                    String testrole = claims.get("roles");
+                    System.out.println("Original Role: " + testrole);
+                    System.out.println("Normalized Roles: " + normalizedRoles);
+                    System.out.println("Is Super Admin: " + isSuperAdmin);
+                    
                     if (!isSuperAdmin) {
-                        // For non-SUPER_ADMIN users, extract user ID and tenant mapping
+                        System.out.println("no superAdmin");
+
+                        // For non-SuperAdmin users, extract user ID and tenant mapping
                         try {
                             userIdAsInteger = Integer.parseInt(claims.get("userId"));
                             userId = UUID.nameUUIDFromBytes(userIdAsInteger.toString().getBytes());
-                            
+
                             // Get tenant ID from user mapping service
                             try {
                                 tenantId = userTenantMappingService.getTenantIdForUser(userIdAsInteger);
@@ -88,29 +107,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             log.warn("Could not parse user ID from claims: {}", e.getMessage());
                         }
                     } else {
-                        // For SUPER_ADMIN, extract user ID but don't require tenant mapping
+                        // For SuperAdmin, extract user ID but don't require tenant mapping
+                        System.out.println("superAdmin");
                         try {
                             userIdAsInteger = Integer.parseInt(claims.get("userId"));
                             userId = UUID.nameUUIDFromBytes(userIdAsInteger.toString().getBytes());
-                            log.debug("SUPER_ADMIN authentication - user ID: {}, no tenant mapping required", userIdAsInteger);
+                            log.debug("SuperAdmin authentication - user ID: {}, no tenant mapping required",
+                                    userIdAsInteger);
                         } catch (Exception e) {
-                            log.debug("SUPER_ADMIN authentication - could not parse user ID: {}", e.getMessage());
+                            log.debug("SuperAdmin authentication - could not parse user ID: {}", e.getMessage());
                         }
                     }
 
-                    // Create UserRoleDto from token information
+                    // Create UserRoleDto from token information (using normalized roles)
                     UserRoleDto userRole = UserRoleDto.builder()
                             .userId(userId)
                             .username(username)
                             .email(email)
-                            .roles(roles)
+                            .roles(normalizedRoles)  // Use normalized roles
                             .tenantId(tenantId)
                             .isActive(true)
                             .build();
 
-                    // Create authorities from roles
-                    List<SimpleGrantedAuthority> authorities = roles.stream()
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                    // Create authorities from normalized roles
+                    List<SimpleGrantedAuthority> authorities = normalizedRoles.stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))  // Now creates "ROLE_SUPER_ADMIN"
                             .collect(Collectors.toList());
 
                     // Create authentication token
@@ -119,17 +140,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             null,
                             authorities);
 
-                    // Set user info in request attributes for controllers to use
+                    // Set user info in request attributes for controllers to use (using normalized roles)
                     request.setAttribute("userId", userId);
                     request.setAttribute("userIdAsInteger", userIdAsInteger);
-                    request.setAttribute("userRoles", roles);
+                    request.setAttribute("userRoles", normalizedRoles);  // Use normalized roles
                     request.setAttribute("tenantId", tenantId);
                     request.setAttribute("userInfo", userRole);
                     request.setAttribute("jwtToken", token);
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.debug("Authenticated user: {} (ID: {}) with roles: {} and tenant: {}",
-                            username, userIdAsInteger, roles, tenantId);
+                    log.debug("Authenticated user: {} (ID: {}) with normalized roles: {} and tenant: {}",
+                            username, userIdAsInteger, normalizedRoles, tenantId);
                 } else {
                     log.warn("Token validation failed for request to {}: {}", requestPath,
                             validationResponse.getMessage());

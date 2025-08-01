@@ -98,3 +98,9 @@ export type CreateBranchDto = {
     location: string,
     tax_percentage: number
 }
+
+export type AssignRoleDto = {
+    userId: number,
+    roleId: number,
+    tenantId: string
+}

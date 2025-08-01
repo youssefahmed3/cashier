@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
+import React from "react";
 
+const Page = () => {
+  return <div>Landing Page</div>;
+};
 
-/* TODO: Still no authorization */
-export default function Page() {
-  redirect('/login');
-}
+export default Page;

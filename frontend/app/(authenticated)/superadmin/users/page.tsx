@@ -28,21 +28,18 @@ import { tenantColumns } from "../_component/tenantColumn";
 import { Tenant } from "@/types/types";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
-import CreateTenantModal from "@/components/modals/CreateTenantModal";
+import { userColumns } from "./_component/UsersColumn";
 
 
 
 const Page = () => {
-  const { activeTenantsQuery } = useTenant();
-  const { getAllTenantWithPaginationLoading, getAllTenantWithPagination } = useTenant();
+  const {allUsers, allUsersIsLoading} = useAuth();
 
-  if (getAllTenantWithPaginationLoading) {
+  if (allUsersIsLoading) {
     return <div>Loading...</div>;
   }
 
-  console.log("activeTenants", activeTenantsQuery);
-
-  console.log("All Tenants", getAllTenantWithPagination!.content);
+  console.log("allUsers", allUsers);
   
   // console.log(tenantWithBranchesQuery());
   return (
@@ -51,37 +48,11 @@ const Page = () => {
         {/* Welcome Message and the Title With a Button */}
         <div className="flex items-center justify-between">
           <section>
-            <h1 className="text-2xl font-bold m">Tenants Management</h1>
+            <h1 className="text-2xl font-bold m">Users Management</h1>
             <p className="text-muted-foreground">
-              Manage all tenant accounts, subscriptions, and configurations.
+              Manage all Users accounts, Permissions.
             </p>
           </section>
-          <CreateTenantModal />
-        </div>
-
-        {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
-          <TenantStatsCard title="Total Items" value="5" icon={<Box />} />
-          <TenantStatsCard
-            title="Total Tenants"
-            value={getAllTenantWithPagination!.content.length.toString()}
-            icon={<AlertTriangle />}
-          />
-          <TenantStatsCard
-            title="Active Tenants"
-            value={activeTenantsQuery.data!.length.toString()}
-            icon={<LucideCalendarRange />}
-          />
-          <TenantStatsCard
-            title="Total Revenue"
-            value="$1.9M"
-            icon={<DollarSign />}
-          />
-          <TenantStatsCard
-            title="Total Employees"
-            value="1,745"
-            icon={<UsersRoundIcon />}
-          />
         </div>
       </header>
 
@@ -90,17 +61,17 @@ const Page = () => {
         <section>
           <Card className="w-full">
             <CardHeader className="flex flex-col">
-              <CardTitle className="text-2xl font-bold">All Tenants</CardTitle>
+              <CardTitle className="text-2xl font-bold">All Users</CardTitle>
               <p className="text-xs text-muted-foreground flex items-center">
-                Manage tenant accounts, subscriptions, and access permissions
+                Manage Users access permissions
               </p>
             </CardHeader>
             <CardContent>
               {/* Table */}
               <DataTable
-                columns={tenantColumns}
-                data={getAllTenantWithPagination!.content}
-                filterBy="name"
+                columns={userColumns}
+                data={allUsers!}
+                filterBy="firstname"
               />
             </CardContent>
           </Card>

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Building2, ChevronsUpDown, Plus } from "lucide-react";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,11 +17,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import CreateBranchModal from "../modals/CreateBranchModal";
 
 export function TeamSwitcher({
+  tenantName,
   role,
   branches = [],
 }: {
+  tenantName: string;
   role: "superadmin" | "admin" | "employee" | "cashier";
   branches?: {
     name: string;
@@ -32,15 +48,12 @@ export function TeamSwitcher({
 }) {
   const { isMobile } = useSidebar();
 
-  // superadmin doesn't switch branches, just shows static label
+  // Superadmin doesn't switch teams
   if (role === "superadmin") {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton
-            size="lg"
-            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-          >
+          <SidebarMenuButton size="lg">
             <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
               <Building2 className="size-4" />
             </div>
@@ -56,12 +69,29 @@ export function TeamSwitcher({
     );
   }
 
-  // admin branch switcher
+  if (!branches.length) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <Card className="w-full border-none bg-muted p-3 text-left">
+            <CardContent className="p-0 space-y-2">
+              <p className="text-sm font-medium">No Branches Found</p>
+              <p className="text-xs text-muted-foreground">
+                Please create a branch to get started.
+              </p>
+              <CreateBranchModal />
+            </CardContent>
+          </Card>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
   const [activeTeam, setActiveTeam] = React.useState(branches[0]);
-  if (!activeTeam) return null;
 
   return (
     <SidebarMenu>
+
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -80,7 +110,7 @@ export function TeamSwitcher({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="min-w-56 rounded-lg"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}

@@ -1,3 +1,4 @@
+"use client";
 import CustomButton from "@/components/Button/Button";
 import TenantStatsCard from "@/components/TenantStatsCard/TenantStatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,9 +28,11 @@ import { columnsBranches } from "../_components/columnBranches";
 import { BranchType } from "@/types/types";
 
 import { useQuery } from "@tanstack/react-query";
+import { useAggregate } from "@/hooks/useAggregate";
+import CreateBranchModal from "@/components/modals/CreateBranchModal";
 
 /* Fake Data */
-const data: BranchType[] = [
+/* const data: BranchType[] = [
   {
     id: "BR001",
     branch_name: "Main Branch",
@@ -120,12 +123,25 @@ const data: BranchType[] = [
     slug: "k9l0m1",
     status: "active",
   },
-];
-
-
+]; */
 
 const Page = () => {
+  const { getFullUserData, isLoading, error } = useAggregate();
 
+  // Optional: Handle errors
+  if (error) {
+    return <div className="text-red-500">Error: {error.message}</div>;
+  }
+
+  // Wait for data to be ready
+  if (isLoading || !getFullUserData) {
+    return <div>Loading...</div>; // or a skeleton
+  }
+
+  // Optional: Fallback if tenant is missing
+  const branches = getFullUserData.tenant?.branches ?? [];
+
+  console.log("Full User Data:", getFullUserData);
 
   return (
     <div className="container-base">
@@ -138,14 +154,14 @@ const Page = () => {
               Welcome Back! Here's What's happening with your supermarket Chain.
             </p>
           </section>
-          <CustomButton title="Add Branch" icon={<Plus />} />
+          <CreateBranchModal />
         </div>
 
         {/* Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <TenantStatsCard
             title="Total Branches"
-            value="5"
+            value={branches.length.toString()}
             icon={<Building />}
           />
           <TenantStatsCard
@@ -242,8 +258,8 @@ const Page = () => {
               {/* Table */}
               <DataTable
                 columns={columnsBranches}
-                data={data}
-                filterBy="branch_name"
+                data={branches}
+                filterBy="name"
               />
             </CardContent>
           </Card>
