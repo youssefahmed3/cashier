@@ -23,8 +23,6 @@ namespace Reporting.API.Controllers
             _orderApiService = orderApiService ?? throw new ArgumentNullException(nameof(orderApiService));
         }
 
-        // Add this method to ReportingController
-
         [HttpPost("SyncExternalOrders")]
         public async Task<IActionResult> SyncExternalOrders()
         {
@@ -58,28 +56,32 @@ namespace Reporting.API.Controllers
             return Ok(new { Message = "Orders synced successfully", Count = orders.Count });
         }
 
-        // GET: api/reporting/DailySales
-        [HttpGet("DailySales")]
-        public async Task<IActionResult> GetDailySales()
+        //GET: api/reporting/DailySalesByBranch
+        [HttpGet("DailySalesByBranch/{branchId}")]
+        public async Task<IActionResult> GetDailySalesByBranch(int branchId)
         {
-            var dailySales = await _context.Set<Order>()
-                .GroupBy(o => o.CreatedAt.Date)
+            var dailySales = await _context.Orders
+                .Where(o => o.branchId == branchId)
+                .GroupBy(o => EF.Functions.DateDiffDay(DateTime.MinValue, o.CreatedAt))
                 .Select(g => new
                 {
-                    Date = g.Key,
+                    Date = DateTime.MinValue.AddDays(g.Key),
+                    BranchId = branchId,
                     TotalSum = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
+
             return Ok(dailySales);
         }
 
-        // GET: api/reporting/WeeklySales
-        [HttpGet("WeeklySales")]
-        public async Task<IActionResult> GetWeeklySales()
+        // GET: api/reporting/WeeklySalesByBranch
+        [HttpGet("WeeklySalesByBranch/{branchId}")]
+        public async Task<IActionResult> GetWeeklySalesByBranch(int branchId)
         {
-            var orders = await _context.Set<Order>().ToListAsync();
-
+            var orders = await _context.Set<Order>()
+                .Where(o => o.branchId == branchId)
+                .ToListAsync();
             var weeklySales = orders
                 .GroupBy(o => new
                 {
@@ -94,19 +96,20 @@ namespace Reporting.API.Controllers
                 {
                     g.Key.Year,
                     g.Key.Week,
+                    BranchId = branchId,
                     TotalSum = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Week)
                 .ToList();
-
             return Ok(weeklySales);
         }
 
-        // GET: api/reporting/MonthlySales
-        [HttpGet("MonthlySales")]
-        public async Task<IActionResult> GetMonthlySales()
+        // GET: api/reporting/MonthlySalesByBranch
+        [HttpGet("MonthlySalesByBranch/{branchId}")]
+        public async Task<IActionResult> GetMonthlySalesByBranch(int branchId)
         {
             var monthlySales = await _context.Set<Order>()
+                .Where(o => o.branchId == branchId)
                 .GroupBy(o => new
                 {
                     o.CreatedAt.Year,
@@ -116,6 +119,7 @@ namespace Reporting.API.Controllers
                 {
                     g.Key.Year,
                     g.Key.Month,
+                    BranchId = branchId,
                     TotalSum = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
@@ -123,11 +127,12 @@ namespace Reporting.API.Controllers
             return Ok(monthlySales);
         }
 
-        // GET: api/reporting/MonthlySalesExport
-        [HttpGet("ExportMonthlySalesToExcel")]
-        public async Task<IActionResult> ExportMonthlySalesToExcel()
+        // GET: api/reporting/MonthlySalesByBranchExport
+        [HttpGet("ExportMonthlySalesByBranchToExcel/{branchId}")]
+        public async Task<IActionResult> ExportMonthlySalesByBranchToExcel(int branchId)
         {
             var monthlySales = await _context.Set<Order>()
+                .Where(o => o.branchId == branchId)
                 .GroupBy(o => new
                 {
                     o.CreatedAt.Year,
@@ -137,31 +142,30 @@ namespace Reporting.API.Controllers
                 {
                     g.Key.Year,
                     g.Key.Month,
+                    BranchId = branchId,
                     TotalSum = g.Sum(o => o.Ammount)
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToListAsync();
-
             ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
             using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("MonthlySales");
-
+            var worksheet = package.Workbook.Worksheets.Add("MonthlySalesByBranch");
             // Add headers
             worksheet.Cells[1, 1].Value = "Year";
             worksheet.Cells[1, 2].Value = "Month";
-            worksheet.Cells[1, 3].Value = "TotalSum";
-
+            worksheet.Cells[1, 3].Value = "BranchId";
+            worksheet.Cells[1, 4].Value = "TotalSum";
             // Add data
             for (int i = 0; i < monthlySales.Count; i++)
             {
                 worksheet.Cells[i + 2, 1].Value = monthlySales[i].Year;
                 worksheet.Cells[i + 2, 2].Value = monthlySales[i].Month;
-                worksheet.Cells[i + 2, 3].Value = monthlySales[i].TotalSum;
+                worksheet.Cells[i + 2, 3].Value = monthlySales[i].BranchId;
+                worksheet.Cells[i + 2, 4].Value = monthlySales[i].TotalSum;
             }
-
             var stream = new MemoryStream(package.GetAsByteArray());
             stream.Position = 0;
-            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "MonthlySales.xlsx");
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "MonthlySalesByBranch.xlsx");
         }
     }
 }
