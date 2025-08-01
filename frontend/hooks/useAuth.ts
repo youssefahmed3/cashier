@@ -11,6 +11,11 @@ import {
     validateResetCode,
     resetPassword,
     fetchUser,
+    getTenantId,
+    getAllUsers,
+    getAllRoles,
+    assignRole,
+    suspendUser,
 } from '../lib/api/auth';
 import { toast } from 'sonner';
 
@@ -24,7 +29,8 @@ import {
     ApiResponse,
     ForgotPasswordResponse,
     ResetPasswordResponse,
-    TwoFactorAuthApiResponse
+    TwoFactorAuthApiResponse,
+    AssignRoleDto
 } from '@/types/dtos';
 import { UserType } from '@/types/types';
 
@@ -87,8 +93,10 @@ export const useAuth = () => {
                     path: '/',
                 });
 
-                router.replace('/tenant/dashboard');
+                router.replace('/');
             } else {
+                console.log(data);
+                
                 toast.error(data.message || "Login failed.");
             }
         },
@@ -193,6 +201,31 @@ export const useAuth = () => {
         },
     });
 
+    const assignRoleMutation = useMutation({
+        mutationFn: (data: AssignRoleDto) => assignRole(token!, data),
+        /*  onSuccess: () => {
+           toast.success("Tenant created successfully");
+           queryClient.invalidateQueries({ queryKey: ["tenants", "active"] });
+         }, */
+        /*     onError: (error) => toast.error(`${error.message}`), */
+    });
+
+
+    const suspendUserMutation = useMutation<
+        any, // or the expected return type
+        Error,
+        { userId: number }
+    >({
+        mutationFn: ({ userId }) => suspendUser(token!, userId),
+        onSuccess: () => {
+            // toast.success("User suspended successfully");
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+        },
+        onError: (error) => toast.error(`${error.message}`),
+    });
+
+
+    /* getAllUsers */
     /* Remove Later */
     const userQuery = useQuery<UserType, Error>({
         queryKey: ['auth-user'],
@@ -205,6 +238,43 @@ export const useAuth = () => {
         staleTime: 1000 * 60 * 5,
         gcTime: 1000 * 60 * 10,
     });
+
+    const allUsersQuery = useQuery<UserType[], Error>({
+        queryKey: ['all-user'],
+        queryFn: async () => {
+            if (!token) throw new Error("No auth token found");
+            return await getAllUsers(token);
+        },
+        enabled: !!token,
+        retry: false,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
+
+
+    const getTenantIdForUser = useQuery<{ tenantId: string, userId: number }, Error>({
+        queryKey: ['auth-user'],
+        queryFn: async () => {
+            if (!token) throw new Error("No auth token found");
+            return await getTenantId(token);
+        },
+        enabled: !!token,
+        retry: false,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
+
+    const getAllRolesQuery = useQuery<{ id: number, name: string }[]>({
+        queryKey: ['all-roles'],
+        queryFn: async () => {
+            if (!token) throw new Error("No auth token found");
+            return await getAllRoles(token);
+        },
+        enabled: !!token,
+        retry: false,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    })
 
 
     return {
@@ -239,6 +309,26 @@ export const useAuth = () => {
         user: userQuery.data,
         userStatus: userQuery.status,
         userError: userQuery.error,
+
+        tenantId: getTenantIdForUser.data,
+        tenantIdStatus: getTenantIdForUser.status,
+        tenantIdError: getTenantIdForUser.error,
+
+        allUsers: allUsersQuery.data,
+        allUsersIsLoading: allUsersQuery.isLoading,
+        allUsersError: allUsersQuery.error,
+
+        getAllRoles: getAllRolesQuery.data,
+        getAllRolesIsLoading: getAllRolesQuery.isLoading,
+        getAllRolesError: getAllRolesQuery.error,
+
+        assignRole: assignRoleMutation.mutate,
+        assignRoleStatus: assignRoleMutation.status,
+        assignRoleError: assignRoleMutation.error,
+
+        suspendUserMutation: suspendUserMutation.mutate,
+        suspendUserStatus: suspendUserMutation.status,
+        suspendUserError: suspendUserMutation.error,
 
         logout: logoutMutation.mutate,
         logoutStatus: logoutMutation.status,

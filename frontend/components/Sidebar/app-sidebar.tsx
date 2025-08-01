@@ -17,6 +17,7 @@ import {
   Settings,
   Settings2,
   SquareTerminal,
+  User,
   Users,
 } from "lucide-react";
 
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { Role } from "@/types/types";
+import { useAggregate } from "@/hooks/useAggregate";
 
 type UserRole = "admin" | "superadmin"; // type fix
 
@@ -74,8 +76,8 @@ const data = {
       role: ["admin"] as Role[],
     },
     {
-      title: "Products",
-      url: "/tenant/products",
+      title: "Catalog",
+      url: "/tenant/catalog",
       icon: Box,
       isActive: true,
       role: ["admin"] as Role[],
@@ -90,6 +92,12 @@ const data = {
       title: "Dashboard",
       url: "/superadmin/dashboard",
       icon: LayoutDashboard,
+      role: ["superadmin"] as Role[],
+    },
+    {
+      title: "Users",
+      url: "/superadmin/users",
+      icon: User,
       role: ["superadmin"] as Role[],
     },
     {
@@ -114,27 +122,46 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth();
+  const { getFullUserData, isLoading } = useAggregate();
 
-  if (!user) return null; // Or a skeleton/loading UI
+  if (isLoading || !getFullUserData?.user) {
+    return null; // Or a <SkeletonSidebar /> component
+  }
+
+  const role = getFullUserData.user.roles?.[0] ?? "admin";
+
+  const branches =
+    getFullUserData?.tenant?.branches?.map((branch) => ({
+      name: branch.name,
+      logo: Building2, // Replace with dynamic icon if available
+      plan: "Enterprise", // Add from backend if needed
+    })) ?? [];
 
   const filteredNavItems = data.navMain.filter((item) =>
-    item.role.some((r) => user?.roles.includes(r))
+    item.role.some((r) => getFullUserData.user?.roles.includes(r))
   );
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
+        <p className="text-center font-bold">{getFullUserData?.tenant?.name}</p>
         <TeamSwitcher
-          role={user?.roles?.[0] ?? "admin"} // fallback to a safe default
-          branches={fetchedMockedUser.branches}
+          tenantName={getFullUserData?.tenant?.name ?? ""}
+          role={role ?? "admin"}
+          branches={
+            branches.map((branch) => ({
+              name: branch.name,
+              logo: Building2, // Replace with branch.logo if you store icons
+              plan: "Enterprise", // Add from backend later if needed
+            })) ?? []
+          }
         />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={filteredNavItems} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user!} />
+        <NavUser user={getFullUserData.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

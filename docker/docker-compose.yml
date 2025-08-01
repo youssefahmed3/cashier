@@ -54,9 +54,9 @@ services:
       - backend
 
   receipt-service:
-    build: ../backend/dotnet-services/ReceiptService
+    build: ../backend/dotnet-services/ReceiptService/CashierSolution
     ports:
-      - "8004:7048"
+      - "8006:7048"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     labels:
@@ -156,6 +156,30 @@ services:
       - "traefik.http.middlewares.strip-catalog.stripprefix.prefixes=/catalog"
     networks:
       - backend
+  
+  inventory-service:
+    build: ../backend/springboot-services/inventory-service
+    volumes:
+      - ../backend/springboot-services/inventory-service:/app
+      - ~/.m2:/root/.m2
+    ports:
+      - "8008:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_INVENTORY_DATASOURCE_URL=jdbc:postgresql://inventory-db:5432/inventory_db
+      - INVENTORY_POSTGRES_USER=inventory_db
+      - INVENTORY_POSTGRES_PASSWORD=inventory_db
+    depends_on:
+      - inventory-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.inventory.rule=PathPrefix(`/inventory`)"
+      - "traefik.http.routers.inventory.entrypoints=web"
+      - "traefik.http.services.inventory.loadbalancer.server.port=8080"
+      - "traefik.http.routers.inventory.middlewares=strip-inventory@docker"
+      - "traefik.http.middlewares.strip-inventory.stripprefix.prefixes=/inventory"
+    networks:
+      - backend
 
   tenant-service:
     build: ../backend/springboot-services/tenant-service
@@ -220,6 +244,22 @@ services:
       POSTGRES_DB: catalog_db
       POSTGRES_USER: catalog_db
       POSTGRES_PASSWORD: catalog_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  inventory-db:
+    image: postgres:14
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: inventory_db
+      POSTGRES_PASSWORD: inventory_db
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
       interval: 10s
