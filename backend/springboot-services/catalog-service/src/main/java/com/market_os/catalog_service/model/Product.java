@@ -1,5 +1,7 @@
 package com.market_os.catalog_service.model;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -28,6 +30,8 @@ public class Product {
     private String name;
     private String imgurl;
     private Boolean isactive;
+    
+    private UUID inventoryId;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -97,6 +101,14 @@ public class Product {
 
     public void setCategory(Category category) {
         this.category = category;
+    }
+
+    public UUID getInventoryId() {
+        return inventoryId;
+    }
+
+    public void setInventoryId(UUID inventoryId) {
+        this.inventoryId = inventoryId;
     }
 }
 

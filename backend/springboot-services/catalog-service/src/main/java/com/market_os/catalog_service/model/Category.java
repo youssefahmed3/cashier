@@ -1,6 +1,7 @@
 package com.market_os.catalog_service.model;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -12,10 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 
-@JsonIdentityInfo(
-  generator = ObjectIdGenerators.PropertyGenerator.class,
-  property = "id"
-)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 
 @Entity
 public class Category {
@@ -26,6 +24,8 @@ public class Category {
     private String name;
 
     private String description;
+
+    private UUID inventoryId;
 
     @OneToMany(mappedBy = "category")
     @JsonManagedReference
@@ -62,4 +62,14 @@ public class Category {
     public void setProducts(List<Product> products) {
         this.products = products;
     }
+
+    public UUID getInventoryId() {
+        return inventoryId;
+    }
+
+    public void setInventoryId(UUID inventoryId) {
+        this.inventoryId = inventoryId;
+    }
+
+    
 }

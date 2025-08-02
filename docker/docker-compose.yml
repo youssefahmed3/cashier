@@ -128,7 +128,7 @@ services:
       - "traefik.http.routers.notifications.rule=PathPrefix(`/notifications`)"
       - "traefik.http.routers.notifications.entrypoints=web"
       - "traefik.http.services.notifications.loadbalancer.server.port=8080"
-      - "traefik.http.routers.notifications.middlewares=strip-notification@docker"
+      - "traefik.http.routers.notifications.middlewares=strip-notifications@docker"
       - "traefik.http.middlewares.strip-notifications.stripprefix.prefixes=/notifications"
     networks:
       - backend
