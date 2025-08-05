@@ -5,17 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateInventoryItemDto {
     
-    @NotNull(message = "Purchase date is required")
-    private LocalDate purchDate;
+
     
     @NotBlank(message = "Location is required")
     @Size(max = 255, message = "Location must not exceed 255 characters")

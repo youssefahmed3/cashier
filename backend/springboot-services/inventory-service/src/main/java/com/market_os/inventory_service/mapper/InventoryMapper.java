@@ -5,6 +5,7 @@ import com.market_os.inventory_service.dto.InventoryItemDto;
 import com.market_os.inventory_service.dto.UpdateInventoryItemDto;
 import com.market_os.inventory_service.model.InventoryItem;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,7 @@ public class InventoryMapper {
         }
         
         InventoryItem item = new InventoryItem();
-        item.setPurchDate(createDto.getPurchDate());
+        item.setPurchDate(LocalDate.now());
         item.setLocation(createDto.getLocation());
         item.setQty(createDto.getQty());
         item.setProductName(createDto.getProductName());
