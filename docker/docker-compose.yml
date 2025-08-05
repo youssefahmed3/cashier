@@ -16,15 +16,16 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
-      - "traefik.http.routers.traefik.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
+      - "traefik.http.routers.traefik.rule=Host(localhost) && PathPrefix(/dashboard)"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.entrypoints=web"
     networks:
       - backend
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3.12-management-alpine
     container_name: rabbitmq
+    platform: linux/amd64
     ports:
       - "5672:5672" # AMQP protocol (for apps)
       - "15672:15672" # RabbitMQ dashboard (browser)
@@ -33,6 +34,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   auth-service:
     build: ../backend/dotnet-services/UserRoleService
@@ -45,7 +51,7 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth.rule=PathPrefix(/auth)"
       - "traefik.http.routers.auth.entrypoints=web"
       - "traefik.http.services.auth.loadbalancer.server.port=7192"
       - "traefik.http.routers.auth.middlewares=strip-auth@docker"
@@ -61,7 +67,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.receipt.rule=PathPrefix(`/receipt`)"
+      - "traefik.http.routers.receipt.rule=PathPrefix(/receipt)"
       - "traefik.http.routers.receipt.entrypoints=web"
       - "traefik.http.services.receipt.loadbalancer.server.port=7048"
       - "traefik.http.routers.receipt.middlewares=strip-receipt@docker"
@@ -81,7 +87,7 @@ services:
       - dotnet-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.order.rule=PathPrefix(`/order`)"
+      - "traefik.http.routers.order.rule=PathPrefix(/order)"
       - "traefik.http.routers.order.entrypoints=web"
       - "traefik.http.services.order.loadbalancer.server.port=8085"
       - "traefik.http.routers.order.middlewares=strip-order@docker"
@@ -101,9 +107,49 @@ services:
       - dotnet-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
+      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(/shift)"
       - "traefik.http.routers.shift-dotnet.entrypoints=web"
       - "traefik.http.services.shift-dotnet.loadbalancer.server.port=8086"
+      - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
+      - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift"
+    networks:
+      - backend
+
+  subscription-service-dotnet:
+    build: ../backend/dotnet-services/SubscriptionService
+    volumes:
+      - ../backend/dotnet-services/SubscriptionService:/app
+    ports:
+      - "7221:5130"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - dotnet-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
+      - "traefik.http.routers.shift-dotnet.entrypoints=web"
+      - "traefik.http.services.shift-dotnet.loadbalancer.server.port=5130"
+      - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
+      - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift"
+    networks:
+      - backend
+
+  reporting-service-dotnet:
+    build: ../backend/dotnet-services/ReportingService
+    volumes:
+      - ../backend/dotnet-services/SubscriptionService:/app
+    ports:
+      - "7144:5290"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - dotnet-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
+      - "traefik.http.routers.shift-dotnet.entrypoints=web"
+      - "traefik.http.services.shift-dotnet.loadbalancer.server.port=5290"
       - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
       - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift"
     networks:
@@ -125,7 +171,7 @@ services:
       - notification-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.notifications.rule=PathPrefix(`/notifications`)"
+      - "traefik.http.routers.notifications.rule=PathPrefix(/notifications)"
       - "traefik.http.routers.notifications.entrypoints=web"
       - "traefik.http.services.notifications.loadbalancer.server.port=8080"
       - "traefik.http.routers.notifications.middlewares=strip-notifications@docker"
@@ -149,7 +195,7 @@ services:
       - catalog-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.catalog.rule=PathPrefix(`/catalog`)"
+      - "traefik.http.routers.catalog.rule=PathPrefix(/catalog)"
       - "traefik.http.routers.catalog.entrypoints=web"
       - "traefik.http.services.catalog.loadbalancer.server.port=8080"
       - "traefik.http.routers.catalog.middlewares=strip-catalog@docker"
@@ -169,11 +215,18 @@ services:
       - SPRING_INVENTORY_DATASOURCE_URL=jdbc:postgresql://inventory-db:5432/inventory_db
       - INVENTORY_POSTGRES_USER=inventory_db
       - INVENTORY_POSTGRES_PASSWORD=inventory_db
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
     depends_on:
-      - inventory-db
+      inventory-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.inventory.rule=PathPrefix(`/inventory`)"
+      - "traefik.http.routers.inventory.rule=PathPrefix(/inventory)"
       - "traefik.http.routers.inventory.entrypoints=web"
       - "traefik.http.services.inventory.loadbalancer.server.port=8080"
       - "traefik.http.routers.inventory.middlewares=strip-inventory@docker"
@@ -208,11 +261,13 @@ services:
       - SECURITY_USER_NAME=admin
       - SECURITY_USER_PASSWORD=admin123
     depends_on:
-      - tenant-db
-      - rabbitmq
+      tenant-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.tenant.rule=PathPrefix(`/tenant`)"
+      - "traefik.http.routers.tenant.rule=PathPrefix(/tenant)"
       - "traefik.http.routers.tenant.entrypoints=web"
       - "traefik.http.services.tenant.loadbalancer.server.port=8080"
       - "traefik.http.routers.tenant.middlewares=strip-tenant@docker"
@@ -221,7 +276,8 @@ services:
       - backend
 
   notification-db:
-    image: postgres:14
+    image: postgres:14-alpine
+    platform: linux/amd64
     ports:
       - "5433:5432"
     environment:
@@ -237,7 +293,8 @@ services:
       - backend
 
   catalog-db:
-    image: postgres:14
+    image: postgres:14-alpine
+    platform: linux/amd64
     ports:
       - "5435:5432"
     environment:
@@ -253,7 +310,7 @@ services:
       - backend
 
   inventory-db:
-    image: postgres:14
+    image: postgres:14-alpine
     ports:
       - "5437:5432"
     environment:
@@ -271,6 +328,7 @@ services:
   dotnet-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: dotnet-db
+    platform: linux/amd64
     environment:
       SA_PASSWORD: "YourStrong@Passw0rd"
       ACCEPT_EULA: "Y"
@@ -282,6 +340,7 @@ services:
   auth-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: auth-db
+    platform: linux/amd64
     environment:
       SA_PASSWORD: "YourStrong@Passw0rd"
       ACCEPT_EULA: "Y"
@@ -296,7 +355,9 @@ services:
       - backend
 
   tenant-db:
-    image: postgres:14
+    image: postgres:14-alpine
+    container_name: tenant-db
+    platform: linux/amd64
     ports:
       - "5436:5432"
     environment:
