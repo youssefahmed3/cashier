@@ -37,13 +37,95 @@ public class InventoryServiceImpl implements InventoryService {
     
     @Override
     public InventoryItemDto createInventoryItem(CreateInventoryItemDto createInventoryItemDto) {
-        log.info("Creating new inventory item with product: {}", createInventoryItemDto.getProductName());
+        log.info("Creating new inventory item with product: {}", createInventoryItemDto.getProductId());
         
         InventoryItem inventoryItem = InventoryMapper.toEntity(createInventoryItemDto);
         InventoryItem savedItem = inventoryRepository.save(inventoryItem);
         
         log.info("Successfully created inventory item with ID: {}", savedItem.getId());
         return InventoryMapper.toDto(savedItem);
+    }
+    
+    @Override
+    public InventoryItemDto createInventoryItemWithIntegration(CreateInventoryItemDto createInventoryItemDto) {
+        log.info("Creating new inventory item with integration for product: {}", createInventoryItemDto.getProductId());
+        
+        try {
+            // Get product information from catalog service
+            ProductDto product = null;
+            try {
+                product = getProductFromCatalog(Long.valueOf(createInventoryItemDto.getProductId()));
+            } catch (Exception e) {
+                log.warn("Failed to fetch product from catalog service: {}", e.getMessage());
+            }
+            
+            // Get branch information from tenant service
+            BranchDto branch = null;
+            try {
+                branch = getBranchFromTenantService(createInventoryItemDto.getBranchId());
+            } catch (Exception e) {
+                log.warn("Failed to fetch branch from tenant service: {}", e.getMessage());
+            }
+            
+            // Create inventory item with enriched data (with fallbacks)
+            String category = "Unknown Category";
+            if (product != null) {
+                if (product.getCategory() != null && !product.getCategory().isEmpty()) {
+                    category = product.getCategory();
+                } else if (product.getName() != null && product.getName().toLowerCase().contains("sneaker")) {
+                    category = "Shoes";
+                } else if (product.getName() != null && product.getName().toLowerCase().contains("shirt")) {
+                    category = "Clothing";
+                } else if (product.getName() != null && product.getName().toLowerCase().contains("phone")) {
+                    category = "Electronics";
+                } else {
+                    category = "General";
+                }
+            }
+            
+            // Determine tenant information
+            String tenantId = "main-tenant";
+            String tenantName = "Main Store";
+            if (branch != null) {
+                tenantId = branch.getTenantId();
+                // Try to get tenant name from tenant service
+                try {
+                    TenantDto tenant = getTenantFromTenantService(branch.getTenantId());
+                    if (tenant != null && tenant.getName() != null) {
+                        tenantName = tenant.getName();
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to fetch tenant name from tenant service: {}", e.getMessage());
+                    tenantName = "Store Branch";
+                }
+            }
+            
+            InventoryItem inventoryItem = InventoryItem.builder()
+                    .productId(createInventoryItemDto.getProductId())
+                    .productName(product != null ? product.getName() : "Unknown Product")
+                    .category(category)
+                    .branchId(createInventoryItemDto.getBranchId())
+                    .tenantId(tenantId)
+                    .quantity(createInventoryItemDto.getQuantity())
+                    .isActive(true)
+                    .build();
+            
+            InventoryItem savedItem = inventoryRepository.save(inventoryItem);
+            
+            log.info("Successfully created inventory item with integration - ID: {}, Product: {}, Category: {}, Branch: {}, Tenant: {} ({})", 
+                    savedItem.getInventoryId(), 
+                    product != null ? product.getName() : "Unknown Product",
+                    category,
+                    branch != null ? branch.getName() : "Unknown Branch",
+                    tenantId,
+                    tenantName);
+            
+            return InventoryMapper.toDto(savedItem);
+            
+        } catch (Exception e) {
+            log.error("Error creating inventory item with integration: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create inventory item with integration: " + e.getMessage());
+        }
     }
     
     @Override
@@ -122,37 +204,38 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public List<InventoryItemDto> getInventoryItemsByLocation(String location) {
-        log.info("Fetching inventory items by location: {}", location);
+        log.info("Fetching inventory items by branch ID: {}", location);
         
-        List<InventoryItem> inventoryItems = inventoryRepository.findByLocationAndIsActiveTrue(location);
+        List<InventoryItem> inventoryItems = inventoryRepository.findByBranchIdAndIsActiveTrue(location);
         return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<InventoryItemDto> getInventoryItemsByProductSku(String productSku) {
-        log.info("Fetching inventory items by product SKU: {}", productSku);
+        log.info("Fetching inventory items by product ID: {}", productSku);
         
-        List<InventoryItem> inventoryItems = inventoryRepository.findByProductSkuAndIsActiveTrue(productSku);
+        List<InventoryItem> inventoryItems = inventoryRepository.findByProductIdAndIsActiveTrue(productSku);
         return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<InventoryItemDto> getInventoryItemsBySupplier(String supplier) {
-        log.info("Fetching inventory items by supplier: {}", supplier);
+        log.info("Fetching inventory items by tenant ID: {}", supplier);
         
-        List<InventoryItem> inventoryItems = inventoryRepository.findBySupplierAndIsActiveTrue(supplier);
+        List<InventoryItem> inventoryItems = inventoryRepository.findByTenantIdAndIsActiveTrue(supplier);
         return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<InventoryItemDto> getInventoryItemsByPurchaseDateRange(LocalDate startDate, LocalDate endDate) {
-        log.info("Fetching inventory items by purchase date range: {} to {}", startDate, endDate);
+        log.info("Fetching inventory items by date range: {} to {}", startDate, endDate);
         
-        List<InventoryItem> inventoryItems = inventoryRepository.findByPurchDateBetweenAndIsActiveTrue(startDate, endDate);
-        return InventoryMapper.toDtoList(inventoryItems);
+        // This method is no longer applicable with the new model structure
+        // Return empty list for now
+        return List.of();
     }
     
     @Override
@@ -167,18 +250,19 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public List<InventoryItemDto> searchInventoryItems(String location, String productName) {
-        log.info("Searching inventory items by location: {} and product name: {}", location, productName);
+        log.info("Searching inventory items by branch ID: {} and product name: {}", location, productName);
         
-        List<InventoryItem> inventoryItems = inventoryRepository.findByLocationAndProductNameContainingIgnoreCaseAndIsActiveTrue(location, productName);
+        // Use the new repository method for product ID and branch ID
+        List<InventoryItem> inventoryItems = inventoryRepository.findByProductIdAndBranchIdAndIsActiveTrue(productName, location);
         return InventoryMapper.toDtoList(inventoryItems);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Integer getTotalQuantityByProductSku(String productSku) {
-        log.info("Calculating total quantity for product SKU: {}", productSku);
+        log.info("Calculating total quantity for product ID: {}", productSku);
         
-        return inventoryRepository.getTotalQuantityByProductSku(productSku);
+        return inventoryRepository.getTotalQuantityByProductId(productSku);
     }
     
     @Override
@@ -188,13 +272,12 @@ public class InventoryServiceImpl implements InventoryService {
         
         List<InventoryItem> activeItems = inventoryRepository.findByIsActiveTrue();
         long totalItems = activeItems.size();
-        Integer totalQuantity = activeItems.stream().mapToInt(InventoryItem::getQty).sum();
-        Double totalValue = inventoryRepository.getTotalInventoryValue();
+        Integer totalQuantity = activeItems.stream().mapToInt(InventoryItem::getQuantity).sum();
         
         InventoryStatsDto stats = InventoryStatsDto.builder()
                 .totalItems(totalItems)
                 .totalQuantity(totalQuantity)
-                .totalValue(totalValue != null ? totalValue : 0.0)
+                .totalValue(0.0) // No longer tracking total value in new model
                 .build();
         
         return stats;
@@ -203,17 +286,16 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public InventoryStatsDto getInventoryStatsByLocation(String location) {
-        log.info("Calculating inventory statistics for location: {}", location);
+        log.info("Calculating inventory statistics for branch ID: {}", location);
         
-        List<InventoryItem> locationItems = inventoryRepository.findByLocationAndIsActiveTrue(location);
+        List<InventoryItem> locationItems = inventoryRepository.findByBranchIdAndIsActiveTrue(location);
         long totalItems = locationItems.size();
-        Integer totalQuantity = locationItems.stream().mapToInt(InventoryItem::getQty).sum();
-        Double totalValue = inventoryRepository.getTotalInventoryValueByLocation(location);
+        Integer totalQuantity = locationItems.stream().mapToInt(InventoryItem::getQuantity).sum();
         
         InventoryStatsDto stats = InventoryStatsDto.builder()
                 .totalItems(totalItems)
                 .totalQuantity(totalQuantity)
-                .totalValue(totalValue != null ? totalValue : 0.0)
+                .totalValue(0.0) // No longer tracking total value in new model
                 .build();
         
         return stats;
@@ -229,12 +311,7 @@ public class InventoryServiceImpl implements InventoryService {
                     return new RuntimeException("Inventory item not found with ID: " + id);
                 });
         
-        existingItem.setQty(newQuantity);
-        
-        // Recalculate total cost
-        if (existingItem.getUnitPrice() != null) {
-            existingItem.setTotalCost(existingItem.getUnitPrice() * newQuantity);
-        }
+        existingItem.setQuantity(newQuantity);
         
         InventoryItem updatedItem = inventoryRepository.save(existingItem);
         
@@ -270,7 +347,7 @@ public class InventoryServiceImpl implements InventoryService {
     
     @Override
     @Transactional(readOnly = true)
-    public TenantDto getTenantFromTenantService(Long tenantId) {
+    public TenantDto getTenantFromTenantService(String tenantId) {
         log.info("Fetching tenant from tenant service with ID: {}", tenantId);
         
         try {
@@ -283,7 +360,7 @@ public class InventoryServiceImpl implements InventoryService {
     
     @Override
     @Transactional(readOnly = true)
-    public BranchDto getBranchFromTenantService(Long branchId) {
+    public BranchDto getBranchFromTenantService(String branchId) {
         log.info("Fetching branch from tenant service with ID: {}", branchId);
         
         try {
@@ -296,14 +373,14 @@ public class InventoryServiceImpl implements InventoryService {
     
     @Override
     public InventoryItemDto createInventoryItemWithProductValidation(CreateInventoryItemDto createInventoryItemDto) {
-        log.info("Creating inventory item with product validation for product: {}", createInventoryItemDto.getProductName());
+        log.info("Creating inventory item with product validation for product: {}", createInventoryItemDto.getProductId());
         
         // Validate product exists in catalog service
         try {
-            catalogServiceClient.getProductByBarcode(createInventoryItemDto.getProductSku());
-            log.info("Product validation successful for SKU: {}", createInventoryItemDto.getProductSku());
+            catalogServiceClient.getProductById(Long.valueOf(createInventoryItemDto.getProductId()));
+            log.info("Product validation successful for ID: {}", createInventoryItemDto.getProductId());
         } catch (Exception e) {
-            log.error("Product validation failed for SKU: {}", createInventoryItemDto.getProductSku());
+            log.error("Product validation failed for ID: {}", createInventoryItemDto.getProductId());
             throw new RuntimeException("Product not found in catalog service", e);
         }
         
@@ -340,7 +417,7 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Successfully updated inventory item with notification, ID: {}", id);
         
         // Additional business logic for low stock alerts
-        if (updatedItem.getQty() != null && updatedItem.getQty() < 10) {
+        if (updatedItem.getQuantity() != null && updatedItem.getQuantity() < 10) {
             try {
                 rabbitMQPublisher.publishLowStockAlert(itemDto, 10);
                 log.info("Low stock alert sent for item ID: {}", id);
@@ -424,7 +501,7 @@ public class InventoryServiceImpl implements InventoryService {
         for (InventoryItem item : inventoryItems) {
             if (remainingQuantity <= 0) break;
             
-            int currentQuantity = item.getQty();
+            int currentQuantity = item.getQuantity();
             int quantityToUpdate;
             
             if (isDecrease) {

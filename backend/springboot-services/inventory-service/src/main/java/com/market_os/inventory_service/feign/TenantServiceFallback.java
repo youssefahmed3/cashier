@@ -13,7 +13,7 @@ import java.util.List;
 public class TenantServiceFallback implements TenantServiceClient {
     
     @Override
-    public TenantDto getTenantById(Long id) {
+    public TenantDto getTenantById(String id) {
         log.error("Tenant service is unavailable, falling back to null for tenant ID: {}", id);
         return null;
     }
@@ -25,13 +25,13 @@ public class TenantServiceFallback implements TenantServiceClient {
     }
     
     @Override
-    public BranchDto getBranchById(Long id) {
+    public BranchDto getBranchById(String id) {
         log.error("Tenant service is unavailable, falling back to null for branch ID: {}", id);
         return null;
     }
     
     @Override
-    public List<BranchDto> getBranchesByTenantId(Long tenantId) {
+    public List<BranchDto> getBranchesByTenantId(String tenantId) {
         log.error("Tenant service is unavailable, falling back to empty list for tenant ID: {}", tenantId);
         return new ArrayList<>();
     }

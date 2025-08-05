@@ -1,15 +1,21 @@
 import { CreateCategoryDto, CreateProductDto } from "@/types/dtos";
+import { Category, Product } from "@/types/types";
 
+
+function headers(token: string): { [key: string]: string } {
+    return {
+        "Content-Type": "application/json",
+        "authorization": `Bearer ${token}`,
+    };
+}
 
 /* Categories Endpoints */
 
 /* GET:  /categories */
-export async function getCategories() {
+export async function getCategories(token: string): Promise<Category[]> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories`, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -18,12 +24,10 @@ export async function getCategories() {
 }
 
 /* GET: /categories/{id} */
-export async function getCategoryById(id: number) {
+export async function getCategoryById(token: string, id: number): Promise<Category> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories/${id}`, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -32,12 +36,10 @@ export async function getCategoryById(id: number) {
 }
 
 /* GET: /categories/{id}/products */
-export async function getProductsByCategory(id: number) {
+export async function getProductsByCategory(token: string, id: number): Promise<Product[]> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories/${id}/products`, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -46,12 +48,10 @@ export async function getProductsByCategory(id: number) {
 }
 
 /* POST: /categories */
-export async function createCategory(createCategoryDto: CreateCategoryDto) {
+export async function createCategory(token: string, createCategoryDto: CreateCategoryDto) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: headers(token),
         body: JSON.stringify(createCategoryDto)
     });
 
@@ -61,12 +61,10 @@ export async function createCategory(createCategoryDto: CreateCategoryDto) {
 }
 
 /* PUT: /categories/{id} */
-export async function updateCategory(id: number, updateCategoryDto: CreateCategoryDto) {
+export async function updateCategory(token: string, id: number, updateCategoryDto: CreateCategoryDto) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories/${id}`, {
         method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: headers(token),
         body: JSON.stringify(updateCategoryDto)
     });
 
@@ -76,12 +74,10 @@ export async function updateCategory(id: number, updateCategoryDto: CreateCatego
 }
 
 /* DELETE: /categories/{id} */
-export async function deleteCategory(id: number) {
+export async function deleteCategory(token: string, id: number) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/categories/${id}`, {
         method: "DELETE",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -93,12 +89,10 @@ export async function deleteCategory(id: number) {
 /* Products Endpoints */
 
 /* GET: /products */
-export async function getProducts() {
+export async function getProducts(token: string): Promise<Product[]> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products`, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -107,12 +101,10 @@ export async function getProducts() {
 }
 
 /* GET: /products/{id} */
-export async function getProductById(id: number) {
+export async function getProductById(token: string, id: number): Promise<Product> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}`, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || "Something went wrong");
@@ -120,12 +112,10 @@ export async function getProductById(id: number) {
 }
 
 /* GET: /products/{id}/category */
-export async function getCategoryByProductId(id: number) {
+export async function getCategoryByProductId(token: string, id: number): Promise<Category> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}/category`, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -134,12 +124,10 @@ export async function getCategoryByProductId(id: number) {
 }
 
 /* POST: /products */
-export async function createProduct(createProductDto: CreateProductDto) {
+export async function createProduct(token: string, createProductDto: CreateProductDto) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: headers(token),
         body: JSON.stringify(createProductDto)
     });
 
@@ -149,12 +137,10 @@ export async function createProduct(createProductDto: CreateProductDto) {
 }
 
 /* PUT: /products/{id} */
-export async function updateProduct(id: number, updateProductDto: CreateProductDto) {
+export async function updateProduct(token: string, id: number, updateProductDto: CreateProductDto) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}`, {
         method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: headers(token),
         body: JSON.stringify(updateProductDto)
     });
 
@@ -164,12 +150,10 @@ export async function updateProduct(id: number, updateProductDto: CreateProductD
 }
 
 /* PUT: /products/{id}/activate */
-export async function activateProduct(id: number) {
+export async function activateProduct(token: string, id: number) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}/activate`, {
         method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -180,12 +164,10 @@ export async function activateProduct(id: number) {
 
 
 /* PUT: /products/{id}/disable */
-export async function disableProduct(id: number) {
+export async function disableProduct(token: string, id: number) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}/disable`, {
         method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -195,12 +177,10 @@ export async function disableProduct(id: number) {
 
 
 /* PUT: /products/{productId}/category/{categoryId} */
-export async function assignCategoryToProduct(productId: number, categoryId: number) {
+export async function assignCategoryToProduct(token: string, productId: number, categoryId: number) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${productId}/category/${categoryId}`, {
         method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();
@@ -210,12 +190,10 @@ export async function assignCategoryToProduct(productId: number, categoryId: num
 
 
 /* DELETE: /products/{id} */
-export async function deleteProduct(id: number) {
+export async function deleteProduct(token: string, id: number) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_URL}/products/${id}`, {
         method: "DELETE",
-        headers: {
-            "Content-Type": "application/json"
-        }
+        headers: headers(token)
     });
 
     const json = await res.json();

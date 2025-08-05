@@ -5,7 +5,6 @@ import com.market_os.inventory_service.dto.InventoryItemDto;
 import com.market_os.inventory_service.dto.UpdateInventoryItemDto;
 import com.market_os.inventory_service.model.InventoryItem;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,20 +18,18 @@ public class InventoryMapper {
             return null;
         }
         
-        InventoryItemDto dto = new InventoryItemDto();
-        dto.setId(inventoryItem.getId());
-        dto.setPurchDate(inventoryItem.getPurchDate());
-        dto.setLocation(inventoryItem.getLocation());
-        dto.setQty(inventoryItem.getQty());
-        dto.setProductName(inventoryItem.getProductName());
-        dto.setProductSku(inventoryItem.getProductSku());
-        dto.setUnitPrice(inventoryItem.getUnitPrice());
-        dto.setTotalCost(inventoryItem.getTotalCost());
-        dto.setSupplier(inventoryItem.getSupplier());
-        dto.setIsActive(inventoryItem.getIsActive());
-        dto.setCreatedAt(inventoryItem.getCreatedAt());
-        dto.setUpdatedAt(inventoryItem.getUpdatedAt());
-        return dto;
+        return InventoryItemDto.builder()
+                .inventoryId(inventoryItem.getInventoryId())
+                .productId(inventoryItem.getProductId())
+                .productName(inventoryItem.getProductName())
+                .category(inventoryItem.getCategory())
+                .branchId(inventoryItem.getBranchId())
+                .tenantId(inventoryItem.getTenantId())
+                .quantity(inventoryItem.getQuantity())
+                .isActive(inventoryItem.getIsActive())
+                .createdAt(inventoryItem.getCreatedAt())
+                .lastUpdated(inventoryItem.getLastUpdated())
+                .build();
     }
     
     /**
@@ -56,22 +53,12 @@ public class InventoryMapper {
             return null;
         }
         
-        InventoryItem item = new InventoryItem();
-        item.setPurchDate(LocalDate.now());
-        item.setLocation(createDto.getLocation());
-        item.setQty(createDto.getQty());
-        item.setProductName(createDto.getProductName());
-        item.setProductSku(createDto.getProductSku());
-        item.setUnitPrice(createDto.getUnitPrice());
-        item.setSupplier(createDto.getSupplier());
-        item.setIsActive(true);
-        
-        // Calculate total cost
-        if (createDto.getUnitPrice() != null && createDto.getQty() != null) {
-            item.setTotalCost(createDto.getUnitPrice() * createDto.getQty());
-        }
-        
-        return item;
+        return InventoryItem.builder()
+                .productId(createDto.getProductId())
+                .branchId(createDto.getBranchId())
+                .quantity(createDto.getQuantity())
+                .isActive(true)
+                .build();
     }
     
     /**
@@ -83,34 +70,20 @@ public class InventoryMapper {
             return;
         }
         
-        if (updateDto.getPurchDate() != null) {
-            target.setPurchDate(updateDto.getPurchDate());
+        if (updateDto.getProductId() != null) {
+            target.setProductId(updateDto.getProductId());
         }
-        if (updateDto.getLocation() != null) {
-            target.setLocation(updateDto.getLocation());
+        if (updateDto.getBranchId() != null) {
+            target.setBranchId(updateDto.getBranchId());
         }
-        if (updateDto.getQty() != null) {
-            target.setQty(updateDto.getQty());
+        if (updateDto.getQuantity() != null) {
+            target.setQuantity(updateDto.getQuantity());
         }
         if (updateDto.getProductName() != null) {
             target.setProductName(updateDto.getProductName());
         }
-        if (updateDto.getProductSku() != null) {
-            target.setProductSku(updateDto.getProductSku());
-        }
-        if (updateDto.getUnitPrice() != null) {
-            target.setUnitPrice(updateDto.getUnitPrice());
-        }
-        if (updateDto.getSupplier() != null) {
-            target.setSupplier(updateDto.getSupplier());
-        }
-        
-        // Recalculate total cost if unit price or quantity changed
-        Double price = updateDto.getUnitPrice() != null ? updateDto.getUnitPrice() : target.getUnitPrice();
-        Integer quantity = updateDto.getQty() != null ? updateDto.getQty() : target.getQty();
-        
-        if (price != null && quantity != null) {
-            target.setTotalCost(price * quantity);
+        if (updateDto.getCategory() != null) {
+            target.setCategory(updateDto.getCategory());
         }
     }
 } 

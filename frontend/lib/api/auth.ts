@@ -8,7 +8,9 @@ export async function fetchUser(token: string): Promise<UserType> {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
-    }
+    },
+    mode: 'cors',
+
   });
 
   if (!res.ok) {
@@ -31,7 +33,8 @@ export async function getTenantId(token: string) {
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
-    }
+    },
+    mode: 'cors',
   });
 
   const json = await res.json();
@@ -47,7 +50,8 @@ export async function registerUser(data: RegisterDto) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
+    mode: 'cors',
   });
 
   const json = await res.json();
@@ -64,6 +68,7 @@ export async function loginUser(data: LoginDto): Promise<ApiResponse> {
     headers: {
       "Content-Type": "application/json"
     },
+    mode: 'cors',
     body: JSON.stringify(data)
   });
 
@@ -82,6 +87,7 @@ export async function confirm2FA(data: Confirm2FADto): Promise<TwoFactorAuthApiR
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+    mode: 'cors',
   })
 
   return await response.json()
@@ -95,6 +101,7 @@ export async function forgotPassword(data: ForgotPasswordDto): Promise<ForgotPas
     headers: {
       "Content-Type": "application/json",
     },
+    mode: 'cors',
     body: JSON.stringify(data),
   })
 
@@ -111,6 +118,7 @@ export async function validateResetCode(
     headers: {
       "Content-Type": "application/json",
     },
+    mode: 'cors',
     body: JSON.stringify(data),
   });
 
@@ -124,7 +132,9 @@ export async function resetPassword(data: ResetPasswordDto): Promise<ResetPasswo
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
     },
+    mode: 'cors',
     body: JSON.stringify(data),
   })
 
@@ -137,8 +147,11 @@ export async function getAllUsers(token: string) : Promise<UserType[]> {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
       "Authorization": `Bearer ${token}`
-    }
+    },
+    mode: 'cors',
+
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message || "Something went wrong");
@@ -155,8 +168,10 @@ export async function getAllRoles(token: string) : Promise<{
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
       "Authorization": `Bearer ${token}`
-    }
+    },
+    mode: 'cors',
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message || "Something went wrong");
@@ -169,8 +184,11 @@ export async function suspendUser(token: string, userId: number) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
       "Authorization": `Bearer ${token}`
-    }
+    },
+    mode: 'cors',
+
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message || "Something went wrong");
@@ -186,8 +204,10 @@ export async function assignRole(token: string, assignRoleDto: AssignRoleDto) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
       "Authorization": `Bearer ${token}`
     },
+    mode: 'cors',
     body: JSON.stringify(assignRoleDto)
   });
   const json = await res.json();
@@ -201,8 +221,10 @@ export async function validateToken(token: string) : Promise<validateTokenResult
   const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/token/validate`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      // "Access-Control-Allow-Origin": "*",
     },
+    mode: 'cors',
     body: JSON.stringify({ token })
   });
   const json = await res.json();

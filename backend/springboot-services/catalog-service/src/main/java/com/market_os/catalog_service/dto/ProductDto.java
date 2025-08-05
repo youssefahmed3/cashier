@@ -1,5 +1,7 @@
 package com.market_os.catalog_service.dto;
 
+import java.util.UUID;
+
 public class ProductDto {
     private String description;
     private Double price;
@@ -8,6 +10,8 @@ public class ProductDto {
     private String imgurl;
     private Boolean isactive;
     private Long categoryId;
+
+    private UUID inventoryId;
 
     public String getDescription() {
         return description;
@@ -63,6 +67,14 @@ public class ProductDto {
 
     public void setCategoryId(Long categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public UUID getInventoryId() {
+        return inventoryId;
+    }
+
+    public void setInventoryId(UUID inventoryId) {
+        this.inventoryId = inventoryId;
     }
 }
 

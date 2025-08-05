@@ -1,5 +1,7 @@
 package com.market_os.catalog_service.dto;
 
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,4 +20,5 @@ public class ProductResponseDto {
     private String imgurl;
     private Boolean isactive;
     private Long categoryId;
+    private UUID inventoryId;
 }

@@ -67,7 +67,8 @@ export interface ResetPasswordResponse {
 
 export type CreateCategoryDto = {
     name: string,
-    description: string
+    description: string,
+    inventoryId: string
 }
 
 export type CreateProductDto = {
@@ -78,6 +79,7 @@ export type CreateProductDto = {
     imgurl: string,
     isactive: boolean,
     categoryId?: number,
+    inventoryId: string
 }
 
 export type CreateTenantDto = {

@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,63 +23,52 @@ public interface InventoryRepository extends JpaRepository<InventoryItem, Long> 
     Optional<InventoryItem> findByIdAndIsActiveTrue(Long id);
     
     /**
-     * Find inventory items by location
+     * Find inventory items by product ID
      */
-    List<InventoryItem> findByLocationAndIsActiveTrue(String location);
+    List<InventoryItem> findByProductIdAndIsActiveTrue(String productId);
     
     /**
-     * Find inventory items by product SKU
+     * Find inventory items by branch ID
      */
-    List<InventoryItem> findByProductSkuAndIsActiveTrue(String productSku);
+    List<InventoryItem> findByBranchIdAndIsActiveTrue(String branchId);
     
     /**
-     * Find inventory items by supplier
+     * Find inventory items by tenant ID
      */
-    List<InventoryItem> findBySupplierAndIsActiveTrue(String supplier);
-    
-    /**
-     * Find inventory items by purchase date range
-     */
-    List<InventoryItem> findByPurchDateBetweenAndIsActiveTrue(LocalDate startDate, LocalDate endDate);
+    List<InventoryItem> findByTenantIdAndIsActiveTrue(String tenantId);
     
     /**
      * Find inventory items with low stock (quantity below threshold)
      */
-    @Query("SELECT i FROM InventoryItem i WHERE i.qty <= :threshold AND i.isActive = true")
+    @Query("SELECT i FROM InventoryItem i WHERE i.quantity <= :threshold AND i.isActive = true")
     List<InventoryItem> findLowStockItems(@Param("threshold") Integer threshold);
     
     /**
-     * Find inventory items by location and product name
+     * Find inventory items by product ID and branch ID
      */
-    List<InventoryItem> findByLocationAndProductNameContainingIgnoreCaseAndIsActiveTrue(String location, String productName);
+    List<InventoryItem> findByProductIdAndBranchIdAndIsActiveTrue(String productId, String branchId);
     
     /**
-     * Get total quantity by product SKU
+     * Get total quantity by product ID
      */
-    @Query("SELECT COALESCE(SUM(i.qty), 0) FROM InventoryItem i WHERE i.productSku = :productSku AND i.isActive = true")
-    Integer getTotalQuantityByProductSku(@Param("productSku") String productSku);
+    @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM InventoryItem i WHERE i.productId = :productId AND i.isActive = true")
+    Integer getTotalQuantityByProductId(@Param("productId") String productId);
     
     /**
-     * Get total value of inventory
+     * Get total quantity by product ID and branch ID
      */
-    @Query("SELECT COALESCE(SUM(i.totalCost), 0.0) FROM InventoryItem i WHERE i.isActive = true")
-    Double getTotalInventoryValue();
-    
-    /**
-     * Get total value of inventory by location
-     */
-    @Query("SELECT COALESCE(SUM(i.totalCost), 0.0) FROM InventoryItem i WHERE i.location = :location AND i.isActive = true")
-    Double getTotalInventoryValueByLocation(@Param("location") String location);
+    @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM InventoryItem i WHERE i.productId = :productId AND i.branchId = :branchId AND i.isActive = true")
+    Integer getTotalQuantityByProductIdAndBranchId(@Param("productId") String productId, @Param("branchId") String branchId);
     
     /**
      * Find inventory items by product ID (for stock updates)
      */
-    @Query("SELECT i FROM InventoryItem i WHERE i.productSku = :productId AND i.isActive = true ORDER BY i.createdAt ASC")
+    @Query("SELECT i FROM InventoryItem i WHERE i.productId = :productId AND i.isActive = true ORDER BY i.createdAt ASC")
     List<InventoryItem> findByProductIdOrderByCreatedAtAsc(@Param("productId") String productId);
     
     /**
      * Update quantity for inventory item
      */
-    @Query("UPDATE InventoryItem i SET i.qty = i.qty + :quantityChange, i.updatedAt = CURRENT_TIMESTAMP WHERE i.id = :id AND i.isActive = true")
+    @Query("UPDATE InventoryItem i SET i.quantity = i.quantity + :quantityChange, i.lastUpdated = CURRENT_TIMESTAMP WHERE i.id = :id AND i.isActive = true")
     void updateQuantityById(@Param("id") Long id, @Param("quantityChange") Integer quantityChange);
 } 
