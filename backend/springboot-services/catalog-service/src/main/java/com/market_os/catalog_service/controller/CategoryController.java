@@ -53,6 +53,7 @@ public class CategoryController {
         Category.setDescription(CategoryDto.getDescription());
         Category.setName(CategoryDto.getName());
         Category.setProducts(null);
+        Category.setInventoryId(CategoryDto.getInventoryId());
         Category savedCategory = service.save(Category);
 
         if (savedCategory == null) {

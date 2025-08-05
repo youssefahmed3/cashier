@@ -33,32 +33,35 @@ export const useCatalog = () => {
     return localStorage.getItem("token") ?? "";
   };
 
+  const token = getToken();
+
   // Category Queries
   const categoriesQuery = useQuery<Category[], Error, Category[], QueryKey>({
     queryKey: ['categories'] as const,
-    queryFn: getCategories,
+    queryFn: () => getCategories(token),
+    enabled: !!token,
     staleTime: 60000, // 1 minute cache
   });
 
   const categoryByIdQuery = (categoryId?: number) =>
     useQuery<Category, Error, Category, QueryKey>({
       queryKey: ['category', categoryId] as const,
-      queryFn: () => getCategoryById(categoryId!),
-      enabled: !!categoryId,
+      queryFn: () => getCategoryById(token, categoryId!),
+      enabled: !!categoryId && !!token,
       staleTime: 60000,
     });
 
   const productsByCategoryQuery = (categoryId?: number) =>
     useQuery<Product[], Error, Product[], QueryKey>({
       queryKey: ['category', categoryId, 'products'] as const,
-      queryFn: () => getProductsByCategory(categoryId!),
-      enabled: !!categoryId,
+      queryFn: () => getProductsByCategory(token, categoryId!),
+      enabled: !!categoryId && !!token,
       staleTime: 60000,
     });
 
   // Category Mutations
   const createCategoryMutation = useMutation<ApiResponse, Error, CreateCategoryDto>({
-    mutationFn: createCategory,
+    mutationFn: (data) => createCategory(token, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
@@ -72,7 +75,7 @@ export const useCatalog = () => {
     Error,
     { id: number; data: CreateCategoryDto }
   >({
-    mutationFn: ({ id, data }) => updateCategory(id, data),
+    mutationFn: ({ id, data }) => updateCategory(token, id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['category', id] });
@@ -83,7 +86,7 @@ export const useCatalog = () => {
   });
 
   const deleteCategoryMutation = useMutation<ApiResponse, Error, number>({
-    mutationFn: deleteCategory,
+    mutationFn: (data) => deleteCategory(token, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
@@ -95,29 +98,30 @@ export const useCatalog = () => {
   // Product Queries
   const productsQuery = useQuery<Product[], Error, Product[], QueryKey>({
     queryKey: ['products'] as const,
-    queryFn: getProducts,
+    queryFn: () => getProducts(token),
+    enabled: !!token,
     staleTime: 60000,
   });
 
   const productByIdQuery = (productId?: number) =>
     useQuery<Product, Error, Product, QueryKey>({
       queryKey: ['product', productId] as const,
-      queryFn: () => getProductById(productId!),
-      enabled: !!productId,
+      queryFn: () => getProductById(token, productId!),
+      enabled: !!productId && !!token,
       staleTime: 60000,
     });
 
   const categoryByProductIdQuery = (productId?: number) =>
     useQuery<Category, Error, Category, QueryKey>({
       queryKey: ['product', productId, 'category'] as const,
-      queryFn: () => getCategoryByProductId(productId!),
-      enabled: !!productId,
+      queryFn: () => getCategoryByProductId(token, productId!),
+      enabled: !!productId && !!token,
       staleTime: 60000,
     });
 
   // Product Mutations
   const createProductMutation = useMutation<ApiResponse, Error, CreateProductDto>({
-    mutationFn: createProduct,
+    mutationFn: (data) => createProduct(token, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
@@ -131,7 +135,7 @@ export const useCatalog = () => {
     Error,
     { id: number; data: CreateProductDto }
   >({
-    mutationFn: ({ id, data }) => updateProduct(id, data),
+    mutationFn: ({ id, data }) => updateProduct(token, id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', id] });
@@ -142,7 +146,7 @@ export const useCatalog = () => {
   });
 
   const activateProductMutation = useMutation<ApiResponse, Error, number>({
-    mutationFn: activateProduct,
+    mutationFn: (id) => activateProduct(token, id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', id] });
@@ -153,7 +157,7 @@ export const useCatalog = () => {
   });
 
   const disableProductMutation = useMutation<ApiResponse, Error, number>({
-    mutationFn: disableProduct,
+    mutationFn: (id) => disableProduct(token, id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', id] });
@@ -168,7 +172,7 @@ export const useCatalog = () => {
     Error,
     { productId: number; categoryId: number }
   >({
-    mutationFn: ({ productId, categoryId }) => assignCategoryToProduct(productId, categoryId),
+    mutationFn: ({ productId, categoryId }) => assignCategoryToProduct(token,productId, categoryId),
     onSuccess: (_, { productId }) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
@@ -180,7 +184,7 @@ export const useCatalog = () => {
   });
 
   const deleteProductMutation = useMutation<ApiResponse, Error, number>({
-    mutationFn: deleteProduct,
+    mutationFn: (data) => deleteProduct(token, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },

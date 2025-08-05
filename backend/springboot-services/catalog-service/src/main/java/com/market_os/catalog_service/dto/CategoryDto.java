@@ -1,8 +1,11 @@
 package com.market_os.catalog_service.dto;
 
+import java.util.UUID;
+
 public class CategoryDto {
     private String name;
     private String description;
+    private UUID inventoryId;
 
     public String getName() {
         return name;
@@ -19,4 +22,13 @@ public class CategoryDto {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public UUID getInventoryId() {
+        return inventoryId;
+    }
+
+    public void setInventoryId(UUID inventoryId) {
+        this.inventoryId = inventoryId;
+    }
+    
 }
