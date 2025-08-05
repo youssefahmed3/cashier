@@ -127,18 +127,18 @@ services:
       - subscription-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
-      - "traefik.http.routers.shift-dotnet.entrypoints=web"
-      - "traefik.http.services.shift-dotnet.loadbalancer.server.port=5130"
-      - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
-      - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift"
+      - "traefik.http.routers.subscription-dotnet.rule=PathPrefix(/subscription)"
+      - "traefik.http.routers.subscription-dotnet.entrypoints=web"
+      - "traefik.http.services.subscription-dotnet.loadbalancer.server.port=5130"
+      - "traefik.http.routers.subscription-dotnet.middlewares=strip-subscription-dotnet@docker"
+      - "traefik.http.middlewares.strip-subscription-dotnet.stripprefix.prefixes=/subscription"
     networks:
       - backend
 
   reporting-service-dotnet:
     build: ../backend/dotnet-services/ReportingService
     volumes:
-      - ../backend/dotnet-services/SubscriptionService:/app
+      - ../backend/dotnet-services/ReportingService:/app
     ports:
       - "7144:5290"
     environment:
@@ -147,11 +147,11 @@ services:
       - reporting-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
-      - "traefik.http.routers.shift-dotnet.entrypoints=web"
-      - "traefik.http.services.shift-dotnet.loadbalancer.server.port=5290"
-      - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
-      - "traefik.http.middlewares.strip-shift-dotnet.stripprefix.prefixes=/shift"
+      - "traefik.http.routers.reporting.rule=PathPrefix(/reporting)"
+      - "traefik.http.routers.reporting.entrypoints=web"
+      - "traefik.http.services.reporting.loadbalancer.server.port=5290"
+      - "traefik.http.routers.reporting.middlewares=strip-reporting@docker"
+      - "traefik.http.middlewares.strip-reporting.stripprefix.prefixes=/reporting"
     networks:
       - backend
 
