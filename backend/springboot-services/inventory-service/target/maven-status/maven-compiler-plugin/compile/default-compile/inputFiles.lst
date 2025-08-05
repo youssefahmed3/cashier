@@ -13,6 +13,7 @@
 /app/src/main/java/com/market_os/inventory_service/controller/InventoryController.java
 /app/src/main/java/com/market_os/inventory_service/feign/CatalogServiceClient.java
 /app/src/main/java/com/market_os/inventory_service/feign/TokenValidationFallback.java
+/app/src/main/java/com/market_os/inventory_service/config/FeignConfig.java
 /app/src/main/java/com/market_os/inventory_service/feign/TenantServiceFallback.java
 /app/src/main/java/com/market_os/inventory_service/feign/CatalogServiceFallback.java
 /app/src/main/java/com/market_os/inventory_service/feign/TenantServiceClient.java

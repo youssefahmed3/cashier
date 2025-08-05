@@ -13,6 +13,11 @@ public interface InventoryService {
     InventoryItemDto createInventoryItem(CreateInventoryItemDto createInventoryItemDto);
     
     /**
+     * Create a new inventory item with catalog and tenant integration
+     */
+    InventoryItemDto createInventoryItemWithIntegration(CreateInventoryItemDto createInventoryItemDto);
+    
+    /**
      * Get inventory item by ID
      */
     InventoryItemDto getInventoryItemById(Long id);
@@ -105,12 +110,12 @@ public interface InventoryService {
     /**
      * Get tenant information from tenant service
      */
-    TenantDto getTenantFromTenantService(Long tenantId);
+    TenantDto getTenantFromTenantService(String tenantId);
     
     /**
      * Get branch information from tenant service
      */
-    BranchDto getBranchFromTenantService(Long branchId);
+    BranchDto getBranchFromTenantService(String branchId);
     
     /**
      * Create inventory item with product validation from catalog service

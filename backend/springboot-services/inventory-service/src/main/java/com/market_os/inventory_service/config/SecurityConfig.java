@@ -24,7 +24,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/actuator/**", "/health", "/api-docs/**", "/swagger-ui/**").permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().authenticated() 
             )
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)

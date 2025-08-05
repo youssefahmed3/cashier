@@ -19,10 +19,10 @@ public class RabbitMQPublisher {
     public void publishStockUpdate(InventoryItemDto inventoryItem) {
         try {
             Map<String, Object> message = new HashMap<>();
-            message.put("itemId", inventoryItem.getId());
-            message.put("productSku", inventoryItem.getProductSku());
-            message.put("quantity", inventoryItem.getQty());
-            message.put("location", inventoryItem.getLocation());
+            message.put("inventoryId", inventoryItem.getInventoryId());
+            message.put("productId", inventoryItem.getProductId());
+            message.put("quantity", inventoryItem.getQuantity());
+            message.put("branchId", inventoryItem.getBranchId());
             message.put("timestamp", System.currentTimeMillis());
             message.put("eventType", "STOCK_UPDATE");
 
@@ -32,22 +32,22 @@ public class RabbitMQPublisher {
                     message
             );
             
-            log.info("Published stock update for item ID: {}, SKU: {}", 
-                    inventoryItem.getId(), inventoryItem.getProductSku());
+            log.info("Published stock update for inventory ID: {}, Product: {}", 
+                    inventoryItem.getInventoryId(), inventoryItem.getProductId());
         } catch (Exception e) {
-            log.error("Failed to publish stock update for item ID: {}", inventoryItem.getId(), e);
+            log.error("Failed to publish stock update for inventory ID: {}", inventoryItem.getInventoryId(), e);
         }
     }
 
     public void publishLowStockAlert(InventoryItemDto inventoryItem, Integer threshold) {
         try {
             Map<String, Object> message = new HashMap<>();
-            message.put("itemId", inventoryItem.getId());
-            message.put("productSku", inventoryItem.getProductSku());
+            message.put("inventoryId", inventoryItem.getInventoryId());
+            message.put("productId", inventoryItem.getProductId());
             message.put("productName", inventoryItem.getProductName());
-            message.put("currentQuantity", inventoryItem.getQty());
+            message.put("currentQuantity", inventoryItem.getQuantity());
             message.put("threshold", threshold);
-            message.put("location", inventoryItem.getLocation());
+            message.put("branchId", inventoryItem.getBranchId());
             message.put("timestamp", System.currentTimeMillis());
             message.put("eventType", "LOW_STOCK_ALERT");
 
@@ -57,18 +57,18 @@ public class RabbitMQPublisher {
                     message
             );
             
-            log.info("Published low stock alert for item ID: {}, SKU: {}, Quantity: {}", 
-                    inventoryItem.getId(), inventoryItem.getProductSku(), inventoryItem.getQty());
+            log.info("Published low stock alert for inventory ID: {}, Product: {}, Quantity: {}", 
+                    inventoryItem.getInventoryId(), inventoryItem.getProductId(), inventoryItem.getQuantity());
         } catch (Exception e) {
-            log.error("Failed to publish low stock alert for item ID: {}", inventoryItem.getId(), e);
+            log.error("Failed to publish low stock alert for inventory ID: {}", inventoryItem.getInventoryId(), e);
         }
     }
 
     public void publishNotificationAlert(InventoryItemDto inventoryItem, String alertType, String message) {
         try {
             Map<String, Object> notificationMessage = new HashMap<>();
-            notificationMessage.put("itemId", inventoryItem.getId());
-            notificationMessage.put("productSku", inventoryItem.getProductSku());
+            notificationMessage.put("inventoryId", inventoryItem.getInventoryId());
+            notificationMessage.put("productId", inventoryItem.getProductId());
             notificationMessage.put("productName", inventoryItem.getProductName());
             notificationMessage.put("alertType", alertType);
             notificationMessage.put("message", message);
@@ -81,10 +81,10 @@ public class RabbitMQPublisher {
                     notificationMessage
             );
             
-            log.info("Published notification alert for item ID: {}, Type: {}, Message: {}", 
-                    inventoryItem.getId(), alertType, message);
+            log.info("Published notification alert for inventory ID: {}, Type: {}, Message: {}", 
+                    inventoryItem.getInventoryId(), alertType, message);
         } catch (Exception e) {
-            log.error("Failed to publish notification alert for item ID: {}", inventoryItem.getId(), e);
+            log.error("Failed to publish notification alert for inventory ID: {}", inventoryItem.getInventoryId(), e);
         }
     }
 }

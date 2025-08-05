@@ -1,5 +1,6 @@
 package com.market_os.inventory_service.feign;
 
+import com.market_os.inventory_service.config.FeignConfig;
 import com.market_os.inventory_service.dto.TenantDto;
 import com.market_os.inventory_service.dto.BranchDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -11,19 +12,20 @@ import java.util.List;
 @FeignClient(
     name = "tenant-service",
     url = "${app.tenant-service.url}",
-    fallback = TenantServiceFallback.class
+    fallback = TenantServiceFallback.class,
+    configuration = FeignConfig.class
 )
 public interface TenantServiceClient {
     
-    @GetMapping("/tenants/{id}")
-    TenantDto getTenantById(@PathVariable Long id);
+    @GetMapping("/api/v1/tenants/{id}")
+    TenantDto getTenantById(@PathVariable String id);
     
-    @GetMapping("/tenants")
+    @GetMapping("/api/v1/tenants")
     List<TenantDto> getAllTenants();
     
-    @GetMapping("/branches/{id}")
-    BranchDto getBranchById(@PathVariable Long id);
+    @GetMapping("/api/v1/branches/{id}")
+    BranchDto getBranchById(@PathVariable String id);
     
-    @GetMapping("/tenants/{tenantId}/branches")
-    List<BranchDto> getBranchesByTenantId(@PathVariable Long tenantId);
+    @GetMapping("/api/v1/tenants/{tenantId}/branches")
+    List<BranchDto> getBranchesByTenantId(@PathVariable String tenantId);
 } 

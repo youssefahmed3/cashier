@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,16 +13,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class InventoryItemDto {
     
-    private Long id;
-    private LocalDate purchDate;
-    private String location;
-    private Integer qty;
+    private String inventoryId;
+    private String productId;
     private String productName;
-    private String productSku;
-    private Double unitPrice;
-    private Double totalCost;
-    private String supplier;
+    private String category;
+    private String branchId;
+    private String tenantId;
+    private Integer quantity;
     private Boolean isActive;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime lastUpdated;
 } 

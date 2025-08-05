@@ -215,10 +215,6 @@ services:
       - SPRING_INVENTORY_DATASOURCE_URL=jdbc:postgresql://inventory-db:5432/inventory_db
       - INVENTORY_POSTGRES_USER=inventory_db
       - INVENTORY_POSTGRES_PASSWORD=inventory_db
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
     depends_on:
       inventory-db:
         condition: service_healthy

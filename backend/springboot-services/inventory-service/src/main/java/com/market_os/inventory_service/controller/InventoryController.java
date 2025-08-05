@@ -44,6 +44,21 @@ public class InventoryController {
         return new ResponseEntity<>(createdItem, HttpStatus.CREATED);
     }
     
+    @PostMapping("/inventory")
+    @Operation(summary = "Create a new inventory item with integration", description = "Creates a new inventory item with catalog and tenant service integration")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Inventory item created successfully with integration"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data or product/branch not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<InventoryItemDto> createInventoryItemWithIntegration(
+            @Valid @RequestBody CreateInventoryItemDto createInventoryItemDto) {
+        log.info("REST request to create inventory item with integration: {}", createInventoryItemDto);
+        
+        InventoryItemDto createdItem = inventoryService.createInventoryItemWithIntegration(createInventoryItemDto);
+        return new ResponseEntity<>(createdItem, HttpStatus.CREATED);
+    }
+    
     @GetMapping("/{id}")
     @Operation(summary = "Get inventory item by ID", description = "Retrieves an inventory item by its ID")
     @ApiResponses(value = {
@@ -332,7 +347,7 @@ public class InventoryController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<TenantDto> getTenantFromTenantService(
-            @Parameter(description = "Tenant ID") @PathVariable Long tenantId) {
+            @Parameter(description = "Tenant ID") @PathVariable String tenantId) {
         log.info("REST request to get tenant from tenant service for ID: {}", tenantId);
         
         TenantDto tenant = inventoryService.getTenantFromTenantService(tenantId);
@@ -347,7 +362,7 @@ public class InventoryController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<BranchDto> getBranchFromTenantService(
-            @Parameter(description = "Branch ID") @PathVariable Long branchId) {
+            @Parameter(description = "Branch ID") @PathVariable String branchId) {
         log.info("REST request to get branch from tenant service for ID: {}", branchId);
         
         BranchDto branch = inventoryService.getBranchFromTenantService(branchId);
