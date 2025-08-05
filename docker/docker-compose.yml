@@ -124,7 +124,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
-      - dotnet-db
+      - subscription-db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
@@ -144,7 +144,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
-      - dotnet-db
+      - reporting-db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
