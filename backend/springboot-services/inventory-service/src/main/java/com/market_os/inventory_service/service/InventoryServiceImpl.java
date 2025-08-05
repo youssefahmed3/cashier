@@ -7,10 +7,8 @@ import com.market_os.inventory_service.mapper.InventoryMapper;
 import com.market_os.inventory_service.model.InventoryItem;
 import com.market_os.inventory_service.repository.InventoryRepository;
 import com.market_os.inventory_service.config.RabbitMQPublisher;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +16,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class InventoryServiceImpl implements InventoryService {
@@ -27,6 +24,16 @@ public class InventoryServiceImpl implements InventoryService {
     private final CatalogServiceClient catalogServiceClient;
     private final TenantServiceClient tenantServiceClient;
     private final RabbitMQPublisher rabbitMQPublisher;
+    
+    public InventoryServiceImpl(InventoryRepository inventoryRepository, 
+                              CatalogServiceClient catalogServiceClient, 
+                              TenantServiceClient tenantServiceClient, 
+                              RabbitMQPublisher rabbitMQPublisher) {
+        this.inventoryRepository = inventoryRepository;
+        this.catalogServiceClient = catalogServiceClient;
+        this.tenantServiceClient = tenantServiceClient;
+        this.rabbitMQPublisher = rabbitMQPublisher;
+    }
     
     @Override
     public InventoryItemDto createInventoryItem(CreateInventoryItemDto createInventoryItemDto) {
@@ -55,11 +62,13 @@ public class InventoryServiceImpl implements InventoryService {
     
     @Override
     @Transactional(readOnly = true)
-    public Page<InventoryItemDto> getAllInventoryItems(Pageable pageable) {
-        log.info("Fetching all inventory items with pagination");
+    public List<InventoryItemDto> getAllInventoryItems() {
+        log.info("Fetching all inventory items");
         
-        Page<InventoryItem> inventoryItems = inventoryRepository.findAll(pageable);
-        return inventoryItems.map(InventoryMapper::toDto);
+        List<InventoryItem> inventoryItems = inventoryRepository.findAll();
+        return inventoryItems.stream()
+                .map(InventoryMapper::toDto)
+                .collect(Collectors.toList());
     }
     
     @Override
