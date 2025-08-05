@@ -10,10 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,16 +60,15 @@ public class InventoryController {
     }
     
     @GetMapping
-    @Operation(summary = "Get all inventory items", description = "Retrieves all inventory items with pagination")
+    @Operation(summary = "Get all inventory items", description = "Retrieves all inventory items")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Inventory items retrieved successfully"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Page<InventoryItemDto>> getAllInventoryItems(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("REST request to get all inventory items with pagination");
+    public ResponseEntity<List<InventoryItemDto>> getAllInventoryItems() {
+        log.info("REST request to get all inventory items");
         
-        Page<InventoryItemDto> inventoryItems = inventoryService.getAllInventoryItems(pageable);
+        List<InventoryItemDto> inventoryItems = inventoryService.getAllInventoryItems();
         return ResponseEntity.ok(inventoryItems);
     }
     
