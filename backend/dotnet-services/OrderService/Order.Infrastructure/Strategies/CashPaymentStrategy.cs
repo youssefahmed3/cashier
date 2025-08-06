@@ -23,9 +23,7 @@ public class CashPaymentStrategy : IPaymentStrategy
 
     public async Task<ResultDto<Payment>> ProcessPaymentAsync(PaymentRequestDto paymentRequestDto)
     {
-        // TODO: Call the shiftService to get the shiftId 
-        var shiftId = 1;   
-
+     
         try
         {
             await _unitOfWork.BeginTransactionAsync();
@@ -34,7 +32,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             {
                 OrderId = paymentRequestDto.OrderId,
                 BranchId = paymentRequestDto.BranchId,
-                ShiftId = shiftId,
+                ShiftId = paymentRequestDto.ShiftId,
                 Method = PaymentMethod.Cash,
                 Amount = paymentRequestDto.Amount,
                 Status = TransactionStatus.Completed,
@@ -55,7 +53,7 @@ public class CashPaymentStrategy : IPaymentStrategy
             await _unitOfWork.SaveChangesAsync();
 
             // Fire and forget Payment event publishing
-           var eventResult = await _paymenteventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto, shiftId);
+           var eventResult = await _paymenteventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto);
 
             await _unitOfWork.CommitTransactionAsync();
 

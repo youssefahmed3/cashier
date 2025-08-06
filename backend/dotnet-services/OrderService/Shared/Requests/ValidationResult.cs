@@ -11,7 +11,6 @@ namespace Shared.Requests
         public bool IsValid { get; set; }
         public List<string> Errors { get; set; } = new();
         public bool BranchValid { get; set; }
-        public bool InventoryValid { get; set; }
         public bool ShiftValid { get; set; }
     }
 }
