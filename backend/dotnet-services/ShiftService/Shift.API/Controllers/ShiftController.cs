@@ -72,9 +72,7 @@ namespace Shift.API.Controllers
             return NotFound(new { error = result.Error });
         }
 
-        //Temp to configure it 
-        [AllowAnonymous]
-
+        [Authorize(Roles = "Admin,Cashier")]
         [HttpGet("validate/{shiftId}/{userId}")]
         public async Task<IActionResult> ValidateShiftForUser(long shiftId, long userId)
         {
