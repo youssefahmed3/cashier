@@ -9,5 +9,7 @@ namespace Order.Core.Interfaces.Services
     public interface IUserContextService
     {
         long GetUserId();
+        string? GetCurrentToken();
+
     }
 }

@@ -38,12 +38,13 @@ namespace Order.Services.Services
                     return ResultDto<OrderDto>.Failure("An order with the provided ID already exists.");
                 }
                 //TODO: Validate products/ inventory call external ProductService
-              //  var validationResult = await _validationService.ValidateShiftAsync(orderDto.ShiftId, orderDto.UserId.Value);
-                //if (!validationResult.IsSuccess) {
-                //    throw new InvalidOperationException(validationResult.Error);
-                //}
+                var validationResult = await _validationService.ValidateOrderAsync(orderDto);
+                if (!validationResult.IsSuccess)
+                {
+                    throw new InvalidOperationException(validationResult.Error);
+                }
 
-               var order = _mapper.Map<SalesOrder>(orderDto);
+                var order = _mapper.Map<SalesOrder>(orderDto);
 
                 await _unitOfWork.Orders.AddAsync(order);
                 await _unitOfWork.SaveChangesAsync();

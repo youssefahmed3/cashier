@@ -18,13 +18,17 @@ namespace Order.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly Dictionary<PaymentMethod, IPaymentStrategy> _paymentStrategies;
+        private readonly IValidationService _validationService;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public PaymentService(IUnitOfWork unitOfWork, IEnumerable<IPaymentStrategy> paymentStrategies, IMapper mapper)
+        public PaymentService(IUnitOfWork unitOfWork, IEnumerable<IPaymentStrategy> paymentStrategies, IMapper mapper, IValidationService validationService, IUserContextService userContextService)
         {
             _unitOfWork = unitOfWork;
             _paymentStrategies = paymentStrategies.ToDictionary(s => s.SupportedPaymentMethod);
             _mapper = mapper;
+            _validationService = validationService;
+            _userContextService = userContextService;
         }
 
         public async Task<ResultDto<PaymentDto>> ProcessPaymentAsync(PaymentRequestDto request)
@@ -46,7 +50,16 @@ namespace Order.Services.Services
                 {
                     return ResultDto<PaymentDto>.Failure($"Payment method {request.PaymentMethod} is not supported.");
                 }
-              
+                var userId =  _userContextService.GetUserId();
+                var branchResult = await _validationService.ValidateBranchAsync(request.BranchId);
+                var shiftResult = await _validationService.ValidateShiftAsync(request.ShiftId, userId);
+                if (!branchResult.IsSuccess  ||
+                    !shiftResult.IsSuccess)
+                {
+                    return ResultDto<PaymentDto>.Failure($"Validation check failed for reference data (BranchId: {request.BranchId}, ShiftId: {request.ShiftId}, UserId: {userId})");
+
+                }
+
                 var strategy = _paymentStrategies[method];
                 var result = await strategy.ProcessPaymentAsync(request);
               

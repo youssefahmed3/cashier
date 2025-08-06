@@ -15,7 +15,7 @@ namespace Shared.DTOS
 
         public long BranchId { get; set; }
 
-        //TODO: See if it better to get it with req or from backend 
+        public long ShiftId { get; set; }
         public long CashierId { get; set; }
 
         public long CustomerId { get; set; }

@@ -22,14 +22,14 @@ namespace Order.Services.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<ResultDto<bool>> PublishPaymentEventsAsync(Payment payment, PaymentRequestDto request, int shiftId)
+        public async Task<ResultDto<bool>> PublishPaymentEventsAsync(Payment payment, PaymentRequestDto request)
         {
             var results = new List<ResultDto<bool>>();
 
             var drawerLogEvent = new DrawerLogEvent
             {
                 BranchId = request.BranchId,
-                ShiftId = shiftId,
+                ShiftId = request.ShiftId,
                 TransactionType = "Sale",
                 Amount = request.Amount,
                 Reference = $"Cash payment for Order #{request.OrderId}",

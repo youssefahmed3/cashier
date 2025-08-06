@@ -10,6 +10,7 @@ using Order.Core.Interfaces.Strategies;
 using Order.Infrastructure.Data;
 using Order.Infrastructure.Data.Configurations;
 using Order.Infrastructure.Extensions;
+using Order.Infrastructure.HttpHandlers;
 using Order.Infrastructure.Repositories;
 using Order.Infrastructure.Services;
 using Order.Infrastructure.Settings;
@@ -41,6 +42,7 @@ namespace Order.API
             builder.Services.ConfigureDbService(builder.Configuration);
             builder.Services.Configure<PaymobSettings>(builder.Configuration.GetSection("PaymobSettings"));
             builder.Services.AddHttpContextAccessor();
+
             builder.Services.ConfigureMassTransitWithRabbitMq(builder.Configuration);
             builder.Services.AddHttpClient<ITokenValidationClient, TokenValidationClient>(client =>
             {
@@ -67,7 +69,9 @@ namespace Order.API
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<IRefundService, RefundService>();
             builder.Services.AddScoped<IUserContextService, UserContextService>();
-            builder.Services.AddScoped<IValidationService, ValidationService>();
+            builder.Services.AddScoped<AuthTokenDelegatingHandler>();
+            builder.Services.AddHttpClient<IValidationService, ValidationService>()
+                            .AddHttpMessageHandler<AuthTokenDelegatingHandler>();
             builder.Services.AddScoped<IPaymobCallbackService, PaymobCallbackService>();
 
 

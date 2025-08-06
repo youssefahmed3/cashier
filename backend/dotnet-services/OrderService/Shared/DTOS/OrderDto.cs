@@ -13,6 +13,7 @@ namespace Shared.DTOS
         public long BranchId { get; init; }
         public long? UserId { get; set; }
 
+        public decimal Total { get; set; }
         public long? CustomerId { get; set; }
 
         public long ShiftId { get; init; }
