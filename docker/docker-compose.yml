@@ -11,12 +11,12 @@ services:
       - --api.insecure=true
       - --entrypoints.web.address=:80
     ports:
-      - "80:80" # Public HTTP traffic
-      - "8080:8080" # Traefik Dashboard
+      - "80:80"       # Public HTTP traffic
+      - "8080:8080"   # Traefik Dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
-      - "traefik.http.routers.traefik.rule=Host(localhost) && PathPrefix(/dashboard)"
+      - "traefik.http.routers.traefik.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.entrypoints=web"
     networks:
@@ -51,7 +51,7 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=PathPrefix(/auth)"
+      - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
       - "traefik.http.routers.auth.entrypoints=web"
       - "traefik.http.services.auth.loadbalancer.server.port=7192"
       - "traefik.http.routers.auth.middlewares=strip-auth@docker"
@@ -67,7 +67,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.receipt.rule=PathPrefix(/receipt)"
+      - "traefik.http.routers.receipt.rule=PathPrefix(`/receipt`)"
       - "traefik.http.routers.receipt.entrypoints=web"
       - "traefik.http.services.receipt.loadbalancer.server.port=7048"
       - "traefik.http.routers.receipt.middlewares=strip-receipt@docker"
@@ -87,7 +87,7 @@ services:
       - dotnet-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.order.rule=PathPrefix(/order)"
+      - "traefik.http.routers.order.rule=PathPrefix(`/order`)"
       - "traefik.http.routers.order.entrypoints=web"
       - "traefik.http.services.order.loadbalancer.server.port=8085"
       - "traefik.http.routers.order.middlewares=strip-order@docker"
@@ -107,7 +107,7 @@ services:
       - dotnet-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(/shift)"
+      - "traefik.http.routers.shift-dotnet.rule=PathPrefix(`/shift`)"
       - "traefik.http.routers.shift-dotnet.entrypoints=web"
       - "traefik.http.services.shift-dotnet.loadbalancer.server.port=8086"
       - "traefik.http.routers.shift-dotnet.middlewares=strip-shift-dotnet@docker"
@@ -115,7 +115,7 @@ services:
     networks:
       - backend
 
-  subscription-service-dotnet:
+  subscription-service:
     build: ../backend/dotnet-services/SubscriptionService
     volumes:
       - ../backend/dotnet-services/SubscriptionService:/app
@@ -127,15 +127,15 @@ services:
       - subscription-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.subscription-dotnet.rule=PathPrefix(/subscription)"
-      - "traefik.http.routers.subscription-dotnet.entrypoints=web"
-      - "traefik.http.services.subscription-dotnet.loadbalancer.server.port=5130"
-      - "traefik.http.routers.subscription-dotnet.middlewares=strip-subscription-dotnet@docker"
-      - "traefik.http.middlewares.strip-subscription-dotnet.stripprefix.prefixes=/subscription"
+      - "traefik.http.routers.subscription.rule=PathPrefix(`/subscription`)"
+      - "traefik.http.routers.subscription.entrypoints=web"
+      - "traefik.http.services.subscription.loadbalancer.server.port=5130"
+      - "traefik.http.routers.subscription.middlewares=strip-subscription@docker"
+      - "traefik.http.middlewares.strip-subscription.stripprefix.prefixes=/subscription"
     networks:
       - backend
 
-  reporting-service-dotnet:
+  reporting-service:
     build: ../backend/dotnet-services/ReportingService
     volumes:
       - ../backend/dotnet-services/ReportingService:/app
@@ -147,7 +147,7 @@ services:
       - reporting-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.reporting.rule=PathPrefix(/reporting)"
+      - "traefik.http.routers.reporting.rule=PathPrefix(`/reporting`)"
       - "traefik.http.routers.reporting.entrypoints=web"
       - "traefik.http.services.reporting.loadbalancer.server.port=5290"
       - "traefik.http.routers.reporting.middlewares=strip-reporting@docker"
@@ -171,7 +171,7 @@ services:
       - notification-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.notifications.rule=PathPrefix(/notifications)"
+      - "traefik.http.routers.notifications.rule=PathPrefix(`/notifications`)"
       - "traefik.http.routers.notifications.entrypoints=web"
       - "traefik.http.services.notifications.loadbalancer.server.port=8080"
       - "traefik.http.routers.notifications.middlewares=strip-notifications@docker"
@@ -195,7 +195,7 @@ services:
       - catalog-db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.catalog.rule=PathPrefix(/catalog)"
+      - "traefik.http.routers.catalog.rule=PathPrefix(`/catalog`)"
       - "traefik.http.routers.catalog.entrypoints=web"
       - "traefik.http.services.catalog.loadbalancer.server.port=8080"
       - "traefik.http.routers.catalog.middlewares=strip-catalog@docker"
@@ -226,7 +226,7 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.inventory.rule=PathPrefix(/inventory)"
+      - "traefik.http.routers.inventory.rule=PathPrefix(`/inventory`)"
       - "traefik.http.routers.inventory.entrypoints=web"
       - "traefik.http.services.inventory.loadbalancer.server.port=8080"
       - "traefik.http.routers.inventory.middlewares=strip-inventory@docker"
@@ -267,7 +267,7 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.tenant.rule=PathPrefix(/tenant)"
+      - "traefik.http.routers.tenant.rule=PathPrefix(`/tenant`)"
       - "traefik.http.routers.tenant.entrypoints=web"
       - "traefik.http.services.tenant.loadbalancer.server.port=8080"
       - "traefik.http.routers.tenant.middlewares=strip-tenant@docker"
@@ -346,6 +346,39 @@ services:
       ACCEPT_EULA: "Y"
     ports:
       - "1434:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "pidof sqlservr || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - backend
+
+  reporting-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: reporting-db
+    platform: linux/amd64
+    environment:
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1435:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "pidof sqlservr || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - backend
+  subscription-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: subscription-db
+    platform: linux/amd64
+    environment:
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1436:1433"
     healthcheck:
       test: ["CMD-SHELL", "pidof sqlservr || exit 1"]
       interval: 10s
