@@ -46,6 +46,7 @@ export const useTenant = () => {
       queryKey: ["tenant", tenantId],
       queryFn: () => getTenantById(tenantId, token),
       enabled: !!tenantId,
+      staleTime: 60000, // 1 minute cache
     });
 
   const tenantSubscriptionStatusQuery = (id: string) =>
@@ -53,6 +54,7 @@ export const useTenant = () => {
       queryKey: ["tenant", id, "subscription"],
       queryFn: () => getSubscriptionStatus(id, token),
       enabled: !!id,
+      staleTime: 60000, // 1 minute cache
     });
 
   const tenantWithBranchesQuery = (tenantId: string) =>
@@ -60,21 +62,28 @@ export const useTenant = () => {
       queryKey: ["tenant", tenantId, "with-branches"],
       queryFn: () => getTenantWithBranches(tenantId, token),
       enabled: !!tenantId,
+      staleTime: 60000, // 1 minute cache
     });
 
   const activeTenantsQuery = useQuery<Tenant[]>({
     queryKey: ["tenants", "active"],
-    queryFn: async() => await getActiveTenants(token),
+    queryFn: async () => await getActiveTenants(token),
+    staleTime: 60000, // 1 minute cache
+
   });
 
   const allUserTenantMappingsQuery = useQuery({
     queryKey: ["user-tenant-mappings"],
     queryFn: async () => await getAllUserTenantMappings(token),
+    staleTime: 60000, // 1 minute cache
+
   });
 
   const getAllTenantWithPaginationQuery = useQuery({
     queryKey: ["tenants", "paginated"],
     queryFn: async () => await getAllTenantWithPagination(token),
+        staleTime: 60000, // 1 minute cache
+
   })
 
   const userTenantQuery = (userId: number) =>
@@ -82,6 +91,8 @@ export const useTenant = () => {
       queryKey: ["user", userId, "tenant"],
       queryFn: () => getUserTenant(userId, token),
       enabled: !!userId,
+          staleTime: 60000, // 1 minute cache
+
     });
 
   // Mutations
@@ -93,6 +104,7 @@ export const useTenant = () => {
       queryClient.invalidateQueries({ queryKey: ["tenants", "active"] });
     },
     onError: () => toast.error("Failed to create tenant"),
+
   });
 
   const updateTenantMutation = useMutation({

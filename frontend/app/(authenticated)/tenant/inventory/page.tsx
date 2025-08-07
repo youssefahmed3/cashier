@@ -1,3 +1,4 @@
+"use client";
 import CustomButton from "@/components/Button/Button";
 import TenantStatsCard from "@/components/TenantStatsCard/TenantStatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,8 +24,14 @@ import {
 } from "lucide-react";
 import React from "react";
 import { columnInventory } from "../_components/columnInventory";
+import { useInventory } from "@/hooks/useInventory";
 
 const Page = () => {
+
+  const { inventory } = useInventory();
+
+  console.log("inventory", inventory);
+  
   return (
     <div className="container-base">
       <header className="flex flex-col gap-6">

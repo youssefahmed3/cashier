@@ -106,3 +106,18 @@ export type AssignRoleDto = {
     roleId: number,
     tenantId: string
 }
+
+
+export type CreateInventoryDto = {
+    productId: string,
+    branchId: string,
+    quantity: number
+}
+
+export type UpdateInventoryDto = {
+    productId: string,
+    branchId: string,
+    quantity: number,
+    productName: string,
+    category: string
+}

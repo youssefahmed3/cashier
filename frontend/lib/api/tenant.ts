@@ -67,7 +67,7 @@ export async function getAllTenantWithPagination( token: string) : Promise<tenan
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || "Something went wrong");
-    console.log(json);
+    console.log("from api call tenants" , json);
     
     return json;
 }

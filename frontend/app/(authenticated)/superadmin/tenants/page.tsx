@@ -29,21 +29,21 @@ import { Tenant } from "@/types/types";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
 import CreateTenantModal from "@/components/modals/CreateTenantModal";
-
-
+import { useCatalog } from "@/hooks/useCatalog";
 
 const Page = () => {
   const { activeTenantsQuery } = useTenant();
-  const { getAllTenantWithPaginationLoading, getAllTenantWithPagination } = useTenant();
-
-  if (getAllTenantWithPaginationLoading) {
+  const { getAllTenantWithPaginationLoading, getAllTenantWithPagination } =
+    useTenant();
+  const { products, productsLoading } = useCatalog();
+  if (getAllTenantWithPaginationLoading || productsLoading) {
     return <div>Loading...</div>;
   }
 
   console.log("activeTenants", activeTenantsQuery);
 
   console.log("All Tenants", getAllTenantWithPagination!.content);
-  
+
   // console.log(tenantWithBranchesQuery());
   return (
     <div className="container-base">
@@ -61,15 +61,15 @@ const Page = () => {
 
         {/* Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
-          <TenantStatsCard title="Total Items" value="5" icon={<Box />} />
+          <TenantStatsCard title="Total Items" value={(products?.length ?? 0).toString()} icon={<Box />} />
           <TenantStatsCard
             title="Total Tenants"
-            value={getAllTenantWithPagination!.content.length.toString()}
+            value={(getAllTenantWithPagination?.content?.length ?? 0).toString()}
             icon={<AlertTriangle />}
           />
           <TenantStatsCard
             title="Active Tenants"
-            value={activeTenantsQuery.data!.length.toString()}
+            value={(activeTenantsQuery.data?.length ?? 0).toString()}
             icon={<LucideCalendarRange />}
           />
           <TenantStatsCard
