@@ -1,0 +1,184 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "05f9c2e5-a47c-4ebd-9765-454f80dd84c4",
+      "name": "Email Trigger (IMAP)",
+      "credentials": {
+        "imap": {
+          "id": "y9il8GiM9NVBkDJp",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "587f6400-6b05-47ae-a46f-acc0cea30013",
+      "name": "Wait",
+      "webhookId": "878959fe-141e-416e-a8d0-31b42ab24e58"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "Thanks for reaching out! Let’s get started",
+        "emailType": "text",
+        "message": "=Hi there,\n\nThank you for reaching out! To help you better, please fill out this quick form with your grocery preferences and budget:\n\n👉 https://forms.gle/yiYPCV9pSVLirVdm9\n\nWe'll send you recommendations shortly!\n\nBest,  \nSSmart Pos\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e1d5c5be-775b-4a0b-a6bb-d3a2af592676",
+      "name": "Send a message",
+      "webhookId": "89837afb-ad79-4a79-ab22-79de03296799",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5fNUn3AHOxCJJFpW",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "form-response",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        -16
+      ],
+      "id": "be6eca97-c1d8-4789-8fe3-b6dff9a88bda",
+      "name": "Webhook",
+      "webhookId": "f0b7a675-0e09-4325-b8aa-2c818618c89d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Authorization\": \"Bearer YOUR_API_KEY\",\n  \"Content-Type\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-3.5-turbo\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a grocery expert who gives budget-optimized grocery lists from Egyptian supermarkets.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Give me a grocery list for a budget of {{$json[\"budget\"]}} EGP. The category is {{$json[\"category\"]}}.\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        848,
+        -16
+      ],
+      "id": "13a42f8b-52b0-43c7-89aa-22cb186bad6a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fromEmail": "Smart Pos ",
+        "toEmail": "={{$json[\"email\"]}}",
+        "subject": "Your Grocery Recommendations",
+        "html": "=Hi {{$json[\"firstName\"]}} {{$json[\"lastName\"]}},<br><br>\nHere are your personalized grocery recommendations based on your budget of {{$json[\"budget\"]}} EGP and category \"{{$json[\"category\"]}}\":<br><br>\n\n<pre>{{$node[\"HTTP Request\"].json[\"choices\"][0][\"message\"][\"content\"]}}</pre><br><br>\n\nThanks for using our service!<br>\nSupermarket Bot 🛒\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1056,
+        -16
+      ],
+      "id": "f752ea5c-61fb-4595-9151-0c0ff9677358",
+      "name": "Send email",
+      "webhookId": "79be4d07-f5a8-4239-823f-78a2e0ee1d8c",
+      "credentials": {
+        "smtp": {
+          "id": "gyh8bswaCKbHlsiB",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Trigger (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9a062412-2bbb-4a55-a30a-1879f2c64574",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "def4565a1932746ea17720441ec5ad7f12a4d35ac7203d3f9bcc82e791433fb5"
+  },
+  "id": "9QE8UJ4lMCfMO8Qm",
+  "tags": []
+}
