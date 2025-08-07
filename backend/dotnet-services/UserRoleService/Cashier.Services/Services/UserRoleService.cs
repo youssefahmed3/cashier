@@ -4,27 +4,95 @@
         IHttpContextAccessor _httpContextAccessor, UserManager<AppUser> _userManager) : IUserRoleService
     {
         // Retrieves a paginated and filtered list of users.
+        //public async Task<List<AppUserDto>> GetAllUsersAsync(UserQueryDto? filter)
+        //{
+        //    filter ??= new UserQueryDto();
+
+        //    var query = await _unitOfWork.GetRepository<AppUser, int>().GetAllAsync();
+
+        //    if (!string.IsNullOrWhiteSpace(filter.Email))
+        //        query = query.Where(u => u.Email != null && u.Email.Contains(filter.Email));
+
+        //    if (!string.IsNullOrWhiteSpace(filter.FirstName))
+        //        query = query.Where(u => (u.Firstname != null && u.Firstname.Contains(filter.FirstName))
+        //                              || (u.Lastname != null && u.Lastname.Contains(filter.FirstName)));
+
+        //    var users = query
+        //        .Where(u => !u.IsSuspended)
+        //        .Skip((filter.PageNumber - 1) * filter.PageSize)
+        //        .Take(filter.PageSize)
+        //        .ToList();
+        //    // Fetch roles for each user
+        //    var result = new List<AppUserDto>();
+        //    foreach (var user in users)
+        //    {
+        //        var userDto = _mapper.Map<AppUserDto>(user);
+        //        var roles = await _userManager.GetRolesAsync(user);
+        //        userDto.Roles = roles.ToList();
+        //        result.Add(userDto);
+        //    }
+        //    return users.Select(_mapper.Map<AppUserDto>).ToList();
+        //}
         public async Task<List<AppUserDto>> GetAllUsersAsync(UserQueryDto? filter)
         {
             filter ??= new UserQueryDto();
 
-            var query = await _unitOfWork.GetRepository<AppUser, int>().GetAllAsync();
+            var users = await _unitOfWork.GetRepository<AppUser, int>().GetAllAsync();
+            var roles = await _unitOfWork.GetRepository<AppRole, int>().GetAllAsync();
+            var userRoles = await _unitOfWork.GetRepository<UserRole, int>().GetAllAsync();
 
+            // Apply filters
             if (!string.IsNullOrWhiteSpace(filter.Email))
-                query = query.Where(u => u.Email != null && u.Email.Contains(filter.Email));
+                users = users.Where(u => u.Email != null && u.Email.Contains(filter.Email)).ToList();
 
             if (!string.IsNullOrWhiteSpace(filter.FirstName))
-                query = query.Where(u => (u.Firstname != null && u.Firstname.Contains(filter.FirstName))
-                                      || (u.Lastname != null && u.Lastname.Contains(filter.FirstName)));
+                users = users.Where(u =>
+                    (u.Firstname != null && u.Firstname.Contains(filter.FirstName)) ||
+                    (u.Lastname != null && u.Lastname.Contains(filter.FirstName))
+                ).ToList();
 
-            var users = query
+            users = users
                 .Where(u => !u.IsSuspended)
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
                 .ToList();
 
-            return users.Select(_mapper.Map<AppUserDto>).ToList();
+            // Build final result with roles
+            var result = users.Select(u => new AppUserDto
+            {
+                Id = u.Id,
+                Email = u?.Email??"",
+                Firstname = u.Firstname,
+                Lastname = u.Lastname,
+                Roles = userRoles
+               .Where(ur => ur.UserId == u.Id)
+               .Join(roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+               .Where(name => name != null)       
+               .Select(name => name!)            
+               .ToList()
+                  }).ToList();
+
+
+            return result;
         }
+
+        //Retrive data of current logged in user 
+        public async Task<AppUserWithRolesDto> GetCurrentUserAsync()
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return new AppUserWithRolesDto();
+
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            if (user == null)
+                return new AppUserWithRolesDto();
+
+            var userDto = _mapper.Map<AppUserWithRolesDto>(user);
+            userDto.Roles = (await _userManager.GetRolesAsync(user)).ToList();
+
+            return userDto;
+        }
+
         // Retrieves all roles in the system.
         public async Task<List<AppRoleDto>> GetAllRolesAsync()
         {
@@ -84,7 +152,7 @@
             return true;
         }
         // Gets the roles assigned to a user for a specific tenant.
-        public async Task<List<UserRoleInfoDto>> GetUserRolesAsync(int userId, int tenantId)
+        public async Task<List<UserRoleInfoDto>> GetUserRolesAsync(int userId, Guid tenantId)
         {
             var userRoleRepo = _unitOfWork.GetRepository<UserRole, int>();
             var roleRepo = _unitOfWork.GetRepository<AppRole, int>();
@@ -104,7 +172,7 @@
             return assignedRoles.ToList();
         }
         // Gets all users assigned to a role in a specific tenant.
-        public async Task<List<AppUserDto>> GetUsersInRoleAsync(int roleId, int tenantId)
+        public async Task<List<AppUserDto>> GetUsersInRoleAsync(int roleId, Guid tenantId)
         {
             var userRoleRepo = _unitOfWork.GetRepository<UserRole, int>();
             var userRepo = _unitOfWork.GetRepository<AppUser, int>();
@@ -180,7 +248,7 @@
         }
 
         // Gets all users in a tenant with their assigned roles.
-        public async Task<List<UserWithRolesDto>> GetUsersWithRolesByTenantAsync(int tenantId)
+        public async Task<List<UserWithRolesDto>> GetUsersWithRolesByTenantAsync(Guid tenantId)
         {
             var userRepo = _unitOfWork.GetRepository<AppUser, int>();
             var userRoleRepo = _unitOfWork.GetRepository<UserRole, int>();
@@ -220,6 +288,19 @@
 
             return permissions.ToList();
         }
+        //Get tenantId for specific user
+        public async Task<Guid?> GetCurrentTenantIdAsync()
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return null;
+
+            var userRoles = await _unitOfWork.GetRepository<UserRole, int>().GetAllAsync();
+            var userTenant = userRoles.FirstOrDefault(ur => ur.UserId.ToString() == userId);
+
+            return userTenant?.TenantId;
+        }
+
         // ---------- Private Helper Methods ----------
         // Checks if the current user is authorized (SuperAdmin or Admin) to assign permissions.
         private async Task<(bool IsAuthorized, string Message)> EnsureCurrentUserIsAuthorizedAsync()

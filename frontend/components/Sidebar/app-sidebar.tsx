@@ -6,6 +6,8 @@ import {
   BookOpen,
   Bot,
   Box,
+  Building2,
+  ChartArea,
   Command,
   Frame,
   GalleryVerticalEnd,
@@ -15,6 +17,7 @@ import {
   Settings,
   Settings2,
   SquareTerminal,
+  User,
   Users,
 } from "lucide-react";
 
@@ -28,124 +31,137 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
+import { Role } from "@/types/types";
+import { useAggregate } from "@/hooks/useAggregate";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
+type UserRole = "admin" | "superadmin"; // type fix
+
+const fetchedMockedUser = {
+  id: "1",
+  name: "John Doe",
+  email: "m@example.com",
+  avatar: "/avatars/shadcn.jpg",
+  role: "admin" as UserRole,
   branches: [
     {
+      id: "branch-1",
       name: "Branch 1",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
-    {
-      name: "Branch 2",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Branch 3",
-      logo: Command,
-      plan: "Free",
-    },
   ],
+};
+
+const data = {
   navMain: [
     {
       title: "Dashboard",
       url: "/tenant/dashboard",
       icon: LayoutDashboard,
       isActive: true,
+      role: ["admin"] as Role[],
     },
     {
       title: "Employees",
       url: "/tenant/employees",
       icon: Users,
       isActive: true,
+      role: ["admin"] as Role[],
     },
     {
       title: "Inventory",
       url: "/tenant/inventory",
       icon: Box,
-      /* items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ], */
+      role: ["admin"] as Role[],
     },
     {
-      title: "Products",
-      url: "/tenant/products",
+      title: "Catalog",
+      url: "/tenant/catalog",
       icon: Box,
       isActive: true,
+      role: ["admin"] as Role[],
     },
-
     {
       title: "Settings",
       url: "/tenant/settings",
       icon: Settings,
-      /* items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ], */
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      role: ["admin"] as Role[],
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
+      title: "Dashboard",
+      url: "/superadmin/dashboard",
+      icon: LayoutDashboard,
+      role: ["superadmin"] as Role[],
     },
     {
-      name: "Travel",
-      url: "#",
-      icon: Map,
+      title: "Users",
+      url: "/superadmin/users",
+      icon: User,
+      role: ["superadmin"] as Role[],
+    },
+    {
+      title: "Tenants",
+      url: "/superadmin/tenants",
+      icon: Building2,
+      role: ["superadmin"] as Role[],
+    },
+    {
+      title: "System Wide Analytics",
+      url: "/superadmin/analytics",
+      icon: ChartArea,
+      role: ["superadmin"] as Role[],
+    },
+    {
+      title: "Settings",
+      url: "/superadmin/settings",
+      icon: Settings,
+      role: ["superadmin"] as Role[],
     },
   ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { getFullUserData, isLoading } = useAggregate();
+
+  if (isLoading || !getFullUserData?.user) {
+    return null; // Or a <SkeletonSidebar /> component
+  }
+
+  const role = getFullUserData.user.roles?.[0] ?? "admin";
+
+  const branches =
+    getFullUserData?.tenant?.branches?.map((branch) => ({
+      name: branch.name,
+      logo: Building2, // Replace with dynamic icon if available
+      plan: "Enterprise", // Add from backend if needed
+    })) ?? [];
+
+  const filteredNavItems = data.navMain.filter((item) =>
+    item.role.some((r) => getFullUserData.user?.roles.includes(r))
+  );
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher branches={data.branches} />
+        <p className="text-center font-bold">{getFullUserData?.tenant?.name}</p>
+        <TeamSwitcher
+          tenantName={getFullUserData?.tenant?.name ?? ""}
+          role={role ?? "admin"}
+          branches={
+            branches.map((branch) => ({
+              name: branch.name,
+              logo: Building2, // Replace with branch.logo if you store icons
+              plan: "Enterprise", // Add from backend later if needed
+            })) ?? []
+          }
+        />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavItems} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={getFullUserData.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

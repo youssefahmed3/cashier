@@ -17,6 +17,17 @@ import { MoreHorizontal } from "lucide-react";
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 
+
+/* 
+    id: string;
+    name: string;
+    phone: string;
+    location: string;
+    tax_percentage: number;
+    tenant_id: string;
+    created_at: string;
+*/
+
 export const columnsBranches: ColumnDef<BranchType>[] = [
   {
     accessorKey: "id",
@@ -26,7 +37,7 @@ export const columnsBranches: ColumnDef<BranchType>[] = [
     ),
   },
   {
-    accessorKey: "branch_name",
+    accessorKey: "name",
     header: () => <div className="text-center w-full">Branch Name</div>,
     cell: ({ getValue }) => (
       <div className="text-center w-full">{getValue() as string}</div>
@@ -40,8 +51,8 @@ export const columnsBranches: ColumnDef<BranchType>[] = [
     ),
   },
   {
-    accessorKey: "tax",
-    header: () => <div className="text-center w-full">Tax</div>,
+    accessorKey: "tax_percentage",
+    header: () => <div className="text-center w-full">Tax Percentage</div>,
     cell: ({ getValue }) => (
       <div className="text-center w-full">{getValue() as string}%</div>
     ),
@@ -56,14 +67,14 @@ export const columnsBranches: ColumnDef<BranchType>[] = [
   },
 
   {
-    accessorKey: "slug",
-    header: () => <div className="text-center w-full">Slug</div>,
+    accessorKey: "created_at",
+    header: () => <div className="text-center w-full">Created At</div>,
     cell: ({ getValue }) => (
       <div className="text-center w-full">{getValue() as string}</div>
     ),
   },
 
-  {
+  /* {
     accessorKey: "status",
     header: () => <div className="text-center w-full">Status</div>,
     cell: ({ row }) => {
@@ -89,7 +100,7 @@ export const columnsBranches: ColumnDef<BranchType>[] = [
         </div>
       );
     },
-  },
+  }, */
   {
     id: "actions",
     header: () => <div className="text-center w-full">Actions</div>,

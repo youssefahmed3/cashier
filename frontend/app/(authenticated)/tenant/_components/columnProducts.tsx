@@ -1,6 +1,6 @@
 "use client";
 
-import { BranchType, InventoryType, ProductType } from "@/types/types";
+import { BranchType, InventoryType, Product, ProductType } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import { MoreHorizontal } from "lucide-react";
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 
-export const columnProducts: ColumnDef<ProductType>[] = [
+export const columnProducts: ColumnDef<Product>[] = [
   {
     accessorKey: "id",
     header: () => <div className="text-center w-full">ID</div>,

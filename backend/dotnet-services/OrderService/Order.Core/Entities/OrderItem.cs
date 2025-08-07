@@ -10,6 +10,8 @@ namespace Order.Core.Entities
     {
         public long Id { get; set; }
 
+        public string Name { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public decimal UnitPrice { get; set; }
 

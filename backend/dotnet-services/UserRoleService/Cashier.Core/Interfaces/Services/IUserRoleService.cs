@@ -1,19 +1,25 @@
-﻿namespace Cashier.Core.Interfaces.Services
+﻿using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
+
+namespace Cashier.Core.Interfaces.Services
 {
     public interface IUserRoleService
     {
         Task<List<AppUserDto>> GetAllUsersAsync(UserQueryDto? filter);
+        Task<AppUserWithRolesDto> GetCurrentUserAsync();
         Task<List<AppRoleDto>> GetAllRolesAsync();
         Task AssignRoleAsync(AssignRoleDto dto);
         Task<bool> UpdateUserAsync(UpdateUserDto dto);
         Task<bool> UnassignRoleAsync(UnassignRoleDto dto);
-        Task<List<UserRoleInfoDto>> GetUserRolesAsync(int userId, int tenantId);
-        Task<List<AppUserDto>> GetUsersInRoleAsync(int roleId, int tenantId);
+        Task<List<UserRoleInfoDto>> GetUserRolesAsync(int userId, Guid tenantId);
+        Task<List<AppUserDto>> GetUsersInRoleAsync(int roleId, Guid tenantId);
         Task<(bool Success, string Message)> AssignPermissionsToUserAsync(AssignPermissionDto dto);
         Task<AppUserToReturnDto> GetUserAsync(int userId);
         Task<bool> SuspendUserAsync(int userId);
         Task<bool> UnsuspendUserAsync(int userId);
-        Task<List<UserWithRolesDto>> GetUsersWithRolesByTenantAsync(int tenantId);
+        Task<List<UserWithRolesDto>> GetUsersWithRolesByTenantAsync(Guid tenantId);
         Task<List<PermissionDto>> GetUserPermissionsAsync(int userId);
+        Task<Guid?> GetCurrentTenantIdAsync();
+
     }
 }

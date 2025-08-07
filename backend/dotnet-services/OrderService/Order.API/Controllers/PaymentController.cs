@@ -1,19 +1,26 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Order.Core.Interfaces.Repositories;
 using Order.Core.Interfaces.Services;
+using Order.Services.Services;
 using Shared.DTOS;
 
 namespace Order.API.Controllers
 {
+    [Authorize]
+
     [Route("api/[controller]")]
     [ApiController]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly IRefundService _refundService;
 
-        public PaymentController(IPaymentService paymentService)
+        public PaymentController(IPaymentService paymentService, IRefundService refundService)
         {
             _paymentService = paymentService;
+            _refundService  = refundService;
         }
 
         [HttpPost("process")]
@@ -28,9 +35,9 @@ namespace Order.API.Controllers
         }
 
         [HttpPost("refund")]
-        public async Task<IActionResult> RefundPayment(RefundRequest refundRequest)
+        public async Task<IActionResult> RefundPayment(RefundRequestDto refundRequest)
         {
-            var result = await _paymentService.RefundPaymentAsync(refundRequest.PaymentId, refundRequest.Amount);
+            var result = await _refundService.ProcessRefundAsync(refundRequest);
 
             if (result.IsSuccess)
                 return Ok(result.Value);
@@ -53,6 +60,28 @@ namespace Order.API.Controllers
         public async Task<IActionResult> GetPaymentsByOrder(long orderId)
         {
             var result = await _paymentService.GetPaymentsByOrderIdAsync(orderId);
+
+            if (result.IsSuccess)
+                return Ok(result.Value);
+
+            return BadRequest(new { error = result.Error });
+        }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllPayments([FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null)
+        {
+            var result = await _paymentService.GetAllPaymentsAsync(fromDate, toDate);
+
+            if (result.IsSuccess)
+                return Ok(result.Value);
+
+            return BadRequest(new { error = result.Error });
+        }
+
+        [HttpGet("branch/{branchId}")]
+        public async Task<IActionResult> GetPaymentsByBranch(long branchId, [FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null)
+        {
+            var result = await _paymentService.GetPaymentsByBranchIdAsync(branchId, fromDate, toDate);
 
             if (result.IsSuccess)
                 return Ok(result.Value);

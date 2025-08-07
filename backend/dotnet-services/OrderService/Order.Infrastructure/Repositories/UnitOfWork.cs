@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -16,6 +17,9 @@ namespace Order.Infrastructure.Repositories
         private IDbContextTransaction? _transaction;
         public IOrderRepository Orders { get; }
         public IGenericRepository<OrderItem, long> OrderItems { get; }
+        public IRefundRepository Refunds { get; }
+
+        public IGenericRepository<RefundItem, long> RefundItems { get; }
 
         public IPaymentRepository PaymentRepo {  get; }
 
@@ -25,6 +29,9 @@ namespace Order.Infrastructure.Repositories
             Orders = new OrderRepository(_context);
             OrderItems = new GenericRepository<OrderItem, long>(_context);
             PaymentRepo =  new PaymentRepository(_context);
+            RefundItems = new GenericRepository<RefundItem, long>(_context);
+            Refunds = new RefundRepository(_context, RefundItems, OrderItems);
+
         }
 
         public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();

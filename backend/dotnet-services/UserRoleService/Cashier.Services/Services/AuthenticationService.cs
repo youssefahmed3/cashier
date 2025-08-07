@@ -114,7 +114,7 @@
 
                 await _emailSender.SendEmailAsync(email);
 
-                return new LoginResponseDto { Requires2FA = true, Message = "Please confirm your email" };
+                return new LoginResponseDto {  Requires2FA = true, Message = "Please confirm your email" };
             }
 
             return GenerateTokensAsync(user);
@@ -199,6 +199,28 @@
             var user = await _userManager.FindByIdAsync(userId.ToString());
             if (user != null)
                 await _signInManager.SignOutAsync();
+        }
+        //Send email to superadmin to announce about tenant registiration
+        public async Task AnnouceSuperAdmin(SuperAdminConfirmationEmailDto dto)
+        {
+            var email = new Email
+            {
+                To = "Musictop043@gmail.com",
+                Body = EmailBuilder.BuildSuperAdminConfirmationEmail(dto),
+                Subject = $"Tenant {dto.Name} Registiration"
+            };
+           await _emailSender.SendEmailAsync(email);
+        }
+          //Send email to tenant admin to announce about confirmation his/her email
+        public async Task AnnouceAdmin(string adminEmail)
+        {
+            var email = new Email
+            {
+                To = adminEmail,
+                Body = EmailBuilder.BuildAdminConfirmationEmail($"{baseFrontendUrl}/login"),
+                Subject = $"Registiration confirmed successfully"
+            };
+           await _emailSender.SendEmailAsync(email);
         }
 
         // Helper method: Generates access and refresh tokens for authenticated user

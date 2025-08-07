@@ -12,6 +12,13 @@
             var users = await _service.GetAllUsersAsync(filter);
             return Ok(users);
         }
+        // GET: api/userrole/me
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUserInfo()
+        {
+            var user = await _service.GetCurrentUserAsync();
+            return Ok(user);
+        }
         //GET : api/userrole/users/{userId}
         [HttpGet("users/{userId}")]
         public async Task<IActionResult> GetUserById(int userId)
@@ -53,14 +60,14 @@
         }
         // GET: api/userrole/user/{userId}/tenant/{tenantId}/roles
         [HttpGet("user/{userId}/tenant/{tenantId}/roles")]
-        public async Task<IActionResult> GetUserRoles(int userId, int tenantId)
+        public async Task<IActionResult> GetUserRoles(int userId, Guid tenantId)
         {
             var roles = await _service.GetUserRolesAsync(userId, tenantId);
             return Ok(roles);
         }
         // GET: api/userrole/role/{roleId}/tenant/{tenantId}/users
         [HttpGet("role/{roleId}/tenant/{tenantId}/users")]
-        public async Task<IActionResult> GetUsersInRole(int roleId, int tenantId)
+        public async Task<IActionResult> GetUsersInRole(int roleId, Guid tenantId)
         {
             var users = await _service.GetUsersInRoleAsync(roleId, tenantId);
             return Ok(users);
@@ -100,7 +107,7 @@
         }
         // GET: api/userrole/tenant/{tenantId}/users-with-roles
         [HttpGet("tenant/{tenantId}/users-with-roles")]
-        public async Task<IActionResult> GetUsersWithRolesByTenant(int tenantId)
+        public async Task<IActionResult> GetUsersWithRolesByTenant(Guid tenantId)
         {
             var usersWithRoles = await _service.GetUsersWithRolesByTenantAsync(tenantId);
             return Ok(usersWithRoles);
@@ -112,5 +119,16 @@
             var permissions = await _service.GetUserPermissionsAsync(userId);
             return Ok(permissions);
         }
+        //GET : api/userrole/current-tenant-id
+        [HttpGet("current-tenant-id")]
+        public async Task<IActionResult> GetCurrentTenantId()
+        {
+            var tenantId = await _service.GetCurrentTenantIdAsync();
+            if (tenantId == null)
+                return NotFound("Tenant not assigned for current user");
+
+            return Ok(new { TenantId = tenantId });
+        }
+
     }
 }

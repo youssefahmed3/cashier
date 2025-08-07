@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using Order.Core.Entities;
 using Order.Core.Enums;
 using Order.Core.Interfaces.Services;
@@ -8,6 +10,7 @@ using Shared.DTOS;
 
 namespace Order.API.Controllers
 {
+    [Authorize(Roles = "Admin,Cashier")]
     [Route("api/orders")]
     [ApiController]
     public class OrderController : ControllerBase
@@ -41,7 +44,7 @@ namespace Order.API.Controllers
         // POST api/<OrderController>
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] OrderDto orderDto)
-        {
+        { 
             var result = await _orderService.CreateOrderAsync(orderDto);
 
             if (!result.IsSuccess)

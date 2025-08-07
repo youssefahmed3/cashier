@@ -1,39 +1,41 @@
 ﻿using Order.Core.Entities;
 using Order.Core.Enums;
 using Order.Core.Interfaces.Repositories;
+using Order.Core.Interfaces.Services;
 using Order.Core.Interfaces.Strategies;
 using Shared.DTOS;
+using Shared.Events;
 
 public class CashPaymentStrategy : IPaymentStrategy
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentEventPublisher _paymenteventPublisher;
+    private readonly IRefundEventPublisher _refundEventPublisher;
 
-    public CashPaymentStrategy(IUnitOfWork unitOfWork)
+    public CashPaymentStrategy(IUnitOfWork unitOfWork, IPaymentEventPublisher paymenteventPublisher, IRefundEventPublisher refundEventPublisher)
     {
         _unitOfWork = unitOfWork;
+        _paymenteventPublisher = paymenteventPublisher;
+        _refundEventPublisher = refundEventPublisher;
     }
 
     public PaymentMethod SupportedPaymentMethod => PaymentMethod.Cash;
 
     public async Task<ResultDto<Payment>> ProcessPaymentAsync(PaymentRequestDto paymentRequestDto)
     {
+     
         try
         {
-            // TODO: Validate cashier's shift
-
-            var shiftId = 1;
-            var cashierId = 1;
-
             await _unitOfWork.BeginTransactionAsync();
 
             var payment = new Payment
             {
                 OrderId = paymentRequestDto.OrderId,
                 BranchId = paymentRequestDto.BranchId,
-                ShiftId = shiftId,
+                ShiftId = paymentRequestDto.ShiftId,
                 Method = PaymentMethod.Cash,
                 Amount = paymentRequestDto.Amount,
-                Status = PaymentStatus.Completed,
+                Status = TransactionStatus.Completed,
                 CreatedAt = DateTime.UtcNow,
                 CompletedAt = DateTime.UtcNow,
                 Reference = paymentRequestDto.Reference
@@ -41,7 +43,6 @@ public class CashPaymentStrategy : IPaymentStrategy
 
             await _unitOfWork.PaymentRepo.AddAsync(payment);
 
-            // Use UpdateStatusOrderAsync method here
             var updateSuccess = await _unitOfWork.Orders.UpdateStatusOrderAsync(paymentRequestDto.OrderId, OrderStatus.Completed);
             if (!updateSuccess)
             {
@@ -51,7 +52,8 @@ public class CashPaymentStrategy : IPaymentStrategy
 
             await _unitOfWork.SaveChangesAsync();
 
-            // TODO: Log Drawer IN and update inventory, shift balance if needed
+            // Fire and forget Payment event publishing
+           var eventResult = await _paymenteventPublisher.PublishPaymentEventsAsync(payment, paymentRequestDto);
 
             await _unitOfWork.CommitTransactionAsync();
 
@@ -60,28 +62,15 @@ public class CashPaymentStrategy : IPaymentStrategy
         catch (Exception ex)
         {
             await _unitOfWork.RollbackTransactionAsync();
-            return ResultDto<Payment>.Failure("Payment processing failed: " + ex.Message);
+            return ResultDto<Payment>.Failure($"Payment processing failed: {ex.Message}");
         }
     }
 
-    public async Task<ResultDto<Payment>> RefundPaymentAsync(long paymentId, decimal amount)
+    public async Task<ResultDto<Payment>> RefundPaymentAsync(Payment originalPayment, SalesOrder order, decimal amount)
     {
         try
         {
-            //TODO: I think i should validate before start Transaction 
             await _unitOfWork.BeginTransactionAsync();
-
-            var originalPayment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-            if (originalPayment == null || (originalPayment != null && originalPayment.OrderId == null))
-                return ResultDto<Payment>.Failure("Original payment not found or related order not found");
-
-            var order = await _unitOfWork.Orders.GetByIdAsync(originalPayment.OrderId.Value);
-            if(order.Status == OrderStatus.Refunded || order.Status == OrderStatus.PartiallyRefunded)
-                return ResultDto<Payment>.Failure("related order does not has refund");
-
-
-            if (amount <= 0 || amount > originalPayment.Amount)
-                return ResultDto<Payment>.Failure("Invalid refund amount.");
 
             var refundPayment = new Payment
             {
@@ -90,7 +79,7 @@ public class CashPaymentStrategy : IPaymentStrategy
                 ShiftId = originalPayment.ShiftId,
                 Method = originalPayment.Method,
                 Amount = -amount,
-                Status = PaymentStatus.Refunded,
+                Status = TransactionStatus.Refunded,
                 CreatedAt = DateTime.UtcNow,
                 CompletedAt = DateTime.UtcNow,
                 Reference = $"Refund for Payment #{originalPayment.Id}",
@@ -99,11 +88,10 @@ public class CashPaymentStrategy : IPaymentStrategy
 
             await _unitOfWork.PaymentRepo.AddAsync(refundPayment);
 
-            // Calculate total paid after refund
-            decimal totalPaid = (await _unitOfWork.PaymentRepo.GetPaymentByOrderIdAsync(originalPayment.OrderId.Value))
+            var totalPaid = (await _unitOfWork.PaymentRepo.GetPaymentByOrderIdAsync(originalPayment.OrderId.Value))
                                 .Sum(p => p.Amount);
 
-            OrderStatus newStatus = totalPaid == 0 ? OrderStatus.Refunded : OrderStatus.PartiallyRefunded;
+            var newStatus = totalPaid == 0 ? OrderStatus.Refunded : OrderStatus.PartiallyRefunded;
             var updateSuccess = await _unitOfWork.Orders.UpdateStatusOrderAsync(originalPayment.OrderId.Value, newStatus);
             if (!updateSuccess)
             {
@@ -111,9 +99,11 @@ public class CashPaymentStrategy : IPaymentStrategy
                 return ResultDto<Payment>.Failure("Failed to update order status.");
             }
 
-            // TODO: Log Drawer Cash out and update inventory!!, shift balance if needed
-
             await _unitOfWork.SaveChangesAsync();
+
+            // Fire and forget refund event publishing
+            var eventResult = await _refundEventPublisher.PublishRefundEventsAsync(refundPayment, originalPayment, amount);
+
             await _unitOfWork.CommitTransactionAsync();
 
             return ResultDto<Payment>.Success(refundPayment);
@@ -121,7 +111,7 @@ public class CashPaymentStrategy : IPaymentStrategy
         catch (Exception ex)
         {
             await _unitOfWork.RollbackTransactionAsync();
-            return ResultDto<Payment>.Failure($"Cash refund failed: {ex.Message}");
+            return ResultDto<Payment>.Failure($"Refund failed: {ex.Message}");
         }
     }
 }

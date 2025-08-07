@@ -17,31 +17,29 @@ public class UserContextUtil {
     /**
      * Get the current user ID from request attributes
      * Set by JwtAuthenticationFilter
+     * Returns null for SUPER_ADMIN users
      */
     public static UUID getCurrentUserId() {
         HttpServletRequest request = getCurrentRequest();
         if (request != null) {
             UUID userId = (UUID) request.getAttribute("userId");
-            if (userId != null) {
-                return userId;
-            }
+            return userId; // Can be null for SUPER_ADMIN
         }
-        throw new IllegalStateException("User ID not found in request context");
+        throw new IllegalStateException("Request context not found");
     }
     
     /**
      * Get the current user ID as integer from request attributes
      * Set by JwtAuthenticationFilter (for .NET service compatibility)
+     * Returns null for SUPER_ADMIN users
      */
     public static Integer getCurrentUserIdAsInteger() {
         HttpServletRequest request = getCurrentRequest();
         if (request != null) {
             Integer userId = (Integer) request.getAttribute("userIdAsInteger");
-            if (userId != null) {
-                return userId;
-            }
+            return userId; // Can be null for SUPER_ADMIN
         }
-        throw new IllegalStateException("User ID as integer not found in request context");
+        throw new IllegalStateException("Request context not found");
     }
     
     /**
@@ -108,7 +106,14 @@ public class UserContextUtil {
      * Check if current user is SUPER_ADMIN
      */
     public static boolean isSuperAdmin() {
-        return hasRole("SUPER_ADMIN");
+        try {
+            List<String> roles = getCurrentUserRoles();
+            return roles.stream().anyMatch(role -> 
+                role.equals("SUPER_ADMIN") || role.equals("SuperAdmin"));
+        } catch (Exception e) {
+            log.warn("Failed to check if user is SUPER_ADMIN: {}", e.getMessage());
+            return false;
+        }
     }
     
     /**
@@ -130,6 +135,21 @@ public class UserContextUtil {
         
         UUID userTenantId = getCurrentUserTenantId();
         return userTenantId != null && userTenantId.equals(tenantId);
+    }
+    
+    /**
+     * Get the current JWT token from request attributes
+     * Set by JwtAuthenticationFilter
+     */
+    public static String getCurrentJwtToken() {
+        HttpServletRequest request = getCurrentRequest();
+        if (request != null) {
+            String token = (String) request.getAttribute("jwtToken");
+            if (token != null) {
+                return token;
+            }
+        }
+        throw new IllegalStateException("JWT token not found in request context");
     }
     
     /**

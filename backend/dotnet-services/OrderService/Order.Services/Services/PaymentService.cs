@@ -18,13 +18,17 @@ namespace Order.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly Dictionary<PaymentMethod, IPaymentStrategy> _paymentStrategies;
+        private readonly IValidationService _validationService;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public PaymentService(IUnitOfWork unitOfWork, IEnumerable<IPaymentStrategy> paymentStrategies, IMapper mapper)
+        public PaymentService(IUnitOfWork unitOfWork, IEnumerable<IPaymentStrategy> paymentStrategies, IMapper mapper, IValidationService validationService, IUserContextService userContextService)
         {
             _unitOfWork = unitOfWork;
             _paymentStrategies = paymentStrategies.ToDictionary(s => s.SupportedPaymentMethod);
             _mapper = mapper;
+            _validationService = validationService;
+            _userContextService = userContextService;
         }
 
         public async Task<ResultDto<PaymentDto>> ProcessPaymentAsync(PaymentRequestDto request)
@@ -46,40 +50,22 @@ namespace Order.Services.Services
                 {
                     return ResultDto<PaymentDto>.Failure($"Payment method {request.PaymentMethod} is not supported.");
                 }
-              
-                var strategy = _paymentStrategies[method];
-                var result = await strategy.ProcessPaymentAsync(request);
-                //TODO: Check if there any error happens throw ex 
-                if (!result.IsSuccess)
-                    throw new InvalidOperationException(result.Error);
-
-                var resultDto = _mapper.Map<PaymentDto>(result.Value);
-
-                return ResultDto<PaymentDto>.Success(resultDto);
-
-            }
-            catch (Exception ex)
-            {
-                return ResultDto<PaymentDto>.Failure($"Payment processing failed: {ex.Message}");
-
-            }
-        }
-        public async Task<ResultDto<PaymentDto>> RefundPaymentAsync(long paymentId, decimal amount)
-        {
-            //TODO: Check the BranchId 
-            try
-            {
-                var payment = await _unitOfWork.PaymentRepo.GetByIdAsync(paymentId);
-                if (payment == null)
+                var userId =  _userContextService.GetUserId();
+                var branchResult = await _validationService.ValidateBranchAsync(request.BranchId);
+                var shiftResult = await _validationService.ValidateShiftAsync(request.ShiftId, userId);
+                if (!branchResult.IsSuccess  ||
+                    !shiftResult.IsSuccess)
                 {
-                    return ResultDto<PaymentDto>.Failure("Payment not found.");
+                    return ResultDto<PaymentDto>.Failure($"Validation check failed for reference data (BranchId: {request.BranchId}, ShiftId: {request.ShiftId}, UserId: {userId})");
+
                 }
 
-                var strategy = _paymentStrategies[payment.Method];
-                var result = await strategy.RefundPaymentAsync(paymentId, amount);
-                //TODO: Check if there any error happens throw ex 
+                var strategy = _paymentStrategies[method];
+                var result = await strategy.ProcessPaymentAsync(request);
+              
                 if (!result.IsSuccess)
                     throw new InvalidOperationException(result.Error);
+
                 var resultDto = _mapper.Map<PaymentDto>(result.Value);
 
                 return ResultDto<PaymentDto>.Success(resultDto);
@@ -90,9 +76,7 @@ namespace Order.Services.Services
                 return ResultDto<PaymentDto>.Failure($"Payment processing failed: {ex.Message}");
 
             }
-
         }
-
         public async Task<ResultDto<IEnumerable<PaymentDto>>> GetPaymentsByOrderIdAsync(long orderId)
         {
             try
@@ -126,5 +110,34 @@ namespace Order.Services.Services
                 return ResultDto<PaymentDto>.Failure($"Error retrieving payment: {ex.Message}");
             }
         }
+
+        public async Task<ResultDto<IEnumerable<PaymentDto>>> GetAllPaymentsAsync(DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            try
+            {
+                var payments = await _unitOfWork.PaymentRepo.GetAllCompletedOrRefundedAsync(fromDate, toDate);
+                var paymentDtos = _mapper.Map<IEnumerable<PaymentDto>>(payments);
+                return ResultDto<IEnumerable<PaymentDto>>.Success(paymentDtos);
+            }
+            catch (Exception ex)
+            {
+                return ResultDto<IEnumerable<PaymentDto>>.Failure($"Error retrieving all payments: {ex.Message}");
+            }
+        }
+        public async Task<ResultDto<IEnumerable<PaymentDto>>> GetPaymentsByBranchIdAsync(long branchId, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            try
+            {
+                var payments = await _unitOfWork.PaymentRepo.GetCompletedOrRefundedByBranchIdAsync(branchId, fromDate, toDate);
+                var paymentDtos = _mapper.Map<IEnumerable<PaymentDto>>(payments);
+                return ResultDto<IEnumerable<PaymentDto>>.Success(paymentDtos);
+            }
+            catch (Exception ex)
+            {
+                return ResultDto<IEnumerable<PaymentDto>>.Failure($"Error retrieving payments for branch: {ex.Message}");
+            }
+        }
+
+
     }
 }

@@ -34,7 +34,17 @@
         public async Task<IActionResult> Login(LoginDto model)
         {
             var result = await _authService.LoginAsync(model);
-            return Ok(result);
+            // return Ok(result);
+             return Ok(new
+             {
+                 success = result.IsSuccess,
+                 message = result.Message,
+                 errors = result.Errors,
+                 requires2FA = result.Requires2FA,
+                 token = result.Token,
+                 refreshToken = result.RefreshToken
+                    
+            });
         }
 
         // POST: api/auth/confirm-2fa
@@ -77,6 +87,27 @@
             });
         }
 
+        // POST: api/auth/annouce-super-admin
+        [HttpPost("annouce-super-admin")]
+        public async Task<IActionResult> AnnouceSuperAdmin(SuperAdminConfirmationEmailDto dto)
+        {
+            await _authService.AnnouceSuperAdmin(dto);
+            return Ok(new
+            {
+                message = "Email sent successfully"
+            });
+        }
+
+        // POST: api/auth/annouce-admin
+        [HttpPost("annouce-admin")]
+        public async Task<IActionResult> AnnouceAdmin([FromBody]string email)
+        {
+            await _authService.AnnouceAdmin(email);
+            return Ok(new
+            {
+                message = "Email sent successfully"
+            });
+        }
         // POST: api/auth/validate-verification-code
         [HttpPost("validate-verification-code")]
         public IActionResult ValidateVerificationCode([FromBody] ValidateVerificationCodeDto model)

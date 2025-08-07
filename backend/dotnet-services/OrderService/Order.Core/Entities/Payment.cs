@@ -15,7 +15,7 @@ namespace Order.Core.Entities
         public long Id { get; set; } 
         public decimal Amount { get; set; }
         public PaymentMethod Method { get; set; }
-        public PaymentStatus Status { get; set; }
+        public Enums.TransactionStatus Status { get; set; }
         public string? TransactionId { get; set; }
 
         public string? Reference { get; set; }

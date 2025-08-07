@@ -1,8 +1,10 @@
 package com.market_os.tenant_service.config;
 
+import com.market_os.tenant_service.dto.TokenValidationRequest;
+import com.market_os.tenant_service.dto.TokenValidationResponse;
 import com.market_os.tenant_service.dto.UserRoleDto;
+import com.market_os.tenant_service.feign.TokenValidationClient;
 import com.market_os.tenant_service.service.UserTenantMappingService;
-import com.market_os.tenant_service.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +19,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -25,81 +29,131 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    
-    private final JwtUtil jwtUtil;
+
+    private final TokenValidationClient tokenValidationClient;
     private final UserTenantMappingService userTenantMappingService;
-    
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
-                                  FilterChain filterChain) throws ServletException, IOException {
-        
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
+
         // Skip authentication for public endpoints
         String requestPath = request.getRequestURI();
         if (isPublicEndpoint(requestPath)) {
             filterChain.doFilter(request, response);
             return;
         }
-        
+
         try {
             String authorizationHeader = request.getHeader("Authorization");
-            
+
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                
-                // Validate token
-                if (jwtUtil.isTokenValid(token)) {
-                    // Extract user information from JWT token
-                    Integer userIdAsInteger = jwtUtil.getUserIdAsInteger(token);
-                    String email = jwtUtil.getEmail(token);
-                    String username = jwtUtil.getUsername(token);
-                    List<String> roles = jwtUtil.getRoles(token);
+
+                // Validate token using remote service
+                TokenValidationRequest validationRequest = new TokenValidationRequest(token);
+                TokenValidationResponse validationResponse = tokenValidationClient.validateToken(validationRequest);
+
+                if (validationResponse.isSuccess()) {
+                    // Extract user information from validation response claims
+                    Map<String, String> claims = validationResponse.getClaims();
+
+                    String email = claims.get("email");
+                    String username = email != null ? email.substring(0, email.indexOf("@")) : "unknown";
                     
-                    // Get tenant ID from user mapping service
+                    // NORMALIZE ROLES - Convert "SuperAdmin" to "SUPER_ADMIN"
+                    List<String> originalRoles = claims.get("roles") != null ? Arrays.asList(claims.get("roles").split(","))
+                            : List.of("USER");
+                    
+                    // Convert roles to consistent format
+                    List<String> normalizedRoles = originalRoles.stream()
+                            .map(role -> {
+                                if (role.equals("SuperAdmin") || role.equals("Super_Admin")) {
+                                    return "SUPER_ADMIN";
+                                }
+                                return role.toUpperCase(); // Convert other roles to uppercase for consistency
+                            })
+                            .collect(Collectors.toList());
+
+                    // Handle SUPER_ADMIN case - no user ID or tenant mapping required
+                    Integer userIdAsInteger = null;
+                    UUID userId = null;
                     UUID tenantId = null;
-                    try {
-                        tenantId = userTenantMappingService.getTenantIdForUser(userIdAsInteger);
-                    } catch (Exception e) {
-                        log.warn("No tenant mapping found for user ID {}: {}", userIdAsInteger, e.getMessage());
-                        // For now, we'll continue without tenant ID
+
+                    System.out.println("Testing if it will reach");
+                    // Check for SuperAdmin role (using normalized roles now)
+                    boolean isSuperAdmin = normalizedRoles.contains("SUPER_ADMIN");
+                            
+                    String testrole = claims.get("roles");
+                    System.out.println("Original Role: " + testrole);
+                    System.out.println("Normalized Roles: " + normalizedRoles);
+                    System.out.println("Is Super Admin: " + isSuperAdmin);
+                    
+                    if (!isSuperAdmin) {
+                        System.out.println("no superAdmin");
+
+                        // For non-SuperAdmin users, extract user ID and tenant mapping
+                        try {
+                            userIdAsInteger = Integer.parseInt(claims.get("userId"));
+                            userId = UUID.nameUUIDFromBytes(userIdAsInteger.toString().getBytes());
+
+                            // Get tenant ID from user mapping service
+                            try {
+                                tenantId = userTenantMappingService.getTenantIdForUser(userIdAsInteger);
+                            } catch (Exception e) {
+                                log.warn("No tenant mapping found for user ID {}: {}", userIdAsInteger, e.getMessage());
+                            }
+                        } catch (Exception e) {
+                            log.warn("Could not parse user ID from claims: {}", e.getMessage());
+                        }
+                    } else {
+                        // For SuperAdmin, extract user ID but don't require tenant mapping
+                        System.out.println("superAdmin");
+                        try {
+                            userIdAsInteger = Integer.parseInt(claims.get("userId"));
+                            userId = UUID.nameUUIDFromBytes(userIdAsInteger.toString().getBytes());
+                            log.debug("SuperAdmin authentication - user ID: {}, no tenant mapping required",
+                                    userIdAsInteger);
+                        } catch (Exception e) {
+                            log.debug("SuperAdmin authentication - could not parse user ID: {}", e.getMessage());
+                        }
                     }
-                    
-                    // Create UUID from integer user ID for backward compatibility
-                    UUID userId = UUID.nameUUIDFromBytes(userIdAsInteger.toString().getBytes());
-                    
-                    // Create UserRoleDto from token information
+
+                    // Create UserRoleDto from token information (using normalized roles)
                     UserRoleDto userRole = UserRoleDto.builder()
                             .userId(userId)
                             .username(username)
                             .email(email)
-                            .roles(roles)
+                            .roles(normalizedRoles)  // Use normalized roles
                             .tenantId(tenantId)
                             .isActive(true)
                             .build();
-                    
-                    // Create authorities from roles
-                    List<SimpleGrantedAuthority> authorities = roles.stream()
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+
+                    // Create authorities from normalized roles
+                    List<SimpleGrantedAuthority> authorities = normalizedRoles.stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))  // Now creates "ROLE_SUPER_ADMIN"
                             .collect(Collectors.toList());
-                    
+
                     // Create authentication token
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
-                            username, 
-                            null, 
-                            authorities
-                    );
-                    
-                    // Set user info in request attributes for controllers to use
+                            username,
+                            null,
+                            authorities);
+
+                    // Set user info in request attributes for controllers to use (using normalized roles)
                     request.setAttribute("userId", userId);
                     request.setAttribute("userIdAsInteger", userIdAsInteger);
-                    request.setAttribute("userRoles", roles);
+                    request.setAttribute("userRoles", normalizedRoles);  // Use normalized roles
                     request.setAttribute("tenantId", tenantId);
                     request.setAttribute("userInfo", userRole);
-                    
+                    request.setAttribute("jwtToken", token);
+
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.debug("Authenticated user: {} (ID: {}) with roles: {} and tenant: {}", 
-                            username, userIdAsInteger, roles, tenantId);
+                    log.debug("Authenticated user: {} (ID: {}) with normalized roles: {} and tenant: {}",
+                            username, userIdAsInteger, normalizedRoles, tenantId);
                 } else {
-                    log.warn("Invalid JWT token in request to: {}", requestPath);
+                    log.warn("Token validation failed for request to {}: {}", requestPath,
+                            validationResponse.getMessage());
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }
@@ -113,16 +167,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
-        
+
         filterChain.doFilter(request, response);
     }
-    
+
     private boolean isPublicEndpoint(String path) {
         return path.startsWith("/actuator/") ||
-               path.startsWith("/api-docs") ||
-               path.startsWith("/swagger-ui/") ||
-               path.equals("/swagger-ui.html") ||
-               path.startsWith("/v3/api-docs/") ||
-               path.equals("/health");
+                path.startsWith("/api-docs") ||
+                path.startsWith("/swagger-ui/") ||
+                path.equals("/swagger-ui.html") ||
+                path.startsWith("/v3/api-docs/") ||
+                path.equals("/health");
     }
-} 
+}

@@ -1,6 +1,8 @@
 "use client";
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { redirect, useRouter } from 'next/navigation';
 import {
     registerUser,
     loginUser,
@@ -8,7 +10,15 @@ import {
     forgotPassword,
     validateResetCode,
     resetPassword,
+    fetchUser,
+    getTenantId,
+    getAllUsers,
+    getAllRoles,
+    assignRole,
+    suspendUser,
 } from '../lib/api/auth';
+import { toast } from 'sonner';
+
 import {
     RegisterDto,
     LoginDto,
@@ -19,64 +29,93 @@ import {
     ApiResponse,
     ForgotPasswordResponse,
     ResetPasswordResponse,
+    TwoFactorAuthApiResponse,
+    AssignRoleDto
 } from '@/types/dtos';
+import { UserType } from '@/types/types';
 
 export const useAuth = () => {
     const queryClient = useQueryClient();
     const router = useRouter();
 
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+
     // Check if user is authenticated based on token presence
     const isAuthenticated =
-        typeof window !== "undefined" ? !!localStorage.getItem("token") : false;
+        typeof window !== "undefined" ? !!token : false;
+
 
     // Register mutation
-    const registerMutation = useMutation<ApiResponse, Error, RegisterDto>({
+    const registerMutation = useMutation<ApiResponse, ApiResponse, RegisterDto>({
         mutationFn: registerUser,
         onSuccess: (data) => {
-            if (data.isSuccess) {
+            if (data.success) {
+                toast.success("Registration successful!");
                 router.push('/login');
             }
+            else {
+                if (data.errors && data.errors.length > 0) {
+                    data.errors.forEach((err) => toast.error(err));
+                } else {
+                    toast.error(data.message || "Registration failed!");
+                }
+            }
         },
-        onError: (error) => {
-            console.error('Registration error:', error.message);
+        onError: (data) => {
+            toast.error("Something went wrong.");
+            if (data.errors && data.errors.length > 0) {
+                console.error("Registration error:", data.errors);
+                data.errors.forEach((err) => toast.error(err));
+            } else {
+                toast.error(data.message || "Registration failed!");
+            }
         },
     });
 
     // Login mutation
     const loginMutation = useMutation<ApiResponse, Error, LoginDto>({
         mutationFn: loginUser,
-        onSuccess: (data) => {
-            if (data.isSuccess) {
-                if (data.message === '2FA required') {
-                    // Store temporary token for 2FA
-                    localStorage.setItem('tempToken', data.token);
-                    localStorage.setItem('tempRefreshToken', data.refreshToken);
-                    router.push('/confirmTwoFactorAuth');
-                } else {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('refreshToken', data.refreshToken);
-                    /* The router here is not correct i know */
-                    /* TODO: fix the router depend on the role or the data fetching */
-                    router.push('/dashboard');
-                }
+        onSuccess: (data, variables) => {
+            if (data.requires2FA) {
+                toast.info("Two-factor authentication required. Please check your email.");
+                localStorage.setItem("2fa-email", variables.email);
+                router.push("/confirmTwoFactorAuth");
+            } else if (data.success) {
+                toast.success("Login successful!");
+
+                localStorage.setItem("token", data.token!);
+                localStorage.setItem("refresh-token", data.refreshToken!);
+
+                Cookies.set("auth-token", data.token!, {
+                    secure: true,
+                    sameSite: 'Strict',
+                    path: '/',
+                });
+
+                router.replace('/');
+            } else {
+                console.log(data);
+                
+                toast.error(data.message || "Login failed.");
             }
         },
         onError: (error) => {
-            console.error('Login error:', error.message);
+            toast.error(error.message || "Invalid credentials.");
         },
     });
 
     // Confirm 2FA mutation
-    const confirm2FAMutation = useMutation<ApiResponse, Error, Confirm2FADto>({
+    const confirm2FAMutation = useMutation<TwoFactorAuthApiResponse, Error, Confirm2FADto>({
         mutationFn: confirm2FA,
         onSuccess: (data) => {
             if (data.isSuccess) {
-                localStorage.removeItem('tempToken');
-                localStorage.removeItem('tempRefreshToken');
+                toast.success("2FA confirmed successfully!");
+                localStorage.removeItem("2fa-email");
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('refresh-token', data.refreshToken);
                 /* TODO: fix the router depend on the role or the data fetching */
-                router.push('/dashboard');
+                router.push('/login');
             }
         },
         onError: (error) => {
@@ -84,16 +123,21 @@ export const useAuth = () => {
         },
     });
 
-    // Forgot password mutation
+
     const forgotPasswordMutation = useMutation<ForgotPasswordResponse, Error, ForgotPasswordDto>({
         mutationFn: forgotPassword,
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
             if (data.success) {
+                localStorage.setItem("user-email", variables.email);
+                toast.success(data.message || "Reset code sent.");
                 router.push('/validateResetPasswordCode');
+            } else {
+                toast.error(data.message || "Something went wrong.");
             }
         },
         onError: (error) => {
-            console.error('Forgot password error:', error.message);
+            toast.error(error.message || "Failed to send reset code.");
+            console.error("Forgot password error:", error.message);
         },
     });
 
@@ -106,10 +150,12 @@ export const useAuth = () => {
         mutationFn: validateResetCode,
         onSuccess: (data) => {
             if (data.success) {
+                toast.success("Code validated successfully.");
                 router.push('/resetPassword');
             }
         },
         onError: (error) => {
+            toast.error("Failed to validate reset code.");
             console.error('Validate reset code error:', error.message);
         },
     });
@@ -119,12 +165,16 @@ export const useAuth = () => {
         mutationFn: resetPassword,
         onSuccess: (data) => {
             if (data.success) {
+                toast.success("Password reset successfully.");
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('refresh-token', data.refreshToken);
+                localStorage.removeItem("user-email")
+                localStorage.removeItem("reset-code")
                 router.push('/login');
             }
         },
         onError: (error) => {
+            toast.error("Failed to reset password.");
             console.error('Reset password error:', error.message);
         },
     });
@@ -132,19 +182,100 @@ export const useAuth = () => {
     // Logout mutation
     const logoutMutation = useMutation<void, Error>({
         mutationFn: async () => {
+            toast.success("Logged out successfully.");
+
             localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('refresh-token');
             localStorage.removeItem('tempToken');
             localStorage.removeItem('tempRefreshToken');
+
+            Cookies.remove('auth-token', { path: '/' });
         },
         onSuccess: () => {
             queryClient.clear();
             router.push('/login');
         },
         onError: (error) => {
+            toast.error("Logout failed.");
             console.error('Logout error:', error.message);
         },
     });
+
+    const assignRoleMutation = useMutation({
+        mutationFn: (data: AssignRoleDto) => assignRole(token!, data),
+        /*  onSuccess: () => {
+           toast.success("Tenant created successfully");
+           queryClient.invalidateQueries({ queryKey: ["tenants", "active"] });
+         }, */
+        /*     onError: (error) => toast.error(`${error.message}`), */
+    });
+
+
+    const suspendUserMutation = useMutation<
+        any, // or the expected return type
+        Error,
+        { userId: number }
+    >({
+        mutationFn: ({ userId }) => suspendUser(token!, userId),
+        onSuccess: () => {
+            // toast.success("User suspended successfully");
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+        },
+        onError: (error) => toast.error(`${error.message}`),
+    });
+
+
+    /* getAllUsers */
+    /* Remove Later */
+    const userQuery = useQuery<UserType, Error>({
+        queryKey: ['auth-user'],
+        queryFn: async () => {
+            if (!token) throw new Error("No auth token found");
+            return await fetchUser(token);
+        },
+        enabled: !!token,
+        retry: false,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
+
+    const allUsersQuery = useQuery<UserType[], Error>({
+        queryKey: ['all-user'],
+        queryFn: async () => {
+            if (!token) throw new Error("No auth token found");
+            return await getAllUsers(token);
+        },
+        enabled: !!token,
+        retry: false,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
+
+
+    const getTenantIdForUser = useQuery<{ tenantId: string, userId: number }, Error>({
+        queryKey: ['auth-user'],
+        queryFn: async () => {
+            if (!token) throw new Error("No auth token found");
+            return await getTenantId(token);
+        },
+        enabled: !!token,
+        retry: false,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
+
+    const getAllRolesQuery = useQuery<{ id: number, name: string }[]>({
+        queryKey: ['all-roles'],
+        queryFn: async () => {
+            if (!token) throw new Error("No auth token found");
+            return await getAllRoles(token);
+        },
+        enabled: !!token,
+        retry: false,
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    })
+
 
     return {
         isAuthenticated,
@@ -156,10 +287,12 @@ export const useAuth = () => {
         login: loginMutation.mutate,
         loginStatus: loginMutation.status,
         loginError: loginMutation.error,
+        isLoading: loginMutation.isPending,
 
         confirm2FA: confirm2FAMutation.mutate,
         confirm2FAStatus: confirm2FAMutation.status,
         confirm2FAError: confirm2FAMutation.error,
+        isConfirm2FALoading: confirm2FAMutation.isPending,
 
         forgotPassword: forgotPasswordMutation.mutate,
         forgotPasswordStatus: forgotPasswordMutation.status,
@@ -172,6 +305,30 @@ export const useAuth = () => {
         resetPassword: resetPasswordMutation.mutate,
         resetPasswordStatus: resetPasswordMutation.status,
         resetPasswordError: resetPasswordMutation.error,
+
+        user: userQuery.data,
+        userStatus: userQuery.status,
+        userError: userQuery.error,
+
+        tenantId: getTenantIdForUser.data,
+        tenantIdStatus: getTenantIdForUser.status,
+        tenantIdError: getTenantIdForUser.error,
+
+        allUsers: allUsersQuery.data,
+        allUsersIsLoading: allUsersQuery.isLoading,
+        allUsersError: allUsersQuery.error,
+
+        getAllRoles: getAllRolesQuery.data,
+        getAllRolesIsLoading: getAllRolesQuery.isLoading,
+        getAllRolesError: getAllRolesQuery.error,
+
+        assignRole: assignRoleMutation.mutate,
+        assignRoleStatus: assignRoleMutation.status,
+        assignRoleError: assignRoleMutation.error,
+
+        suspendUserMutation: suspendUserMutation.mutate,
+        suspendUserStatus: suspendUserMutation.status,
+        suspendUserError: suspendUserMutation.error,
 
         logout: logoutMutation.mutate,
         logoutStatus: logoutMutation.status,
