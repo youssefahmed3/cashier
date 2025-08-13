@@ -205,6 +205,48 @@ public class TenantServiceImpl implements TenantService {
                     .build();
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SubscriptionDto> getActiveSubscriptionPlans() {
+        return subscriptionServiceClient.getActiveSubscriptions();
+    }
+
+    @Override
+    public SubscriptionStatusDto subscribeTenantToPlan(UUID tenantId, Integer planId) {
+        log.info("Subscribing tenant {} to plan {}", tenantId, planId);
+
+        //  if planId provided, attempt to activate it; otherwise create a default then activate
+        try {
+            Integer subscriptionId = planId;
+            if (subscriptionId == null) {
+                // Create a default subscription entry (minimal fields)
+                SubscriptionDto created = subscriptionServiceClient.createSubscription(
+                        SubscriptionDto.builder()
+                                .subId(Math.abs(tenantId.hashCode()))
+                                .isActive(false)
+                                .price(0)
+                                .build()
+                );
+                subscriptionId = created != null ? created.getId() : null;
+            }
+
+            if (subscriptionId != null) {
+                subscriptionServiceClient.activateSubscription(subscriptionId);
+            }
+
+            // Return updated status derived from subscription service
+            return getTenantSubscriptionStatus(tenantId);
+        } catch (Exception e) {
+            log.error("Failed subscribing tenant {} to plan {}: {}", tenantId, planId, e.getMessage());
+            return SubscriptionStatusDto.builder()
+                    .tenantId(tenantId)
+                    .isActive(false)
+                    .status("SERVICE_UNAVAILABLE")
+                    .planName("UNKNOWN")
+                    .build();
+        }
+    }
     
     @Override
     public String updateTenantLogo(UUID tenantId, String logoUrl) {

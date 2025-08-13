@@ -57,6 +57,20 @@ export async function getTenantWithBranches(tenantId: string, token: string) {
     return json;
 }
 
+/* GET: /api/v1/tenants/subscription-plans */
+export async function getSubscriptionPlans(token: string) {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_TENANT_API_URL}/api/v1/tenants/subscription-plans`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || "Something went wrong");
+    return json;
+}
+
 export async function getAllTenantWithPagination( token: string) : Promise<tenantPaginated> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_TENANT_API_URL}/api/v1/tenants`, {
         method: "GET",
@@ -116,6 +130,21 @@ export async function deleteTenant(id: string, token: string) {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
         },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || "Something went wrong");
+    return json;
+}
+
+/* POST: /api/v1/tenants/{id}/subscribe */
+export async function subscribeTenant(tenantId: string, token: string, planId?: number) {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_TENANT_API_URL}/api/v1/tenants/${tenantId}/subscribe`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ planId })
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || "Something went wrong");

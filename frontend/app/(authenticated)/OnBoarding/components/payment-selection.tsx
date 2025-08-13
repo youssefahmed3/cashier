@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { CreditCard, Building2, ArrowLeft, ArrowRight, Lock, Shield, CheckCircle, Calendar, User } from "lucide-react"
+import { subscribeTenant } from "@/lib/api/tenant"
+import { toast } from "sonner"
 
 const subscriptionPlans = {
   basic: { name: "Basic", price: "1,500 EGP", period: "per month" },
@@ -26,6 +28,7 @@ export function PaymentSelection() {
     paymentData,
     setPaymentData,
     setHasSubscription,
+    tenantId,
   } = useLanding()
 
   const [isProcessing, setIsProcessing] = React.useState(false)
@@ -49,12 +52,25 @@ export function PaymentSelection() {
     if (!selectedPaymentMethod) return
 
     setIsProcessing(true)
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+      if (!token) throw new Error("Not authenticated")
 
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-
-    setHasSubscription(true)
-    setCurrentStep("setup")
+      // Best-effort mapping: use selectedPlan string as numeric id if possible
+      const planId = selectedPlan && !isNaN(Number(selectedPlan)) ? Number(selectedPlan) : undefined
+      // Use tenant id from provider
+      const result = await subscribeTenant(tenantId || "", token, planId)
+      if (result?.is_active || result?.isActive || result?.status === "ACTIVE") {
+        setHasSubscription(true)
+        setCurrentStep("setup")
+      } else {
+        toast.error("Subscription not activated. Please try again.")
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to process subscription")
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const paymentMethods = [

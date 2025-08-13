@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useLanding } from "./landing-provider"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,11 +16,12 @@ const subscriptionPlans = {
 export function LandingComplete() {
   const { companyData, selectedPlan, selectedPaymentMethod } = useLanding()
   const [showGetStartedDialog, setShowGetStartedDialog] = useState(false)
+  const router = useRouter()
 
   const currentPlan = selectedPlan ? subscriptionPlans[selectedPlan as keyof typeof subscriptionPlans] : null
 
   const handleGetStarted = () => {
-    setShowGetStartedDialog(true)
+    router.push("/tenant/dashboard")
   }
 
   const handleContactSupport = () => {

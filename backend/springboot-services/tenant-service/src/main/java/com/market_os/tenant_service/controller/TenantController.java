@@ -222,6 +222,31 @@ public class TenantController {
         return ResponseEntity.ok(subscriptionStatus);
     }
 
+    @GetMapping("/subscription-plans")
+    @Operation(summary = "Get available subscription plans (proxy to subscription-service)")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<List<SubscriptionDto>> getSubscriptionPlans() {
+        List<SubscriptionDto> plans = tenantService.getActiveSubscriptionPlans();
+        return ResponseEntity.ok(plans);
+    }
+
+    @PostMapping("/{id}/subscribe")
+    @Operation(summary = "Subscribe/activate a plan for a tenant")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<SubscriptionStatusDto> subscribeTenant(
+            @Parameter(description = "Tenant ID") @PathVariable UUID id,
+            @RequestBody Map<String, Object> body) {
+
+        // planId is sent from FE; map or create/activate in subscription-service
+        Integer planId = null;
+        if (body != null && body.get("planId") != null) {
+            try { planId = Integer.valueOf(body.get("planId").toString()); } catch (Exception ignored) {}
+        }
+
+        SubscriptionStatusDto status = tenantService.subscribeTenantToPlan(id, planId);
+        return ResponseEntity.ok(status);
+    }
+
     @PostMapping("/{id}/logo")
     @Operation(summary = "Upload tenant logo")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")

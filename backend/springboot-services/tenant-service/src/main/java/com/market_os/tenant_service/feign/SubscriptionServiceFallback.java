@@ -22,4 +22,15 @@ public class SubscriptionServiceFallback implements SubscriptionServiceClient {
 		log.warn("Subscription service is unavailable for getActiveSubscriptions(). Returning empty list.");
 		return Collections.emptyList();
 	}
+
+    @Override
+    public SubscriptionDto createSubscription(SubscriptionDto request) {
+        log.warn("Subscription service is unavailable for createSubscription. Returning null.");
+        return null;
+    }
+
+    @Override
+    public void activateSubscription(Integer id) {
+        log.warn("Subscription service is unavailable for activateSubscription({}). No-op.", id);
+    }
 }

@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import { useLanding } from "./landing-provider"
+import { updateTenant } from "@/lib/api/tenant"
+import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +13,7 @@ import { Progress } from "@/components/ui/progress"
 import { Building2, Mail, Phone, MapPin, ArrowRight, CheckCircle } from "lucide-react"
 
 export function CompanySetup() {
-  const { companyData, setCompanyData, setupProgress, setSetupProgress, setCurrentStep } = useLanding()
+  const { companyData, setCompanyData, setupProgress, setSetupProgress, setCurrentStep, tenantId } = useLanding()
 
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -77,11 +79,26 @@ export function CompanySetup() {
 
   const handleComplete = async () => {
     setIsSubmitting(true)
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+      if (!token) throw new Error("Not authenticated")
 
-    // Simulate setup completion
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    setCurrentStep("complete")
+      if (tenantId) {
+        await updateTenant(
+          {
+            name: companyData.name,
+            is_active: true,
+          },
+          tenantId,
+          token
+        )
+      }
+      setCurrentStep("complete")
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to complete setup")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleContinue = () => {

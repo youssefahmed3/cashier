@@ -58,6 +58,17 @@ public interface TenantService {
      * Get tenant subscription status
      */
     SubscriptionStatusDto getTenantSubscriptionStatus(UUID tenantId);
+
+    /**
+     * Proxy list of active subscription plans from subscription-service
+     */
+    List<SubscriptionDto> getActiveSubscriptionPlans();
+
+    /**
+     * Subscribe/activate a plan for the given tenant
+     * If planId is null, default mapping can be applied server-side
+     */
+    SubscriptionStatusDto subscribeTenantToPlan(UUID tenantId, Integer planId);
     
     /**
      * Update tenant logo URL

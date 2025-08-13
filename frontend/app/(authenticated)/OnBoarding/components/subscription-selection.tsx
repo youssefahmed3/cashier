@@ -1,12 +1,14 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLanding } from "./landing-provider"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Check, Store, Zap, Crown, ArrowRight, Building2, Star } from "lucide-react"
+import { getSubscriptionPlans } from "@/lib/api/tenant"
+import { toast } from "sonner"
 
-const subscriptionPlans = [
+const fallbackPlans = [
   {
     id: "basic",
     name: "Basic",
@@ -72,6 +74,32 @@ const subscriptionPlans = [
 export function SubscriptionSelection() {
   const { selectedPlan, setSelectedPlan, setCurrentStep } = useLanding()
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null)
+  const [plans, setPlans] = useState(fallbackPlans)
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+        if (!token) return
+        const apiPlans = await getSubscriptionPlans(token)
+        // Map backend structure to UI. Using price and id where available
+        const mapped = (apiPlans || []).map((p: any) => ({
+          id: String(p.id ?? p.sub_Id ?? p.subId ?? "standard"),
+          name: p.name || "Standard",
+          price: String(p.price ?? 0),
+          period: "per month",
+          description: "Plan",
+          icon: Store,
+          features: ["POS", "Inventory", "Reporting"],
+          popular: false,
+        }))
+        if (mapped.length > 0) setPlans(mapped)
+      } catch (e: any) {
+        toast.message("Using default plans")
+      }
+    }
+    loadPlans()
+  }, [])
 
   const handlePlanSelect = (planId: string) => {
     setSelectedPlan(planId)
@@ -102,7 +130,7 @@ export function SubscriptionSelection() {
 
         {/* Subscription Plans */}
         <div className="grid lg:grid-cols-3 gap-4">
-          {subscriptionPlans.map((plan) => {
+          {plans.map((plan) => {
             const Icon = plan.icon
             const isSelected = selectedPlan === plan.id
             const isHovered = hoveredPlan === plan.id
@@ -165,7 +193,7 @@ export function SubscriptionSelection() {
                     ))}
                   </ul>
 
-                  <Button
+                   <Button
                     className={`w-full h-10 text-sm font-semibold transition-all duration-300 rounded-lg hover:transform hover:scale-105 ${
                       isSelected
                         ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg transform scale-105"
@@ -175,7 +203,7 @@ export function SubscriptionSelection() {
                     }`}
                     onClick={() => handlePlanSelect(plan.id)}
                   >
-                    {isSelected ? (
+                     {isSelected ? (
                       <div className="flex items-center justify-center space-x-2">
                         <Check className="w-4 h-4" />
                         <span>Selected</span>
@@ -195,12 +223,12 @@ export function SubscriptionSelection() {
 
         {/* Continue Button */}
         <div className="text-center mt-6">
-          <Button
+            <Button
             onClick={handleContinue}
             disabled={!selectedPlan}
             className="px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            Continue with {selectedPlan ? subscriptionPlans.find(p => p.id === selectedPlan)?.name : 'Plan'}
+            Continue with {selectedPlan ? plans.find(p => p.id === selectedPlan)?.name : 'Plan'}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
