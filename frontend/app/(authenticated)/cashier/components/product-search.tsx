@@ -24,18 +24,18 @@ export function ProductSearch({ open, onOpenChange, onAddToCart }: ProductSearch
   const { data: products = [], isLoading, error } = useQuery({
     queryKey: productKeys.search(searchTerm),
     queryFn: () => searchProducts(searchTerm),
-    enabled: searchTerm.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: searchTerm.trim().length > 0,
+    staleTime: 5 * 60 * 1000,
   })
 
   const handleAddToCart = (product: any) => {
     onAddToCart({
-      id: product.id,
+      id: String(product.id),
       name: product.name,
       price: product.price,
       barcode: product.barcode,
-      category: product.category,
-      taxRate: product.taxRate,
+      category: product.category ?? "General",
+      taxRate: product.taxRate ?? 0,
     })
   }
 
@@ -136,8 +136,8 @@ export function ProductSearch({ open, onOpenChange, onAddToCart }: ProductSearch
                         </div>
 
                         <div className="flex items-center justify-between mt-2">
-                          <Badge variant="secondary" className={getCategoryColor(product.category)}>
-                            {product.category}
+                          <Badge variant="secondary" className={getCategoryColor(product.category ?? "General")}>
+                            {product.category ?? "General"}
                           </Badge>
                                                      <Button
                              size="sm"

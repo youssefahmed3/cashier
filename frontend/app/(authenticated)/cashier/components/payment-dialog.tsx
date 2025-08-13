@@ -8,6 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { DollarSign, CreditCard, Smartphone, CheckCircle } from "lucide-react"
+// Lazy-import heavy libs at runtime to avoid type deps
+const dynamicHtml2Canvas = () => import("html2canvas")
+const dynamicJsPDF = () => import("jspdf")
+import { sendReceipt } from "@/lib/api/receipt"
 import type { CartItem, Customer } from "../page"
 
 interface PaymentDialogProps {
@@ -39,19 +43,35 @@ export function PaymentDialog({
 
   const handlePayment = async () => {
     setProcessing(true)
-
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    setProcessing(false)
-    setPaymentComplete(true)
-
-    // Auto-close after showing success
-    setTimeout(() => {
-      setPaymentComplete(false)
-      setCashReceived("")
-      onPaymentComplete()
-    }, 2000)
+    try {
+      await onPaymentComplete()
+      setPaymentComplete(true)
+      // Attempt to capture receipt preview (if open) and send via email when customer email exists
+      if (customer?.email) {
+        try {
+          const element = document.body
+          const { default: html2canvas } = await dynamicHtml2Canvas()
+          const canvas = await html2canvas(element)
+          const imgData = canvas.toDataURL("image/png")
+          const { default: JsPDF } = await dynamicJsPDF()
+          const pdf = new JsPDF({ orientation: "p", unit: "pt", format: "a4" })
+          const pageWidth = pdf.internal.pageSize.getWidth()
+          const pageHeight = pdf.internal.pageSize.getHeight()
+          pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pageHeight)
+          const blob = pdf.output("blob") as Blob
+          const file = new File([blob], `receipt-${Date.now()}.pdf`, { type: "application/pdf" })
+          await sendReceipt(file, customer.email)
+        } catch {
+          // ignore receipt email failure in payment flow
+        }
+      }
+    } finally {
+      setProcessing(false)
+      setTimeout(() => {
+        setPaymentComplete(false)
+        setCashReceived("")
+      }, 1200)
+    }
   }
 
   const renderPaymentMethod = () => {

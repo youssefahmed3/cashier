@@ -7,6 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Search, Scan, Plus, Minus, Trash2, User, CreditCard, DollarSign, Receipt, ShoppingCart, Package } from "lucide-react"
+import { getProductByBarcode } from "@/lib/api/products"
+import { createOrder, mapCartToOrderItems } from "@/lib/api/orders"
+import { processPayment } from "@/lib/api/payments"
+import { useAuth } from "@/hooks/useAuth"
+import { getInventoryProductsByProductId, updateInventoryQuantity } from "@/lib/api/inventory"
+import { useShift } from "@/hooks/useShift"
+import { useBranch } from "@/hooks/useBranch"
 import { ProductSearch } from "./product-search"
 import { CustomerLookup } from "./customer-lookup"
 import { PaymentDialog } from "./payment-dialog"
@@ -46,12 +53,86 @@ export function POSMainInterface({
   activeTab,
   setActiveTab,
 }: POSMainInterfaceProps) {
+  const { user } = useAuth()
   const [barcodeInput, setBarcodeInput] = React.useState("")
   const [showProductSearch, setShowProductSearch] = React.useState(false)
   const [showCustomerLookup, setShowCustomerLookup] = React.useState(false)
   const [showPayment, setShowPayment] = React.useState(false)
   const [showReceipt, setShowReceipt] = React.useState(false)
   const [showBulkEntry, setShowBulkEntry] = React.useState(false)
+  const [branchId, setBranchId] = React.useState<number | null>(null)
+  const [shiftId, setShiftId] = React.useState<number | null>(null)
+
+  // Load branches for the user's tenant (pick first as active for now)
+  const { tenantId } = useAuth()
+  const { tenantBranchesQuery } = useBranch()
+  const { data: branches } = tenantBranchesQuery(tenantId?.tenantId ?? "")
+
+  React.useEffect(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("pos-branch-id") : null
+    if (saved) {
+      setBranchId(Number(saved))
+      return
+    }
+    if (branches && branches.length > 0) {
+      const first = branches[0]
+      if (first?.id) setBranchId(Number(first.id))
+    }
+  }, [branches])
+
+  // Load or start active shift for current user and branch
+  const { activeShiftQuery, startShiftMutation } = useShift(branchId ?? undefined, user?.id)
+  React.useEffect(() => {
+    if (activeShiftQuery.data?.id) setShiftId(Number(activeShiftQuery.data.id))
+  }, [activeShiftQuery.data])
+
+  const getToken = () => (typeof window !== "undefined" ? localStorage.getItem("token") ?? "" : "")
+
+  // Validate inventory availability for all cart items
+  const validateInventoryForCart = async (): Promise<boolean> => {
+    const token = getToken()
+    for (const item of cart) {
+      const productIdNum = Number.parseInt(item.id, 10)
+      if (!Number.isFinite(productIdNum)) continue
+      try {
+        const entries: any[] = await getInventoryProductsByProductId(token, productIdNum)
+        const totalQty = (entries || []).reduce((sum, e: any) => sum + (e.qty ?? e.quantity ?? 0), 0)
+        if (totalQty < item.quantity) {
+          alert(`Insufficient stock for ${item.name}. Available: ${totalQty}, requested: ${item.quantity}`)
+          return false
+        }
+      } catch (e) {
+        console.error("Inventory validation failed", e)
+        alert("Failed to validate inventory. Please try again.")
+        return false
+      }
+    }
+    return true
+  }
+
+  // Decrement inventory quantities across entries after success
+  const decrementInventoryForCart = async () => {
+    const token = getToken()
+    for (const item of cart) {
+      let remaining = item.quantity
+      const productIdNum = Number.parseInt(item.id, 10)
+      if (!Number.isFinite(productIdNum) || remaining <= 0) continue
+      try {
+        const entries: any[] = await getInventoryProductsByProductId(token, productIdNum)
+        for (const entry of entries || []) {
+          if (remaining <= 0) break
+          const currentQty: number = entry.qty ?? entry.quantity ?? 0
+          if (currentQty <= 0) continue
+          const take = Math.min(remaining, currentQty)
+          const newQty = currentQty - take
+          await updateInventoryQuantity(token, Number(entry.id), newQty)
+          remaining -= take
+        }
+      } catch (e) {
+        console.error("Inventory decrement failed", e)
+      }
+    }
+  }
 
   // Calculate totals
   const subtotal = cart.reduce((sum, item) => {
@@ -128,11 +209,22 @@ export function POSMainInterface({
     setCurrentCustomer(null)
   }
 
-  const handleBarcodeSubmit = (e: React.FormEvent) => {
+  const handleBarcodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (barcodeInput.trim()) {
-      // In a real app, you'd look up the product by barcode
-      console.log("Looking up barcode:", barcodeInput)
+    if (!barcodeInput.trim()) return
+    try {
+      const product = await getProductByBarcode(barcodeInput.trim())
+      if (product) {
+        addToCart({
+          id: String(product.id),
+          name: product.name,
+          price: product.price,
+          barcode: product.barcode,
+          category: product.category ?? "General",
+          taxRate: product.taxRate ?? 0,
+        })
+      }
+    } finally {
       setBarcodeInput("")
     }
   }
@@ -174,7 +266,50 @@ export function POSMainInterface({
             total={total}
             paymentMethod={paymentMethod}
             customer={currentCustomer}
-            onPaymentComplete={() => {
+            onPaymentComplete={async () => {
+              // Ensure we have a branch and shift; start shift if not active
+              let effectiveShiftId = shiftId
+              if (!effectiveShiftId && branchId && user?.id) {
+                const started = await startShiftMutation.mutateAsync({
+                  branchId,
+                  userId: user.id,
+                  startingCash: 0,
+                })
+                effectiveShiftId = Number(started.id)
+                setShiftId(effectiveShiftId)
+              }
+
+              // Validate inventory before proceeding
+              const isInventoryOk = await validateInventoryForCart()
+              if (!isInventoryOk) {
+                return
+              }
+
+              // Create order then process payment
+              const orderPayload = {
+                orderId: Date.now(),
+                branchId: branchId ?? 1,
+                userId: user?.id ?? null,
+                total: Number(total.toFixed(2)),
+                customerId: currentCustomer ? Number.parseInt(currentCustomer.id) : null,
+                shiftId: effectiveShiftId ?? 1,
+                status: "New",
+                items: mapCartToOrderItems(cart),
+              }
+              const created = await createOrder(orderPayload)
+              await processPayment({
+                orderId: created.orderId,
+                amount: Number(total.toFixed(2)),
+                paymentMethod: paymentMethod === "cash" ? "Cash" : "Paymob",
+                branchId: orderPayload.branchId,
+                shiftId: orderPayload.shiftId,
+                cashierId: user?.id ?? 0,
+                customerId: orderPayload.customerId ?? undefined,
+                reference: undefined,
+              })
+
+              // Decrement inventory after successful payment
+              await decrementInventoryForCart()
               setActiveTab("new-sale")
               setShowReceipt(true)
             }}

@@ -27,146 +27,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Transaction } from "../page"
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query"
+import { getPaymentsByBranch, type PaymentDto, refundPayment } from "@/lib/api/payments"
+import { getOrderById, type OrderDto } from "@/lib/api/orders"
+import { useShift } from "@/hooks/useShift"
+import { DateRange } from "react-day-picker"
+import { useAuth } from "@/hooks/useAuth"
+import { useBranch } from "@/hooks/useBranch"
 
-// Sample transaction data
-const transactionData: Transaction[] = [
-  {
-    id: "TXN001234",
-    date: "2024-01-27",
-    time: "14:32:15",
-    items: [
-      {
-        id: "PRD001",
-        name: "Organic Bananas",
-        price: 2.99,
-        quantity: 2,
-        barcode: "1234567890123",
-        category: "Fruits",
-        taxRate: 0.08,
-      },
-      {
-        id: "PRD002",
-        name: "Whole Milk 1L",
-        price: 3.49,
-        quantity: 1,
-        barcode: "2345678901234",
-        category: "Dairy",
-        taxRate: 0.08,
-      },
-    ],
-    customer: { id: "CUST001", name: "John Smith", loyaltyPoints: 1250, membershipLevel: "gold" },
-    total: 9.47,
-    paymentMethod: "card",
-    cashier: "Jane Doe",
-    status: "completed",
-  },
-  {
-    id: "TXN001235",
-    date: "2024-01-27",
-    time: "14:45:22",
-    items: [
-      {
-        id: "PRD003",
-        name: "White Bread",
-        price: 2.79,
-        quantity: 1,
-        barcode: "4567890123456",
-        category: "Bakery",
-        taxRate: 0.08,
-      },
-    ],
-    total: 3.01,
-    paymentMethod: "cash",
-    cashier: "Jane Doe",
-    status: "completed",
-  },
-  {
-    id: "TXN001236",
-    date: "2024-01-27",
-    time: "15:12:08",
-    items: [
-      {
-        id: "PRD004",
-        name: "Ground Beef 1lb",
-        price: 8.99,
-        quantity: 1,
-        barcode: "3456789012345",
-        category: "Meat",
-        taxRate: 0.08,
-      },
-      {
-        id: "PRD005",
-        name: "Coca Cola 2L",
-        price: 2.49,
-        quantity: 2,
-        barcode: "5678901234567",
-        category: "Beverages",
-        taxRate: 0.08,
-      },
-    ],
-    customer: { id: "CUST002", name: "Sarah Johnson", loyaltyPoints: 850, membershipLevel: "silver" },
-    total: 14.95,
-    paymentMethod: "card",
-    cashier: "Jane Doe",
-    status: "completed",
-  },
-  {
-    id: "TXN001237",
-    date: "2024-01-27",
-    time: "15:28:45",
-    items: [
-      {
-        id: "PRD001",
-        name: "Organic Bananas",
-        price: 2.99,
-        quantity: 3,
-        barcode: "1234567890123",
-        category: "Fruits",
-        taxRate: 0.08,
-      },
-    ],
-    total: 9.69,
-    paymentMethod: "cash",
-    cashier: "Jane Doe",
-    status: "refunded",
-  },
-  {
-    id: "TXN001238",
-    date: "2024-01-27",
-    time: "16:05:12",
-    items: [
-      {
-        id: "QP001",
-        name: "Plastic Bag",
-        price: 0.1,
-        quantity: 5,
-        barcode: "BAG001",
-        category: "Accessories",
-        taxRate: 0.08,
-      },
-      {
-        id: "QP002",
-        name: "Gift Card $25",
-        price: 25.0,
-        quantity: 1,
-        barcode: "GC025",
-        category: "Gift Cards",
-        taxRate: 0,
-      },
-    ],
-    total: 25.54,
-    paymentMethod: "card",
-    cashier: "Jane Doe",
-    status: "completed",
-  },
-]
+// Will load from backend payments API; fallback to empty
+const transactionData: Transaction[] = []
 
-export const transactionColumns: ColumnDef<Transaction>[] = [
+const baseColumns: ColumnDef<Transaction>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -289,66 +168,150 @@ export const transactionColumns: ColumnDef<Transaction>[] = [
       )
     },
   },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const transaction = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(transaction.id)}>
-              Copy transaction ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Reprint Receipt
-            </DropdownMenuItem>
-            {transaction.status === "completed" && (
-              <DropdownMenuItem className="text-red-600">
-                <X className="mr-2 h-4 w-4" />
-                Process Refund
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
 ]
 
 export function TransactionHistory() {
+  const { user } = useAuth()
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
   const [paymentFilter, setPaymentFilter] = React.useState<string>("all")
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>()
+
+  const { tenantId } = useAuth()
+  const { tenantBranchesQuery } = useBranch()
+  const { data: branches } = tenantBranchesQuery(tenantId?.tenantId ?? "")
+  const branchId = React.useMemo(() => (branches && branches[0]?.id ? Number(branches[0].id) : undefined), [branches])
+
+  const { data: payments = [], isLoading } = useQuery<PaymentDto[]>({
+    queryKey: ["payments", branchId, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
+    queryFn: () => getPaymentsByBranch(
+      branchId!,
+      dateRange?.from ? dateRange.from.toISOString() : undefined,
+      dateRange?.to ? dateRange.to.toISOString() : undefined
+    ),
+    enabled: !!branchId,
+    staleTime: 60_000,
+  })
+
+  // Map payment id and load orders for details
+  const paymentById = React.useMemo(() => {
+    const map = new Map<string, PaymentDto>()
+    for (const p of payments) map.set(String(p.id), p)
+    return map
+  }, [payments])
+
+  const ordersQueries = useQueries({
+    queries: (payments || []).map((p) => ({
+      queryKey: ["order", p.orderId],
+      queryFn: () => getOrderById(p.orderId),
+      enabled: !!p.orderId,
+      staleTime: 60_000,
+    })),
+  })
+  const orderMap = React.useMemo(() => {
+    const map = new Map<number, OrderDto>()
+    ordersQueries.forEach((q) => {
+      if (q.data) map.set(q.data.orderId, q.data)
+    })
+    return map
+  }, [ordersQueries])
+
+  // Shift for refund
+  const { activeShiftQuery } = useShift(branchId, user?.id)
+  const shiftId = activeShiftQuery.data?.id ? Number(activeShiftQuery.data.id) : undefined
+
+  // Dialog state
+  const [detailsOpen, setDetailsOpen] = React.useState(false)
+  const [refundOpen, setRefundOpen] = React.useState(false)
+  const [activePayment, setActivePayment] = React.useState<PaymentDto | null>(null)
+  const [refundReason, setRefundReason] = React.useState("")
+  const [refundQty, setRefundQty] = React.useState<Record<string, number>>({})
+  const qc = useQueryClient()
+
+  const mappedTransactions: Transaction[] = React.useMemo(() => {
+    return (payments || []).map((p) => ({
+      id: String(p.id),
+      date: new Date(p.createdAt).toISOString().slice(0, 10),
+      time: new Date(p.createdAt).toTimeString().slice(0, 8),
+      items: (orderMap.get(p.orderId)?.items || []).map((it) => ({
+        id: String(it.productId),
+        name: it.name,
+        price: Number(it.unitPrice),
+        quantity: Number(it.quantity),
+        barcode: "",
+        category: "General",
+        taxRate: 0,
+      })),
+      total: Number(p.amount),
+      paymentMethod: (p.method?.toLowerCase() as any) ?? "cash",
+      cashier: "",
+      status: (p.status?.toLowerCase() as any) ?? "completed",
+    }))
+  }, [payments, orderMap])
 
   const filteredData = React.useMemo(() => {
-    return transactionData.filter((transaction) => {
+    return mappedTransactions.filter((transaction) => {
       const statusMatch = statusFilter === "all" || transaction.status === statusFilter
       const paymentMatch = paymentFilter === "all" || transaction.paymentMethod === paymentFilter
       return statusMatch && paymentMatch
     })
-  }, [statusFilter, paymentFilter])
+  }, [statusFilter, paymentFilter, mappedTransactions])
+
+  // Build columns with action menu
+  const columns = React.useMemo<ColumnDef<Transaction>[]>(() => {
+    const actions: ColumnDef<Transaction> = {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const transaction = row.original
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(transaction.id)}>
+                Copy transaction ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => {
+                const p = paymentById.get(transaction.id) || null
+                setActivePayment(p)
+                setDetailsOpen(true)
+              }}>
+                <Eye className="mr-2 h-4 w-4" />
+                View Details
+              </DropdownMenuItem>
+              {transaction.status === "completed" && (
+                <DropdownMenuItem className="text-red-600" onClick={() => {
+                  const p = paymentById.get(transaction.id) || null
+                  setActivePayment(p)
+                  setRefundQty({})
+                  setRefundReason("")
+                  setRefundOpen(true)
+                }}>
+                  <X className="mr-2 h-4 w-4" />
+                  Process Refund
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    }
+    return [...baseColumns, actions]
+  }, [paymentById])
 
   const table = useReactTable({
     data: filteredData,
-    columns: transactionColumns,
+    columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -448,6 +411,11 @@ export function TransactionHistory() {
                 <SelectItem value="voided">Voided</SelectItem>
               </SelectContent>
             </Select>
+            {/* Date range (basic inputs to avoid calendar dep) */}
+            <div className="flex items-center gap-2">
+              <Input type="date" value={dateRange?.from ? dateRange.from.toISOString().slice(0,10) : ""} onChange={(e) => setDateRange({ from: e.target.value ? new Date(e.target.value) : undefined, to: dateRange?.to })} />
+              <Input type="date" value={dateRange?.to ? dateRange.to.toISOString().slice(0,10) : ""} onChange={(e) => setDateRange({ from: dateRange?.from, to: e.target.value ? new Date(e.target.value) : undefined })} />
+            </div>
             <Select value={paymentFilter} onValueChange={setPaymentFilter}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Payment" />
@@ -513,7 +481,7 @@ export function TransactionHistory() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={transactionColumns.length} className="h-24 text-center">
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
                       No transactions found.
                     </TableCell>
                   </TableRow>
@@ -543,6 +511,111 @@ export function TransactionHistory() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Transaction Details</DialogTitle>
+          </DialogHeader>
+          {activePayment && (
+            <div className="space-y-3">
+              <div className="text-sm">Payment ID: {activePayment.id} • Order ID: {activePayment.orderId}</div>
+              <div className="text-sm">Amount: {activePayment.amount}</div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Qty</TableHead>
+                      <TableHead>Unit Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(orderMap.get(activePayment.orderId)?.items || []).map((it) => (
+                      <TableRow key={it.id}>
+                        <TableCell>{it.name}</TableCell>
+                        <TableCell>{String(it.quantity)}</TableCell>
+                        <TableCell>{String(it.unitPrice)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Dialog */}
+      <Dialog open={refundOpen} onOpenChange={setRefundOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Process Refund</DialogTitle>
+          </DialogHeader>
+          {activePayment && (
+            <div className="space-y-3">
+              <div className="grid gap-2">
+                <Label>Reason</Label>
+                <Input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} placeholder="Optional reason" />
+              </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Max Qty</TableHead>
+                      <TableHead>Refund Qty</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(orderMap.get(activePayment.orderId)?.items || []).map((it) => (
+                      <TableRow key={it.id}>
+                        <TableCell>{it.name}</TableCell>
+                        <TableCell>{String(it.quantity)}</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={Number(it.quantity)}
+                            value={refundQty[String(it.id!)] ?? 0}
+                            onChange={(e) => setRefundQty({ ...refundQty, [String(it.id!)]: Number(e.target.value) })}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setRefundOpen(false)}>Cancel</Button>
+                <Button
+                  onClick={async () => {
+                    if (!branchId || !shiftId || !activePayment) return
+                    const order = orderMap.get(activePayment.orderId)
+                    if (!order) return
+                    const items = (order.items || [])
+                      .filter((it) => typeof it.id === 'number' && (refundQty[String(it.id)] ?? 0) > 0)
+                      .map((it) => ({ orderItemId: Number(it.id), quantity: Number(refundQty[String(it.id)] ?? 0), productId: it.productId }))
+                    if (items.length === 0) return
+                    await refundPayment({
+                      orderId: order.orderId,
+                      branchId,
+                      shiftId,
+                      reason: refundReason || undefined,
+                      items,
+                    })
+                    setRefundOpen(false)
+                    setRefundQty({})
+                    setRefundReason("")
+                    qc.invalidateQueries({ queryKey: ["payments", branchId] })
+                  }}
+                >Submit Refund</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
